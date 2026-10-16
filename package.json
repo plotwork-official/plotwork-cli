@@ -1,0 +1,44 @@
+{
+  "name": "@buun_group/plotwork",
+  "version": "0.1.0-beta.1",
+  "description": "The Plotwork command line: validate, render, sync, and convert diagrams in your repository, offline. Keeps the pictures in Markdown files in step with their source, with a check for CI. It counts nothing and sends nothing.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "plotwork": "./plotwork.mjs"
+  },
+  "files": [
+    "plotwork.mjs",
+    "README.md",
+    "LICENSE",
+    "THIRD-PARTY-NOTICES.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/plotwork-official/plotwork-cli.git"
+  },
+  "homepage": "https://docs.plotwork.dev",
+  "bugs": {
+    "url": "https://github.com/plotwork-official/plotwork-cli/issues"
+  },
+  "keywords": [
+    "plotwork",
+    "diagrams",
+    "cli",
+    "markdown",
+    "flowchart",
+    "sequence-diagram",
+    "database-schema",
+    "svg",
+    "mermaid",
+    "docs-as-code",
+    "github-actions"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
