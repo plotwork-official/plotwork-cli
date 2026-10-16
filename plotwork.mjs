@@ -999,7 +999,7 @@ var init_style_rules = __esm({
       /** The address of the JSON Schema an editor reads from `$schema`; the docs app serves it. Nothing in Plotwork fetches it. */
       schemaUrl: "https://docs.plotwork.dev/schemas/plotwork.config.json",
       /** The largest settings file read, in bytes. */
-      maxBytes: 65536,
+      maxBytes: 262144,
       /** The longest value a header default may have, in characters. */
       maxValueLength: 200
     };
@@ -1013,7 +1013,7 @@ var init_generate = __esm({
     "use strict";
     GENERATE = {
       /** The most sources one settings file lists. */
-      maxSources: 50,
+      maxSources: 250,
       /** The most patterns one source's `from` lists. */
       maxPatterns: 20,
       /** The most files one source reads, after its patterns are expanded. */
@@ -4324,13 +4324,14 @@ var init_diagnostics = __esm({
       settingIgnored: "S200",
       // Generated diagrams (src/generate). S101-S104 stop one source: a source the run cannot use, an overrides file that does not check,
       // a source whose files are missing, a Markdown fence that is not there. S201-S202 are warnings: an override whose target is gone, and
-      // one the diagram could not take.
+      // one the diagram could not take. S203 is an overrides file a source names that is not there.
       sourceInvalid: "S101",
       overridesInvalid: "S102",
       sourceNoFiles: "S103",
       fenceMissing: "S104",
       overrideStale: "S201",
-      overrideRefused: "S202"
+      overrideRefused: "S202",
+      overridesMissing: "S203"
     };
   }
 });
@@ -4800,13 +4801,13 @@ var require_elk_api = __commonJS({
               this.id = id + 1;
               msg.id = id;
               var self2 = this;
-              return new Promise(function(resolve10, reject) {
+              return new Promise(function(resolve11, reject) {
                 self2.resolvers[id] = function(err2, res) {
                   if (err2) {
                     self2.convertGwtStyleError(err2);
                     reject(err2);
                   } else {
-                    resolve10(res);
+                    resolve11(res);
                   }
                 };
                 self2.worker.postMessage(msg);
@@ -109941,7 +109942,7 @@ async function layoutWith2(diagram, boxes2, direction) {
     // A stretch moved off a tab can land past a sibling edge's stub; that stub then steps past it, so the two do not cross by their node.
     edges: orderStubs(routes.map((edge) => routeAroundTabs2(edge, tabRects, nodeRects)), nodeRects, tabRects)
   };
-  return makeRoomFor(layout, spanned.grown);
+  return makeRoomFor(layout, [...spanned.grown, ...layout.edges.flatMap((edge) => edge.label === null ? [] : [edge.label.rect])]);
 }
 async function layoutFlowOnce(diagram) {
   const boxes2 = evenFlowBoxes(diagram, new Map(diagram.nodes.map((node3) => [node3.id, sizeNode(node3)])));
@@ -117700,7 +117701,7 @@ function resolveCast(state) {
   const actors = entries2.map((entry2, index2) => ({ name: entry2.name, tone: tones[index2] ?? "neutral", initials: initials[index2] ?? "?", isDeclared: entry2.isDeclared }));
   const names7 = new Map(entries2.map((entry2) => [actorKey(entry2.name), entry2.name]));
   const known3 = entries2.map((entry2) => entry2.name);
-  const resolve10 = (section) => ({
+  const resolve11 = (section) => ({
     label: section.label,
     tone: section.tone,
     labelAt: section.labelAt,
@@ -117717,7 +117718,7 @@ function resolveCast(state) {
       })
     }))
   });
-  return { actors, sections: state.sections.map(resolve10) };
+  return { actors, sections: state.sections.map(resolve11) };
 }
 var init_parse_cast = __esm({
   "../../packages/diagrams/src/kinds/journey/parse-cast.ts"() {
@@ -143716,7 +143717,7 @@ function isRef(value) {
 function cloneIssues(issues) {
   return issues.map((iss) => iss.path ? { ...iss, path: iss.path.slice() } : { ...iss });
 }
-function isRecursive(inst, stack, resolve10) {
+function isRecursive(inst, stack, resolve11) {
   const cached3 = recursive.get(inst);
   if (cached3 !== void 0)
     return cached3 ? PROVEN : NONE2;
@@ -143726,7 +143727,7 @@ function isRecursive(inst, stack, resolve10) {
   let result = NONE2;
   const check2 = (child) => {
     if (result !== PROVEN && child?._zod) {
-      const answer = isRecursive(child, stack, resolve10);
+      const answer = isRecursive(child, stack, resolve11);
       if (answer > result)
         result = answer;
     }
@@ -143737,7 +143738,7 @@ function isRecursive(inst, stack, resolve10) {
       const desc = Object.getOwnPropertyDescriptor(sh, key);
       if (spread2 && !desc.enumerable)
         continue;
-      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve10) : NONE2;
+      const child = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve11) : NONE2;
       if (child > answer)
         answer = child;
     }
@@ -143801,7 +143802,7 @@ function isRecursive(inst, stack, resolve10) {
       break;
     // `$ZodLazy` caches its inner on the def, so a resolved edge is followed exactly
     case "lazy": {
-      const inner = def._cachedInner ?? (resolve10 ? inst._zod.innerType : void 0);
+      const inner = def._cachedInner ?? (resolve11 ? inst._zod.innerType : void 0);
       merge3(inner ? isRecursive(inner, stack, false) : ASSUMED);
       break;
     }
@@ -160715,8 +160716,8 @@ function pathPolylines(d) {
     current = [];
   };
   for (const { letter, numbers } of commands(d)) {
-    const relative8 = letter === letter.toLowerCase();
-    const at3 = (x, y) => relative8 ? { x: pen.x + x, y: pen.y + y } : { x, y };
+    const relative9 = letter === letter.toLowerCase();
+    const at3 = (x, y) => relative9 ? { x: pen.x + x, y: pen.y + y } : { x, y };
     const upper = letter.toUpperCase();
     const n = numbers;
     let index2 = 0;
@@ -160757,12 +160758,12 @@ function pathPolylines(d) {
       } else if (upper === "H") {
         const v = take(1);
         if (v === null) break;
-        pen = { x: relative8 ? pen.x + v[0] : v[0], y: pen.y };
+        pen = { x: relative9 ? pen.x + v[0] : v[0], y: pen.y };
         current.push(pen);
       } else if (upper === "V") {
         const v = take(1);
         if (v === null) break;
-        pen = { x: pen.x, y: relative8 ? pen.y + v[0] : v[0] };
+        pen = { x: pen.x, y: relative9 ? pen.y + v[0] : v[0] };
         current.push(pen);
       } else if (upper === "C") {
         const v = take(6);
@@ -163795,12 +163796,12 @@ function resolver(scan, context, added) {
     return null;
   };
 }
-function endOf(resolve10, end) {
-  const whole2 = resolve10(end);
+function endOf(resolve11, end) {
+  const whole2 = resolve11(end);
   if (whole2 !== null) return whole2;
   const dot2 = end.lastIndexOf(".");
   if (dot2 <= 0) return null;
-  const table = resolve10(end.slice(0, dot2));
+  const table = resolve11(end.slice(0, dot2));
   return table === null ? null : `${table}.${end.slice(dot2 + 1)}`;
 }
 function applyOverrides(source, overrides, context) {
@@ -163826,7 +163827,7 @@ function applyOverrides(source, overrides, context) {
     notes.push(warningAt(DIAGNOSTIC_CODES.overrideRefused, `The override of ${step.what} could not apply: ${result?.message ?? "the edit was refused"}`, place2(step.path), result?.hint ?? `Check this entry of ${context.file}.`));
   };
   const added = new Set(Object.keys(overrides.groups ?? {}));
-  const resolve10 = resolver(scan, context, added);
+  const resolve11 = resolver(scan, context, added);
   const isElsewhere = (name) => context.elsewhere?.has(name) === true;
   const header = () => scan().elements.find((element) => element.role === "header");
   const title = overrides.header?.title;
@@ -163856,13 +163857,13 @@ group ${id} ${quote(group2.label)}${options3} {
   }
   for (const [id, group2] of Object.entries(overrides.groups ?? {})) {
     if (group2.parent === void 0 || group2.parent === null) continue;
-    const into = resolve10(group2.parent);
+    const into = resolve11(group2.parent);
     if (into === null) stale(group2.parent, ["groups", id, "parent"]);
     else run3({ op: { op: "move", target: id, into }, what: `the group ${id}`, path: ["groups", id] });
   }
   const hidden = [];
   for (const [name, item] of Object.entries(overrides.items ?? {})) {
-    const id = resolve10(name);
+    const id = resolve11(name);
     if (id === null) {
       if (!isElsewhere(name)) stale(name, ["items", name]);
       continue;
@@ -163873,7 +163874,7 @@ group ${id} ${quote(group2.label)}${options3} {
   function applyItem(name, id, item) {
     const path = ["items", name];
     if (item.group !== void 0) {
-      const into = item.group === null ? null : resolve10(item.group);
+      const into = item.group === null ? null : resolve11(item.group);
       const element2 = declared(scan(), id);
       const parent = element2?.parent === null || element2?.parent === void 0 ? null : scan().elements[element2.parent]?.id ?? null;
       if (item.group !== null && into === null) stale(item.group, [...path, "group"]);
@@ -163900,8 +163901,8 @@ group ${id} ${quote(group2.label)}${options3} {
   }
   for (const [index2, edge] of (overrides.edges ?? []).entries()) {
     const path = ["edges", index2];
-    const from = endOf(resolve10, edge.from);
-    const to = endOf(resolve10, edge.to);
+    const from = endOf(resolve11, edge.from);
+    const to = endOf(resolve11, edge.to);
     if (from === null || to === null) {
       const missing = from === null ? edge.from : edge.to;
       if (!isElsewhere(missing)) stale(missing, path);
@@ -163918,7 +163919,7 @@ group ${id} ${quote(group2.label)}${options3} {
   }
   for (const [index2, line3] of (overrides.lines ?? []).entries()) {
     const path = ["lines", index2];
-    const into = line3.into === void 0 || line3.into === null ? null : resolve10(line3.into);
+    const into = line3.into === void 0 || line3.into === null ? null : resolve11(line3.into);
     if (line3.into !== void 0 && line3.into !== null && into === null) {
       stale(line3.into, path);
       continue;
@@ -167865,9 +167866,9 @@ var init_values2 = __esm({
 });
 
 // ../../packages/diagrams/src/importers/terraform/modules.ts
-function joinFolder(folder, relative8) {
+function joinFolder(folder, relative9) {
   const parts = folder === "" ? [] : folder.split("/");
-  for (const part of relative8.split(/[\\/]/)) {
+  for (const part of relative9.split(/[\\/]/)) {
     if (part === "" || part === ".") continue;
     if (part === "..") {
       if (parts.length === 0) return null;
@@ -176731,6 +176732,22 @@ function overridden(result, overrides, file2, text4) {
   });
   return { sources, notes: [...notes.values()] };
 }
+function diffParts(files, out) {
+  const diagrams = files.filter((file2) => file2.path.endsWith(".diagram"));
+  if (diagrams.length <= 1) return diffDiagrams(diagrams[0]?.before ?? null, diagrams[0]?.content ?? "");
+  const changes = diagrams.flatMap((file2) => {
+    const own2 = diffDiagrams(file2.before, file2.content ?? "").changes;
+    const named2 = file2.path.slice(file2.path.lastIndexOf("/") + 1);
+    return file2.path === out ? own2 : own2.map((change) => ({ ...change, name: `${change.name} (${named2})` }));
+  });
+  const tally2 = (picked) => ({ added: picked.filter((change) => change.change === "added").length, removed: picked.filter((change) => change.change === "removed").length, changed: picked.filter((change) => change.change !== "added" && change.change !== "removed").length });
+  return {
+    changes,
+    summary: summarize(changes),
+    nodes: tally2(changes.filter((change) => change.subject !== "edge" && change.subject !== "header" && change.subject !== "line")),
+    edges: tally2(changes.filter((change) => change.subject === "edge"))
+  };
+}
 function withBanner(entry2, overrides, source) {
   return `${bannerLines({ name: sourceName(entry2), format: entry2.format, from: patternsOf(entry2), overrides }).join("\n")}
 ${source.replace(/\n+$/, "")}
@@ -176817,6 +176834,7 @@ async function planOne(request, entry2) {
   }
   const read = readOverrides(request.root, overridesPath);
   if ("problems" in read) return stopped(inputs, read.problems);
+  const missing = entry2.overrides !== void 0 && read.text === void 0 ? [{ ...warningAt(DIAGNOSTIC_CODES.overridesMissing, `The source ${name} names the overrides file ${overridesPath}, which is not there, so no override applies.`, spanOfValue(request.settingsText, overridesPath), "Check the path, or create the file; leave overrides out to use the default beside the diagram."), file: request.settingsFile }] : [];
   const files = readSourceFiles(request.root, inputs);
   const options3 = { ...entry2.options, view: entry2.view };
   const result = importSource(entry2.format, files, entry2.title ?? null, options3, LOCAL_IMPORT_LIMITS);
@@ -176830,8 +176848,8 @@ async function planOne(request, entry2) {
   const texts = done.sources.map((part) => withBanner(entry2, overridesPath, part.source));
   const first = done.sources[0]?.source ?? "";
   const made = fence === null ? await diagramFiles(request.root, entry2, request.settings, texts) : await fenceFiles(request.root, entry2, request.settings, texts[0] ?? "");
-  const before = fence === null ? readIfThere(request.root, entry2.out) : made.before ?? null;
-  const diagnostics = [...found, ...done.notes, ...made.diagnostics];
+  const before = made.before ?? null;
+  const diagnostics = [...missing, ...found, ...done.notes, ...made.diagnostics];
   const failed2 = diagnostics.some((diagnostic) => diagnostic.severity === "error");
   const parsed = parseDiagram(first);
   return {
@@ -176839,12 +176857,23 @@ async function planOne(request, entry2) {
     inputs,
     files: made.files,
     stale: !failed2 && made.files.some((file2) => file2.content !== file2.before),
-    diff: diffDiagrams(before, texts[0] ?? ""),
+    diff: fence === null ? diffParts(made.files, entry2.out) : diffDiagrams(before, texts[0] ?? ""),
     source: first,
     title: parsed.ok ? parsed.value.meta.title ?? null : null,
     diagnostics,
     failed: failed2
   };
+}
+function touches4(request, entry2) {
+  const changed = request.changed ?? /* @__PURE__ */ new Set();
+  if (changed.has(request.settingsFile)) return true;
+  if ([...changed].some((path) => readIfThere(request.root, path) === null && !/(?:\.svg|\.diagram|\.md|\.markdown|\.mdx|\.overrides\.json)$/.test(path))) return true;
+  const fence = fenceTarget(entry2.out);
+  const owned = [overridesPathOf(entry2), fence?.file ?? entry2.out, ...entry2.options?.varFiles ?? []];
+  if (owned.some((path) => changed.has(path))) return true;
+  const stem = entry2.out.replace(/\.diagram$/, "");
+  if (fence === null && [...changed].some((path) => path.startsWith(`${stem}.`) && /\.(?:\d+\.)?(?:diagram|svg|dark\.svg)$/.test(path))) return true;
+  return expandSourcePatterns(request.root, patternsOf(entry2)).some((path) => changed.has(path));
 }
 async function planGeneration(request) {
   const sources = request.settings.sources ?? [];
@@ -176855,11 +176884,16 @@ async function planGeneration(request) {
     problems.push({ ...errorAt(DIAGNOSTIC_CODES.sourceInvalid, `No source is named ${request.only}.`, spanOfPath(request.settingsText, ["sources"]), `The sources are ${sources.map(sourceName).join(", ") || "none"}.`), file: request.settingsFile });
   }
   const diagrams = [];
+  const unchanged = [];
   for (const { entry: entry2, index: index2 } of chosen) {
     if (checked2.refused.has(index2)) continue;
+    if (request.changed !== void 0 && !touches4(request, entry2)) {
+      unchanged.push(sourceName(entry2));
+      continue;
+    }
     diagrams.push(await planOne(request, entry2));
   }
-  return { diagrams, problems };
+  return { diagrams, problems, unchanged };
 }
 function writePlan(root, plan) {
   const written3 = [];
@@ -176892,6 +176926,7 @@ var init_plan10 = __esm({
     init_apply_overrides();
     init_banner();
     init_check_sources();
+    init_edit();
     init_diff();
     init_fence();
     init_files();
@@ -176973,6 +177008,93 @@ var init_capture_edits = __esm({
   }
 });
 
+// ../../packages/diagrams/src/generate/reports.ts
+function sarifReport(plan, pathOf3, version2) {
+  const problems = problemsOf2(plan);
+  const rules = /* @__PURE__ */ new Map();
+  rules.set(DRIFT_RULE, { id: DRIFT_RULE, shortDescription: { text: "A generated diagram no longer matches the files it is made from." }, helpUri: HELP });
+  for (const problem of problems) if (!rules.has(problem.code)) rules.set(problem.code, { id: problem.code, shortDescription: { text: `Plotwork ${problem.code}` }, helpUri: `${HELP}#${problem.code.toLowerCase()}` });
+  const drift = plan.diagrams.filter((diagram) => diagram.stale).map((diagram) => ({
+    ruleId: DRIFT_RULE,
+    level: "error",
+    message: { text: `${diagram.name} no longer matches ${diagram.from.join(", ")}. ${diagram.diff?.summary ?? ""} Run plotwork generate, and change the diagram in ${pathOf3(diagram.overrides)}.`.trim() },
+    locations: [{ physicalLocation: { artifactLocation: { uri: pathOf3(fileOf2(diagram)) }, region: { startLine: 1 } } }],
+    partialFingerprints: { plotworkSource: diagram.name }
+  }));
+  const found = problems.map((problem) => ({
+    ruleId: problem.code,
+    level: problem.severity === "error" ? "error" : "warning",
+    message: { text: problem.hint === null ? problem.message : `${problem.message} ${problem.hint}` },
+    locations: [{ physicalLocation: { artifactLocation: { uri: pathOf3(problem.file) }, region: { startLine: Math.max(1, problem.line), startColumn: Math.max(1, problem.column) } } }]
+  }));
+  return {
+    $schema: "https://json.schemastore.org/sarif-2.1.0.json",
+    version: "2.1.0",
+    runs: [{ tool: { driver: { name: "Plotwork", informationUri: HELP, version: version2, rules: [...rules.values()] } }, results: [...drift, ...found] }]
+  };
+}
+function xml(text4) {
+  return text4.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&apos;");
+}
+function junitReport(plan, pathOf3) {
+  const cases = plan.diagrams.map((diagram) => {
+    const errors = diagram.diagnostics.filter((problem) => problem.severity === "error");
+    const failed2 = diagram.stale || errors.length > 0;
+    const lines = [
+      ...diagram.stale ? [`${diagram.name} no longer matches ${diagram.from.join(", ")}.`, diagram.diff?.summary ?? "", ...(diagram.diff?.changes ?? []).map(changeLine)] : [],
+      ...diagram.diagnostics.map((problem) => `${pathOf3(problem.file)}:${problem.line}: ${problem.severity} ${problem.code}: ${problem.message}`)
+    ].filter((line3) => line3 !== "");
+    const message2 = diagram.stale ? "drift" : `${errors.length} error(s)`;
+    const body2 = failed2 ? `<failure message="${xml(message2)}" type="${diagram.stale ? DRIFT_RULE : "plotwork/error"}">${xml(lines.join("\n"))}</failure>` : lines.length > 0 ? `<system-out>${xml(lines.join("\n"))}</system-out>` : "";
+    return `    <testcase classname="plotwork.generate" name="${xml(diagram.name)}" file="${xml(pathOf3(fileOf2(diagram)))}">${body2}</testcase>`;
+  });
+  const settings = plan.problems.map((problem) => `    <testcase classname="plotwork.settings" name="${xml(`${problem.code} line ${problem.line}`)}" file="${xml(pathOf3(problem.file))}"><failure message="${xml(problem.code)}" type="plotwork/settings">${xml(problem.message)}</failure></testcase>`);
+  const failures = plan.diagrams.filter((diagram) => diagram.stale || diagram.diagnostics.some((problem) => problem.severity === "error")).length + plan.problems.length;
+  const tests = cases.length + settings.length;
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    `<testsuites name="plotwork generate" tests="${tests}" failures="${failures}">`,
+    `  <testsuite name="plotwork generate" tests="${tests}" failures="${failures}" skipped="0">`,
+    ...cases,
+    ...settings,
+    "  </testsuite>",
+    "</testsuites>",
+    ""
+  ].join("\n");
+}
+var DRIFT_RULE, HELP, fileOf2, problemsOf2;
+var init_reports = __esm({
+  "../../packages/diagrams/src/generate/reports.ts"() {
+    "use strict";
+    init_diff();
+    DRIFT_RULE = "plotwork/drift";
+    HELP = "https://docs.plotwork.dev/diagrams-as-code";
+    fileOf2 = (diagram) => diagram.out.replace(/#[^#/]*$/, "");
+    problemsOf2 = (plan) => [...plan.problems, ...plan.diagrams.flatMap((diagram) => diagram.diagnostics)];
+  }
+});
+
+// ../../packages/diagrams/src/generate/changed.ts
+import { relative as relative6, resolve as resolve9, sep as sep3 } from "node:path";
+function changedSince(git, root, ref) {
+  if (!/^[\w./~^@{}-]{1,200}$/.test(ref) || ref.startsWith("-")) return { ok: false, error: `${ref} is not a git ref.` };
+  const top = git(["rev-parse", "--show-toplevel"], root);
+  if (top.status !== 0) return { ok: false, error: `${root} is not in a git repository, so --since has nothing to compare with.` };
+  const known3 = git(["rev-parse", "--verify", "--quiet", `${ref}^{commit}`], root);
+  if (known3.status !== 0) return { ok: false, error: `git does not know ${ref}. In a workflow, check out with fetch-depth: 0, or fetch the ref first.` };
+  const diff = git(["diff", "--name-only", "--no-renames", "--merge-base", ref], root);
+  if (diff.status !== 0) return { ok: false, error: `git diff against ${ref} failed: ${diff.stderr.trim().split("\n").at(-1) ?? ""}` };
+  const untracked = git(["ls-files", "--others", "--exclude-standard", "--full-name"], root);
+  const fromTop = (path) => relative6(resolve9(root), resolve9(top.stdout.trim(), path)).split(sep3).join("/");
+  const paths = [...diff.stdout.split("\n"), ...untracked.status === 0 ? untracked.stdout.split("\n") : []].map((line3) => line3.trim()).filter((line3) => line3 !== "");
+  return { ok: true, changed: new Set(paths.map(fromTop).filter((path) => !path.startsWith("../"))) };
+}
+var init_changed = __esm({
+  "../../packages/diagrams/src/generate/changed.ts"() {
+    "use strict";
+  }
+});
+
 // ../../packages/diagrams/src/generate/index.ts
 var init_generate2 = __esm({
   "../../packages/diagrams/src/generate/index.ts"() {
@@ -176988,12 +177110,15 @@ var init_generate2 = __esm({
     init_capture_edits();
     init_plan10();
     init_edit();
+    init_reports();
+    init_changed();
   }
 });
 
 // ../../packages/diagrams/src/cli/generate-command.ts
+import { spawnSync } from "node:child_process";
 import { existsSync as existsSync4, readFileSync as readFileSync5 } from "node:fs";
-import { basename as basename3, dirname as dirname6, relative as relative6, resolve as resolve9 } from "node:path";
+import { basename as basename3, dirname as dirname6, relative as relative7, resolve as resolve10 } from "node:path";
 function settingsRoot(path) {
   const folder = dirname6(path);
   return basename3(folder) === ".plotwork" && basename3(path) === "config.json" ? dirname6(folder) : folder;
@@ -177001,17 +177126,17 @@ function settingsRoot(path) {
 function settingsPath(options3, deps) {
   const cwd = deps.cwd ?? process.cwd();
   const named2 = options3.config ?? (deps.env ?? process.env)[SETTINGS_FILE.env];
-  if (named2 !== void 0 && named2 !== "") return resolve9(cwd, named2);
+  if (named2 !== void 0 && named2 !== "") return resolve10(cwd, named2);
   return discoverSettingsFile(cwd);
 }
 function textOf7(root, plan, file2, settings) {
-  if (resolve9(root, file2) === settings.path) return settings.text;
+  if (resolve10(root, file2) === settings.path) return settings.text;
   for (const diagram of plan.diagrams) for (const made of diagram.files) if (made.path === file2 && made.content !== null) return made.content;
-  const absolute = resolve9(root, file2);
+  const absolute = resolve10(root, file2);
   return existsSync4(absolute) ? readFileSync5(absolute, "utf8") : "";
 }
 function printProblem(problem, root, cwd, format, text4) {
-  const file2 = repositoryPath2(resolve9(root, problem.file), cwd);
+  const file2 = repositoryPath2(resolve10(root, problem.file), cwd);
   if (format === "github") {
     console.log(annotation(problem.severity, { file: file2, line: problem.line, title: `Plotwork ${problem.code}` }, `${problem.message}${problem.hint === null ? "" : `
 ${problem.hint}`}`));
@@ -177028,7 +177153,7 @@ function changeLines(diagram) {
   return [`  ${diagram.diff?.summary ?? ""}`, ...listed2, ...changes.length > listed2.length ? [`  and ${changes.length - listed2.length} more`] : []];
 }
 function driftAnnotation(diagram, root, cwd) {
-  const file2 = repositoryPath2(resolve9(root, diagram.files[0]?.path ?? diagram.out), cwd);
+  const file2 = repositoryPath2(resolve10(root, diagram.files[0]?.path ?? diagram.out), cwd);
   const fix = `Run plotwork generate, or the GitHub Action with command: generate and mode: write, then commit what it writes. Change the diagram in ${diagram.overrides}, never in the file.`;
   return annotation("error", { file: file2, line: 1, title: "Diagram drift" }, `${diagram.name} no longer matches ${diagram.from.join(", ")}.
 ${diagram.diff?.summary ?? ""}
@@ -177043,7 +177168,7 @@ async function generateCommand(options3, deps = {}) {
   }
   const text4 = readFileSync5(path, "utf8");
   const read = readSettings2(text4);
-  const shown = relative6(cwd, path) || path;
+  const shown = relative7(cwd, path) || path;
   if (!read.ok) {
     for (const problem of read.error) console.error(`${formatDiagnostic(problem, text4)}
      in ${shown}
@@ -177055,7 +177180,16 @@ async function generateCommand(options3, deps = {}) {
     return EXIT.usage;
   }
   const root = settingsRoot(path);
-  const request = { root, settings: read.value, settingsText: text4, settingsFile: relative6(root, path).split("\\").join("/"), only: options3.source };
+  let changed;
+  if (options3.since !== void 0) {
+    const found = changedSince(deps.git ?? LOCAL_GIT, root, options3.since);
+    if (!found.ok) {
+      console.error(found.error);
+      return EXIT.usage;
+    }
+    changed = found.changed;
+  }
+  const request = { root, settings: read.value, settingsText: text4, settingsFile: relative7(root, path).split("\\").join("/"), only: options3.source, changed };
   if (options3.capture && !options3.check) {
     for (const captured of await captureEdits(request)) {
       for (const problem of captured.problems) printProblem(problem, root, cwd, options3.format, "");
@@ -177064,17 +177198,25 @@ async function generateCommand(options3, deps = {}) {
   }
   const plan = await planGeneration(request);
   const problems = [...plan.problems, ...plan.diagrams.flatMap((diagram) => diagram.diagnostics)];
+  const machine = options3.format === "json" || options3.format === "sarif" || options3.format === "junit";
+  const toCwd = (file2) => repositoryPath2(resolve10(root, file2), cwd);
   if (options3.format === "json") {
     const shape = plan.diagrams.map(({ files, source, ...rest }) => ({ ...rest, files: files.map((file2) => ({ path: file2.path, changed: file2.content !== file2.before })) }));
-    process.stdout.write(`${JSON.stringify({ diagrams: shape, problems: plan.problems }, null, 2)}
+    process.stdout.write(`${JSON.stringify({ diagrams: shape, problems: plan.problems, unchanged: plan.unchanged }, null, 2)}
 `);
+  } else if (options3.format === "sarif") {
+    process.stdout.write(`${JSON.stringify(sarifReport(plan, toCwd, options3.version ?? "development"), null, 2)}
+`);
+  } else if (options3.format === "junit") {
+    process.stdout.write(junitReport(plan, toCwd));
   } else {
     for (const problem of problems) printProblem(problem, root, cwd, options3.format, textOf7(root, plan, problem.file, { path, text: text4 }));
   }
   const errors = problems.filter((problem) => problem.severity === "error").length;
   const stale = plan.diagrams.filter((diagram) => diagram.stale);
+  if (plan.unchanged.length > 0 && !machine) console.log(`unchanged since ${options3.since ?? ""}: ${plan.unchanged.join(", ")}`);
   if (options3.check) {
-    if (options3.format !== "json") {
+    if (!machine) {
       for (const diagram of stale) {
         if (options3.format === "github") console.log(driftAnnotation(diagram, root, cwd));
         console.log([`drift: ${diagram.out} (${diagram.name}, ${diagram.format} from ${diagram.from.join(", ")})`, ...changeLines(diagram)].join("\n"));
@@ -177084,7 +177226,7 @@ async function generateCommand(options3, deps = {}) {
     return stale.length > 0 || errors > 0 ? EXIT.problems : EXIT.ok;
   }
   const written3 = writePlan(root, plan);
-  if (options3.format !== "json") {
+  if (!machine) {
     for (const diagram of plan.diagrams) {
       const own2 = written3.filter((file2) => diagram.files.some((made) => made.path === file2));
       console.log(diagram.failed ? `not written: ${diagram.out} has errors` : own2.length === 0 ? `up to date: ${diagram.out}` : `wrote ${own2.join(", ")}: ${diagram.diff?.summary ?? ""}`);
@@ -177092,7 +177234,7 @@ async function generateCommand(options3, deps = {}) {
   }
   return errors > 0 ? EXIT.problems : EXIT.ok;
 }
-var LISTED_CHANGES;
+var LOCAL_GIT, LISTED_CHANGES;
 var init_generate_command = __esm({
   "../../packages/diagrams/src/cli/generate-command.ts"() {
     "use strict";
@@ -177103,6 +177245,10 @@ var init_generate_command = __esm({
     init_commands();
     init_github_annotations();
     init_settings_file();
+    LOCAL_GIT = (args, cwd) => {
+      const run3 = spawnSync("git", [...args], { cwd, encoding: "utf8" });
+      return { status: run3.status ?? 1, stdout: run3.stdout ?? "", stderr: run3.stderr ?? "" };
+    };
     LISTED_CHANGES = 20;
   }
 });
@@ -177227,7 +177373,7 @@ var init_importers = __esm({
 
 // ../../packages/diagrams/src/cli/import-source-command.ts
 import { mkdirSync as mkdirSync6, readFileSync as readFileSync7, readdirSync as readdirSync3, statSync as statSync4, writeFileSync as writeFileSync6 } from "node:fs";
-import { dirname as dirname8, join as join7, relative as relative7 } from "node:path";
+import { dirname as dirname8, join as join7, relative as relative8 } from "node:path";
 function readerOptions(options3) {
   const view = IMPORT_VIEWS.find((name) => name === options3.view);
   const chart = IMPORT_CHARTS.find((name) => name === options3.chart);
@@ -177246,7 +177392,7 @@ function folderFiles(root) {
       const stat = statSync4(path);
       if (stat.isDirectory()) {
         if (!SKIPPED_FOLDERS.has(name)) walk2(path, depth + 1);
-      } else if (stat.isFile()) out.push({ path: relative7(root, path), text: readFileSync7(path, "utf8") });
+      } else if (stat.isFile()) out.push({ path: relative8(root, path), text: readFileSync7(path, "utf8") });
     }
   };
   walk2(root, 0);
@@ -177426,7 +177572,9 @@ Commands:
                              Kubernetes, Prisma, SQL, workflows, and more), apply its overrides file, and write it with
                              its pictures; --check writes nothing and fails on drift, saying what changed
                              [--source <name>]  One source only   [--capture]  Keep hand edits in the overrides first
-                             [--format github|json]  Annotations for a workflow, or the plan as JSON
+                             [--since <ref>]  Only the sources whose files changed since a git ref, such as origin/main
+                             [--format github|json|sarif|junit]  Annotations, the plan as JSON, or a report for code
+                             scanning or a test view; exit 0 in step, 1 on drift or an error, 2 for a usage mistake
   icons <query>              Search bundled icons
   --help, -h                 Print this help`;
 }
@@ -177481,13 +177629,17 @@ async function runCli(argv, who = REPOSITORY_CLI) {
   }
   const [command, target2] = positionals;
   if (command === "generate") {
-    const format = values.format === "github" || values.format === "json" ? values.format : "text";
+    const format = values.format === "github" || values.format === "json" || values.format === "sarif" || values.format === "junit" ? values.format : "text";
+    if (values.format !== void 0 && format === "text") {
+      console.error("generate --format is one of github, json, sarif, junit");
+      return EXIT.usage;
+    }
     const source = values.source === true ? positionals[1] : void 0;
     if (values.source === true && source === void 0) {
       console.error("generate --source needs the name of a source");
       return EXIT.usage;
     }
-    return generateCommand({ check: values.check === true, capture: values.capture === true, config: values.config, source, format });
+    return generateCommand({ check: values.check === true, capture: values.capture === true, config: values.config, source, since: values.since, format, version: who.version });
   }
   if (command === void 0 || target2 === void 0) {
     console.error(usage);
@@ -177572,6 +177724,7 @@ var init_run = __esm({
       config: { type: "string" },
       org: { type: "string" },
       capture: { type: "boolean" },
+      since: { type: "string" },
       help: { type: "boolean", short: "h" }
     };
   }
@@ -177593,7 +177746,7 @@ var init_cli = __esm({
 });
 
 // package.json
-var package_default = { version: "0.1.0-beta.3" };
+var package_default = { version: "0.1.0-beta.4" };
 
 // npm/package-config.json
 var package_config_default = {
@@ -177637,8 +177790,8 @@ async function main(args) {
   if (first === void 0 || first === "--help" || first === "-h") {
     process.stdout.write(ABOUT);
     process.stdout.write("\n");
-    return runCli2(["--help"], { bin: BIN, syncCommand: SYNC_COMMAND });
+    return runCli2(["--help"], { bin: BIN, syncCommand: SYNC_COMMAND, version: package_default.version });
   }
-  return runCli2(args, { bin: BIN, syncCommand: SYNC_COMMAND });
+  return runCli2(args, { bin: BIN, syncCommand: SYNC_COMMAND, version: package_default.version });
 }
 process.exitCode = await main(process.argv.slice(2));
