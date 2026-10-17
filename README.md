@@ -11,6 +11,7 @@ Check, draw, and sync Plotwork diagrams in your repository. A diagram is a few l
 | Does it count anything? | No. It keeps no usage counts and sends none, whatever `PLOTWORK_USAGE` is set to. |
 | How do I run it? | `npx @buun_group/plotwork <command>`. |
 | Which Node version? | Node 22 or newer. |
+| Where is every option? | `plotwork <command> --help` prints one command's options, defaults, examples, and exit codes. The [command reference](https://docs.plotwork.dev/cli/commands) has the same, one page for each command. |
 | How do I keep pictures in step in CI? | `npx @buun_group/plotwork sync --check --format github "docs/**/*.md"`, or the Plotwork sync action. See [Keep diagrams in sync in CI](https://docs.plotwork.dev/diagrams-in-ci). |
 | Can a diagram come from my Terraform, Bicep, Pulumi, CloudFormation, OpenAPI, or SQL files? | Yes. Name the files in the `sources` of `plotwork.config.json` and run `npx @buun_group/plotwork generate`; `generate --check` fails when the files moved and the diagram did not. See [Diagrams as code](https://docs.plotwork.dev/diagrams-as-code). |
 | Which licence? | MIT. Code and data from other people keep their own licences, listed in `THIRD-PARTY-NOTICES.md`. |
@@ -20,7 +21,7 @@ Check, draw, and sync Plotwork diagrams in your repository. A diagram is a few l
 | Command | What it does |
 |---|---|
 | `plotwork validate <file> [--strict]` | Checks every diagram in a Markdown or diagram file. Each mistake has a line, a column, and a hint. `--strict` also fails on warnings. |
-| `plotwork render <file> --out <svg> [--theme light\|dark]` | Draws the first diagram to an SVG that carries its source. `--no-embed-source` leaves the source out. The file can be a view link from a Plotwork tool (`viewUrl`, `svgUrl`), in quotes: the diagram is read from it here, with no request. |
+| `plotwork render <file> --out <svg> [--theme light\|dark\|auto]` | Draws the first diagram to an SVG that carries its source. `--no-embed-source` leaves the source out. The file can be a view link from a Plotwork tool (`viewUrl`, `svgUrl`), in quotes: the diagram is read from it here, with no request. |
 | `plotwork sync <files...> [--check] [--format github]` | Writes the SVGs and the picture block under every diagram fence. Each word is a file, a folder, or a quoted glob. `--check` writes nothing and fails when a picture is stale; `--format github` prints each stale fence and each mistake as a GitHub annotation on its line. |
 | `plotwork generate [--check] [--capture] [--source <name>] [--since <ref>] [--config <file>] [--format github\|json\|sarif\|junit]` | Builds each diagram named in the `sources` of `plotwork.config.json` from its files (Terraform with its modules and environments, or a Terraform plan or state as JSON, Bicep, ARM, Pulumi, CloudFormation, OpenAPI, Compose, Kubernetes, SQL, Prisma, Drizzle, workflows, CSV, JSON, folders, git log), applies its overrides file, and writes the `.diagram` file or the Markdown fence and its pictures. `--check` writes nothing and fails on drift, naming each node and edge added, removed, or changed. `--capture` turns hand edits of a generated diagram into its overrides file. `--since origin/main` runs only the sources whose files changed since that git ref. `--format sarif` writes a report for code scanning and `--format junit` one for a test view, with the same exit code as `--check`. |
 | `plotwork import <file> [--out <file>] [--write]` | Converts Mermaid to Plotwork: a `.mmd` file to source, or every `mermaid` fence of a Markdown file (rewritten only with `--write`). |
@@ -53,6 +54,7 @@ sha256sum --check checksums.txt
 
 | Link | Why |
 |---|---|
+| [Command line documentation](https://docs.plotwork.dev/cli/overview) | Install, every command, CI on GitHub Actions, GitLab, Azure Pipelines, Jenkins, and CircleCI, exit codes, and troubleshooting |
 | [Documentation](https://docs.plotwork.dev) | The diagram language and the guides |
 | [Issues](https://github.com/plotwork-official/plotwork-cli/issues) | Report a problem or ask a question |
 | [Security policy](https://github.com/plotwork-official/plotwork-cli/security/policy) | Report a vulnerability privately |

@@ -115515,15 +115515,15 @@ var init_items = __esm({
 // ../../packages/diagrams/src/kinds/git/layout-down-row.ts
 function rowBlock(item) {
   const lines = item.text.lines.filter(inMessage);
-  const plain3 = lines.filter((line3) => !line3.isMuted).length;
+  const plain4 = lines.filter((line3) => !line3.isMuted).length;
   const hasTags = item.tags.length > 0;
-  const inline = hasTags && plain3 <= 1 ? plain3 === 1 ? lines.findIndex((line3) => !line3.isMuted) : lines.length - 1 : -1;
+  const inline = hasTags && plain4 <= 1 ? plain4 === 1 ? lines.findIndex((line3) => !line3.isMuted) : lines.length - 1 : -1;
   const ownRow = hasTags && inline < 0 && lines.length > 0;
   let top = 0;
   let tags = null;
   const placed2 = [];
   lines.forEach((line3, index2) => {
-    if (ownRow && index2 === plain3) {
+    if (ownRow && index2 === plain4) {
       tags = { line: -1, top, box: GIT_METRICS.tagHeight };
       top += GIT_METRICS.tagHeight;
     }
@@ -115535,7 +115535,7 @@ function rowBlock(item) {
   if (hasTags && lines.length === 0) {
     tags = { line: -1, top: 0, box: GIT_METRICS.tagHeight };
     top = GIT_METRICS.tagHeight;
-  } else if (ownRow && plain3 === lines.length) {
+  } else if (ownRow && plain4 === lines.length) {
     tags = { line: -1, top, box: GIT_METRICS.tagHeight };
     top += GIT_METRICS.tagHeight;
   }
@@ -118840,11 +118840,11 @@ var init_text3 = __esm({
 });
 
 // ../../packages/diagrams/src/kinds/layers/rows.ts
-function packRows(spans, columns) {
+function packRows(spans, columns2) {
   const rows = [[]];
   let used = 0;
   spans.forEach((span, index2) => {
-    if (used > 0 && used + span > columns) {
+    if (used > 0 && used + span > columns2) {
       rows.push([]);
       used = 0;
     }
@@ -118861,15 +118861,15 @@ function packLayer(blocks2, width) {
   const spans = blocks2.map((block) => Math.min(block.span, widest8));
   const total = spans.reduce((sum, span) => sum + span, 0);
   const longest = Math.max(...spans);
-  let columns = Math.max(total, longest);
+  let columns2 = Math.max(total, longest);
   if (total > columnsFitting(width, leastUnit)) {
     let fewest = Number.POSITIVE_INFINITY;
     for (let candidate2 = longest; candidate2 <= Math.max(longest, columnsFitting(width, likedUnit)); candidate2 += 1) {
       const count3 = packRows(spans, candidate2).length;
-      if (count3 < fewest) [fewest, columns] = [count3, candidate2];
+      if (count3 < fewest) [fewest, columns2] = [count3, candidate2];
     }
   }
-  const rows = packRows(spans, columns).map((indexes2) => {
+  const rows = packRows(spans, columns2).map((indexes2) => {
     let column = 0;
     return indexes2.map((index2) => {
       const packed = { block: blocks2[index2], span: spans[index2], column };
@@ -118877,7 +118877,7 @@ function packLayer(blocks2, width) {
       return packed;
     });
   });
-  return { unit: Math.floor((width - (columns - 1) * LAYERS_METRICS.blockGap) / columns), rows };
+  return { unit: Math.floor((width - (columns2 - 1) * LAYERS_METRICS.blockGap) / columns2), rows };
 }
 function planLayer(layer2, index2, x, width, showCount) {
   const inner = width - 2 * LAYERS_METRICS.layerPadX;
@@ -119868,7 +119868,7 @@ function layoutTable(diagram) {
   const hasPills = heads.some((head) => head.pill !== null);
   const headerHeight = Math.max(M4.headerMin, titleBand + (hasPills ? M4.pillGap + M4.pillHeight : 0) + M4.cellPadY * 2);
   let x = frameX + firstWidth;
-  const columns = heads.map((head, place2) => {
+  const columns2 = heads.map((head, place2) => {
     const column = { x, width: widths[place2], head };
     x += column.width;
     return column;
@@ -119913,7 +119913,7 @@ function layoutTable(diagram) {
     titleBand,
     hasPills,
     firstWidth,
-    columns,
+    columns: columns2,
     total: totals === null ? null : { x, width: totalWidth },
     rows,
     legend: legend2,
@@ -120065,12 +120065,12 @@ function rowLine(diagram, row, place2, total) {
 }
 function tableLines(diagram) {
   const totals = totalsOf(diagram);
-  const columns = diagram.columns.map((column) => `${flat(column.label)}${column.weight === null ? "" : ` (weight ${weightOf(column)})`}`);
+  const columns2 = diagram.columns.map((column) => `${flat(column.label)}${column.weight === null ? "" : ` (weight ${weightOf(column)})`}`);
   const rows = diagram.rows.map((row, place2) => rowLine(diagram, row, place2, totals?.[place2] === void 0 ? null : `Total: ${totals[place2]?.total} of ${totals[place2]?.most}`));
   const best = totals === null ? 0 : Math.max(...totals.map((entry2) => entry2.total));
   const winners = totals === null ? [] : diagram.rows.filter((_, place2) => totals[place2]?.total === best).map((row) => flat(row.label));
   return [
-    `${diagram.style === "raci" ? "Roles" : "Columns"}: ${columns.join(", ")}.`,
+    `${diagram.style === "raci" ? "Roles" : "Columns"}: ${columns2.join(", ")}.`,
     ...rows,
     ...totals === null ? [] : [`Highest total: ${joinWords(winners, "and")} with ${best} of ${totals[0]?.most ?? 0}.`]
   ];
@@ -120383,12 +120383,12 @@ function readCells(cursor, state) {
   return isValid ? { cells, tokens } : null;
 }
 function reportCount(state, name, count3, tokens, endAt) {
-  const columns = state.columns.length;
-  const extra = tokens[columns];
+  const columns2 = state.columns.length;
+  const extra = tokens[columns2];
   state.report.push(
     errorAt(
       DIAGNOSTIC_CODES.syntax,
-      `The row "${name}" has ${count3} ${count3 === 1 ? "cell" : "cells"} for ${columns} ${columns === 1 ? "column" : "columns"}`,
+      `The row "${name}" has ${count3} ${count3 === 1 ? "cell" : "cells"} for ${columns2} ${columns2 === 1 ? "column" : "columns"}`,
       extra ?? endAt,
       `Write one cell for each column, in order: ${state.columns.map((column) => column.label).join(", ")}.`
     )
@@ -120839,13 +120839,13 @@ function paintBack(layout, theme) {
   });
   const rules = rows.flatMap((row, place2) => place2 === 0 || row.isRecommended || rows[place2 - 1]?.isRecommended === true ? [] : [line(frame.x, row.rect.y, right, row.rect.y, hairline(theme))]);
   const edges = [frame.x + layout.firstWidth, ...layout.total === null ? [] : [layout.total.x]];
-  const columns = rows.filter((row) => !row.isRecommended).flatMap((row) => edges.map((x) => line(x, row.rect.y, x, row.rect.y + row.rect.height, hairline(theme))));
+  const columns2 = rows.filter((row) => !row.isRecommended).flatMap((row) => edges.map((x) => line(x, row.rect.y, x, row.rect.y + row.rect.height, hairline(theme))));
   return [
     el("rect", { ...frame, rx: M7.radius, fill: theme.surface }),
     el("path", { d: cornerPath(frame.x, headerTop, frame.width, headerHeight, [headRadius, headRadius, 0, 0]), fill: headFill(theme) }),
     ...bands,
     ...rules,
-    ...columns,
+    ...columns2,
     ...layout.title === null ? [] : [line(frame.x, headerTop, right, headerTop, hairline(theme))],
     line(frame.x, headerTop + headerHeight, right, headerTop + headerHeight, theme.border)
   ];
@@ -122985,17 +122985,17 @@ var init_layout_labels = __esm({
 });
 
 // ../../packages/diagrams/src/kinds/pie/layout-legend.ts
-function legendRows(contents, wrap) {
+function legendRows(contents, wrap2) {
   const rows = [];
   for (const content of contents) {
     const row = rows[rows.length - 1];
-    if (row !== void 0 && rowWidth([...row, content]) <= wrap) row.push(content);
+    if (row !== void 0 && rowWidth([...row, content]) <= wrap2) row.push(content);
     else rows.push([content]);
   }
   return rows;
 }
-function balancedRows(contents, wrap) {
-  const rows = legendRows(contents, wrap);
+function balancedRows(contents, wrap2) {
+  const rows = legendRows(contents, wrap2);
   let best = rows;
   for (let narrower = widest5(rows) - 1; narrower > 0; narrower -= NARROW_STEP) {
     const trial = legendRows(contents, narrower);
@@ -125347,9 +125347,9 @@ function checkSankeyBudget(diagram, at3) {
   if (diagram.flows.length > SANKEY_LIMITS.maxFlows) {
     return [tooComplex2(`The sankey has ${diagram.flows.length} flows, and the most that can be drawn is ${SANKEY_LIMITS.maxFlows}`, at3, 'Fold the small flows into one "Other" flow, or split the diagram by stage.')];
   }
-  const { columns } = layerNodes(diagram.nodes.length, diagram.flows, diagram.align);
-  if (columns > SANKEY_LIMITS.maxColumns) {
-    return [tooComplex2(`The sankey has ${columns} columns, and the most that can be drawn is ${SANKEY_LIMITS.maxColumns}`, at3, "Merge stages that belong together, or draw the stages in two diagrams.")];
+  const { columns: columns2 } = layerNodes(diagram.nodes.length, diagram.flows, diagram.align);
+  if (columns2 > SANKEY_LIMITS.maxColumns) {
+    return [tooComplex2(`The sankey has ${columns2} columns, and the most that can be drawn is ${SANKEY_LIMITS.maxColumns}`, at3, "Merge stages that belong together, or draw the stages in two diagrams.")];
   }
   return [];
 }
@@ -125630,12 +125630,12 @@ function buildChains(diagram, layer2, totals) {
   });
   return { items: items2, segments, ins, outs, byFlow };
 }
-function orderColumns(chains, columns, sort) {
+function orderColumns(chains, columns2, sort) {
   const { items: items2, segments, ins, outs } = chains;
   const valueOf3 = (id) => items2[id]?.value ?? 0;
   const keyOf4 = (id) => items2[id]?.key ?? 0;
   const tie = (a, b) => (sort === "desc" ? valueOf3(b) - valueOf3(a) : 0) || keyOf4(a) - keyOf4(b);
-  const order = Array.from({ length: columns }, () => []);
+  const order = Array.from({ length: columns2 }, () => []);
   items2.forEach((item, id) => order[item.column]?.push(id));
   const position = new Array(items2.length).fill(0);
   const settle3 = (column) => (order[column] ?? []).forEach((id, at3) => void (position[id] = at3));
@@ -125655,7 +125655,7 @@ function orderColumns(chains, columns, sort) {
     order[column] = entries2.map((entry2) => entry2.id);
     settle3(column);
   };
-  const hopsFrom = Array.from({ length: columns }, () => []);
+  const hopsFrom = Array.from({ length: columns2 }, () => []);
   segments.forEach((segment, id) => hopsFrom[items2[segment.from]?.column ?? 0]?.push(id));
   const crossings2 = () => {
     let total = 0;
@@ -125673,12 +125673,12 @@ function orderColumns(chains, columns, sort) {
   };
   order[0]?.sort(tie);
   settle3(0);
-  for (let column = 1; column < columns; column += 1) reorder(column, ins);
+  for (let column = 1; column < columns2; column += 1) reorder(column, ins);
   let best = order.map((column) => [...column]);
   let fewest = crossings2();
   for (let sweep = 0; sweep < MAX_SWEEPS2 && fewest > 0; sweep += 1) {
-    for (let column = 1; column < columns; column += 1) reorder(column, ins);
-    for (let column = columns - 2; column >= 0; column -= 1) reorder(column, outs);
+    for (let column = 1; column < columns2; column += 1) reorder(column, ins);
+    for (let column = columns2 - 2; column >= 0; column -= 1) reorder(column, outs);
     const found = crossings2();
     if (found >= fewest) break;
     fewest = found;
@@ -125908,12 +125908,12 @@ function captionOf2(diagram, totals, hasStubs) {
 }
 function placeSankey(diagram) {
   const totals = totalsOf2(diagram);
-  const { layer: layer2, columns } = layerNodes(diagram.nodes.length, diagram.flows, diagram.align);
+  const { layer: layer2, columns: columns2 } = layerNodes(diagram.nodes.length, diagram.flows, diagram.align);
   const chains = buildChains(diagram, layer2, totals);
-  const order = orderColumns(chains, columns, diagram.sort);
+  const order = orderColumns(chains, columns2, diagram.sort);
   const valueTexts = diagram.nodes.map((_, at3) => valueTextOf(diagram, totals[at3]?.through ?? 0));
-  const wanted2 = Array.from({ length: columns }, () => 0);
-  const floors = Array.from({ length: columns }, () => SANKEY_METRICS.minNodeWidth);
+  const wanted2 = Array.from({ length: columns2 }, () => 0);
+  const floors = Array.from({ length: columns2 }, () => SANKEY_METRICS.minNodeWidth);
   diagram.nodes.forEach((node3, at3) => {
     const column = layer2[at3] ?? 0;
     wanted2[column] = Math.max(wanted2[column] ?? 0, wantedWidth(node3, valueTexts[at3] ?? null));
@@ -125941,7 +125941,7 @@ function placeSankey(diagram) {
     stubs: marked.stubs,
     caption: { text: captionOf2(diagram, totals, marked.stubs.length > 0), x: SANKEY_METRICS.canvasPadding, top: bottom + SANKEY_METRICS.captionGap + (SANKEY_METRICS.captionHeight - TYPE_ROLES.sub.lineHeight) / 2 },
     facts: {
-      columns,
+      columns: columns2,
       shortened: nodes.filter((node3) => node3.isShortened).map((node3) => node3.node.label),
       thin: marked.ribbons.filter((ribbon) => ribbon.thickness < SANKEY_LIMITS.thinRibbon).map((ribbon) => `${diagram.nodes[ribbon.flow.from]?.label ?? ""} to ${diagram.nodes[ribbon.flow.to]?.label ?? ""}`)
     }
@@ -125988,10 +125988,10 @@ function balanceWarnings(diagram) {
     ];
   });
 }
-function densityWarnings3(diagram, columns) {
+function densityWarnings3(diagram, columns2) {
   const found = [];
-  if (columns > SANKEY_LIMITS.warnColumns) {
-    found.push(warningAt(DIAGNOSTIC_CODES.tooDense, `${columns} columns (limit ${SANKEY_LIMITS.warnColumns}); each needs a card and room for ribbons, so the picture grows past a Markdown column`, HEADER, "Merge stages that belong together, or draw the stages in two diagrams."));
+  if (columns2 > SANKEY_LIMITS.warnColumns) {
+    found.push(warningAt(DIAGNOSTIC_CODES.tooDense, `${columns2} columns (limit ${SANKEY_LIMITS.warnColumns}); each needs a card and room for ribbons, so the picture grows past a Markdown column`, HEADER, "Merge stages that belong together, or draw the stages in two diagrams."));
   }
   if (diagram.nodes.length > SANKEY_LIMITS.warnNodes || diagram.flows.length > SANKEY_LIMITS.warnFlows) {
     found.push(warningAt(DIAGNOSTIC_CODES.tooDense, `${diagram.nodes.length} nodes and ${diagram.flows.length} flows (limit ${SANKEY_LIMITS.warnNodes} and ${SANKEY_LIMITS.warnFlows})`, HEADER, 'Fold the small nodes and flows into one "Other", or split the diagram by stage.'));
@@ -126182,11 +126182,11 @@ var init_mermaid10 = __esm({
 
 // ../../packages/diagrams/src/kinds/sankey/outline.ts
 function summarizeSankey(diagram) {
-  const { columns } = layerNodes(diagram.nodes.length, diagram.flows, diagram.align);
+  const { columns: columns2 } = layerNodes(diagram.nodes.length, diagram.flows, diagram.align);
   const title = oneLine6(diagram.meta.title ?? "Sankey diagram");
   const description = diagram.meta.description === null ? "" : ` ${oneLine6(diagram.meta.description)}`;
   const total = formatValue2(enteringTotal(totalsOf2(diagram)), diagram.unit);
-  return `${title}: ${countOf(diagram.nodes.length, "node")} and ${countOf(diagram.flows.length, "flow")} in ${countOf(columns, "column")}, total ${total}.${description}`;
+  return `${title}: ${countOf(diagram.nodes.length, "node")} and ${countOf(diagram.flows.length, "flow")} in ${countOf(columns2, "column")}, total ${total}.${description}`;
 }
 function outlineSankey(diagram) {
   const totals = totalsOf2(diagram);
@@ -127707,8 +127707,8 @@ function flagsOf(column) {
   return flags;
 }
 function toPlanTable(table) {
-  const columns = table.columns.map((column) => ({ name: column.name, type: column.type, flags: flagsOf(column), note: column.note, origin: column.origin }));
-  return { id: table.id, label: table.label, columns, origin: table.origin };
+  const columns2 = table.columns.map((column) => ({ name: column.name, type: column.type, flags: flagsOf(column), note: column.note, origin: column.origin }));
+  return { id: table.id, label: table.label, columns: columns2, origin: table.origin };
 }
 var init_plan_schema_work = __esm({
   "../../packages/diagrams/src/import/plan-schema-work.ts"() {
@@ -132312,8 +132312,8 @@ function layoutSwimlane(diagram) {
   if (diagram.direction !== "auto") return layoutWith4(diagram, diagram.direction);
   const bands = layoutWith4(diagram, "right");
   if (bands.size.width <= WIDE) return bands;
-  const columns = layoutWith4(diagram, "down");
-  return columns.size.width < bands.size.width ? columns : bands;
+  const columns2 = layoutWith4(diagram, "down");
+  return columns2.size.width < bands.size.width ? columns2 : bands;
 }
 var LANE_INSET, RAIL_MIN_WIDTH, EDGE_ROOM, TRACK_ROOM, WIDE;
 var init_layout13 = __esm({
@@ -136558,8 +136558,8 @@ function takeApart3(text4) {
   return { name: quoted4[1] ?? quoted4[2] ?? "", valueText, className };
 }
 function numberOf(text4) {
-  const plain3 = text4.replace(/[,_]/g, "");
-  return /^\d+(?:\.\d+)?$/.test(plain3) ? Number(plain3) : null;
+  const plain4 = text4.replace(/[,_]/g, "");
+  return /^\d+(?:\.\d+)?$/.test(plain4) ? Number(plain4) : null;
 }
 function readTreemap(ctx) {
   const { header, body: body2 } = ctx.prepared;
@@ -138143,9 +138143,9 @@ function takeLexerError2(report4, line3, column, char) {
   return index2 !== -1 && report4.splice(index2, 1).length === 1;
 }
 function takeAll(report4, line3, char) {
-  const columns = report4.filter((entry2) => entry2.line === line3 && entry2.message === `Unexpected character "${char}"`).map((entry2) => entry2.column);
-  for (const column of columns) takeLexerError2(report4, line3, column, char);
-  return columns.sort((a, b) => a - b);
+  const columns2 = report4.filter((entry2) => entry2.line === line3 && entry2.message === `Unexpected character "${char}"`).map((entry2) => entry2.column);
+  for (const column of columns2) takeLexerError2(report4, line3, column, char);
+  return columns2.sort((a, b) => a - b);
 }
 function dropBracketErrors(report4, line3) {
   takeAll(report4, line3, "[");
@@ -139526,7 +139526,7 @@ function putProp(target2, key, value) {
   else
     target2[key] = value;
 }
-function mirrorShape(target2, source, keys, wrap) {
+function mirrorShape(target2, source, keys, wrap2) {
   const raw = sourceShape(source);
   for (const key of keys) {
     const desc = Object.getOwnPropertyDescriptor(raw, key);
@@ -139535,10 +139535,10 @@ function mirrorShape(target2, source, keys, wrap) {
     if (desc.get) {
       deferProp(target2, key, () => {
         const value = source._zod.def.shape[key];
-        return wrap ? wrap(value, key) : value;
+        return wrap2 ? wrap2(value, key) : value;
       });
     } else
-      putProp(target2, key, wrap ? wrap(desc.value, key) : desc.value);
+      putProp(target2, key, wrap2 ? wrap2(desc.value, key) : desc.value);
   }
 }
 function mirrorProps(target2, source) {
@@ -160700,11 +160700,11 @@ function overlappingLabels(labels2, boxes2) {
 function emptyShare(scene) {
   if (scene.width <= 0 || scene.height <= 0) return 0;
   const cell = Math.max(MIN_CELL_PX, Math.sqrt(scene.width * scene.height / MAX_CELLS));
-  const columns = Math.ceil(scene.width / cell);
+  const columns2 = Math.ceil(scene.width / cell);
   const rows = Math.ceil(scene.height / cell);
-  const filled = new Uint8Array(columns * rows);
+  const filled = new Uint8Array(columns2 * rows);
   const mark = (column, row) => {
-    if (column >= 0 && column < columns && row >= 0 && row < rows) filled[row * columns + column] = 1;
+    if (column >= 0 && column < columns2 && row >= 0 && row < rows) filled[row * columns2 + column] = 1;
   };
   const fillRect = (rect) => {
     for (let row = Math.floor(rect.y / cell); row <= Math.floor((rect.y + rect.height) / cell); row += 1) {
@@ -165293,10 +165293,10 @@ function splitSchema(draft, report4, writeOne) {
       reached.set(to, (reached.get(to) ?? /* @__PURE__ */ new Set()).add(relation2.toColumn));
     }
     const byKey = new Map(draft.tables.map((table) => [fold2(table.key), table]));
-    const copies = [...reached].map(([key, columns]) => {
+    const copies = [...reached].map(([key, columns2]) => {
       const table = byKey.get(key);
       const space = schemaOf(table);
-      return { ...table, label: `${space === null || table.label.includes(".") ? "" : `${space}.`}${table.label} (part ${(partOf2.get(key) ?? 0) + 2})`, columns: table.columns.filter((column) => columns.has(column.name)) };
+      return { ...table, label: `${space === null || table.label.includes(".") ? "" : `${space}.`}${table.label} (part ${(partOf2.get(key) ?? 0) + 2})`, columns: table.columns.filter((column) => columns2.has(column.name)) };
     });
     const title = `${draft.title}: ${unit3.name} (${index2 + 2} of ${total})`;
     const written3 = writeOne({ ...draft, title, tables: [...unit3.tables, ...copies], relations: outgoing, filter: void 0 }, Math.max(size, unit3.tables.length + copies.length));
@@ -165443,9 +165443,9 @@ function writeOneSchema(draft, report4, cap2, allTables, outside) {
     const label = relation2.label === void 0 || relation2.label === null || relation2.label === "" ? "" : ` : ${quote(relation2.label)}`;
     lines.add(`${tableIds.idFor(fold3(relation2.fromTable))}.${from} -> ${tableIds.idFor(fold3(relation2.toTable))}.${to}${label}`);
   }
-  const columns = kept2.reduce((sum, table) => sum + table.columns.length, 0);
+  const columns2 = kept2.reduce((sum, table) => sum + table.columns.length, 0);
   const coverage = { noun: "tables", total: allTables, drawn: kept2.length, summarised: 0 };
-  return { kind: "schema", source: lines.toString(), stats: { items: kept2.length, links, groups: 0, dropped }, advice: draft.advice ?? `Check the ${countOf2(columns, "column")} and ${countOf2(links, "relation")} against the file.`, coverage, ids: named2 };
+  return { kind: "schema", source: lines.toString(), stats: { items: kept2.length, links, groups: 0, dropped }, advice: draft.advice ?? `Check the ${countOf2(columns2, "column")} and ${countOf2(links, "relation")} against the file.`, coverage, ids: named2 };
 }
 var fold3;
 var init_schema5 = __esm({
@@ -170699,10 +170699,10 @@ function exprOf(value, start2, depth = 0) {
 function symbolOf(resource, used) {
   const name = typeof resource["name"] === "string" ? resource["name"] : "";
   const type = typeof resource["type"] === "string" ? resource["type"] : "resource";
-  const plain3 = name.startsWith("[") ? void 0 : name.split("/").pop();
+  const plain4 = name.startsWith("[") ? void 0 : name.split("/").pop();
   const written3 = [...name.replace(/(?:parameters|variables)\('[^']*'\)/g, "").matchAll(/'([^']*)'/g)].map((match) => (match[1] ?? "").replace(/\{\d+\}/g, " ").trim()).flatMap((text4) => text4.split(/[\s/]+/)).map((text4) => text4.replace(/^[-_.]+|[-_.]+$/g, "")).filter((text4) => /[A-Za-z]/.test(text4)).pop();
   const kind = (type.split("/").pop() ?? "resource").replace(/s$/, "");
-  const base = (plain3 ?? written3 ?? kind).replace(/[^A-Za-z0-9_]+/g, "_");
+  const base = (plain4 ?? written3 ?? kind).replace(/[^A-Za-z0-9_]+/g, "_");
   let symbol2 = base;
   for (let count3 = 2; used.has(symbol2); count3 += 1) symbol2 = `${base}_${count3}`;
   used.add(symbol2);
@@ -171324,15 +171324,15 @@ var init_parse23 = __esm({
           if (read === null) throw this.problem(line3, "A quoted string is never closed.", "Close it with the same quote it opened with.");
           node3 = scalar(read.value, true, line3.line, column + props.offset);
         } else {
-          let plain3 = body2;
+          let plain4 = body2;
           while (this.index < this.lines.length) {
             const more = this.lines[this.index];
             if (more.indent < indent || more.indent === indent && !ofKey) break;
             if (splitKey(more.text) !== null || isItem3(more.text)) break;
-            plain3 = `${plain3} ${more.text}`;
+            plain4 = `${plain4} ${more.text}`;
             this.index += 1;
           }
-          node3 = scalar(plain3.trim(), false, line3.line, column + props.offset);
+          node3 = scalar(plain4.trim(), false, line3.line, column + props.offset);
         }
         node3 = tagged(node3, props.tag);
         if (props.anchor !== null) this.anchors.set(props.anchor, node3);
@@ -172152,9 +172152,9 @@ function isNumericColumn(table, column) {
   }
   return seen > 0;
 }
-function sharedUnit(table, columns) {
+function sharedUnit(table, columns2) {
   let unit3;
-  for (const column of columns) {
+  for (const column of columns2) {
     for (const row of table.rows) {
       const read = cellNumber(row[column] ?? "");
       if (read === null) continue;
@@ -172308,13 +172308,13 @@ var init_paging = __esm({
 
 // ../../packages/diagrams/src/importers/table/matrix.ts
 function writeMatrix(table, title, report4) {
-  const columns = table.header.slice(1);
-  if (columns.length === 0) {
+  const columns2 = table.header.slice(1);
+  if (columns2.length === 0) {
     report4.add(DIAGNOSTIC_CODES.importNoShape, table.headerSpan, "The table has only one column, so the matrix has no columns.", "Add a column for each thing the rows are compared on.");
     return null;
   }
-  const columnPlan = paging(columns.length, WORKFLOW_LIMITS.maxImportColumns, MAX_COLUMNS);
-  const columnPages = pages(columns.map((_, index2) => index2), columnPlan);
+  const columnPlan = paging(columns2.length, WORKFLOW_LIMITS.maxImportColumns, MAX_COLUMNS);
+  const columnPages = pages(columns2.map((_, index2) => index2), columnPlan);
   const rowPlan = paging(table.rows.length, WORKFLOW_LIMITS.maxImportRows, MAX_ROWS, Math.max(1, Math.floor(WORKFLOW_LIMITS.maxImportParts / columnPages.length)));
   const rowPages = pages(table.rows.map((_, index2) => index2), rowPlan);
   const names8 = [];
@@ -172327,7 +172327,7 @@ function writeMatrix(table, title, report4) {
     names8.push(name);
   }
   const marks = table.rows.map(
-    (row, index2) => columns.map((_, column) => {
+    (row, index2) => columns2.map((_, column) => {
       const read = markOf(row[column + 1] ?? "");
       if (read === null) report4.add(DIAGNOSTIC_CODES.importChanged, table.spans[index2] ?? table.headerSpan, `The cell "${cleanText(row[column + 1] ?? "")}" is not yes or no, so it became na.`, "Write yes, no, or partial in the cells, or chart the table another way.");
       return read ?? "na";
@@ -172342,7 +172342,7 @@ function writeMatrix(table, title, report4) {
       const used = /* @__PURE__ */ new Set();
       const lines = new SourceLines();
       const name = pageTitle(title, written3.length, count3);
-      const heads = columnPage.map((column) => cleanText(columns[column] ?? "", `Column ${column + 2}`));
+      const heads = columnPage.map((column) => cleanText(columns2[column] ?? "", `Column ${column + 2}`));
       lines.add(`matrix ${quote(name)}${options2({ desc: `Each ${subject} checked against ${joinWords(heads, "and")}, imported from a table of ${countOf2(table.rows.length, "row")}.` })}`);
       lines.gap();
       lines.add(`columns ${heads.map(quote).join(" ")}`);
@@ -172362,9 +172362,9 @@ function writeMatrix(table, title, report4) {
   const drawnRows = rowPages.reduce((total, page) => total + page.length, 0);
   const drawnColumns = columnPages.reduce((total, page) => total + page.length, 0);
   reportPages(report4, count3, table.rows.length, "row", "rows", table.rows.length - drawnRows);
-  if (drawnColumns < columns.length) reportPages(report4, 1, columns.length, "column", "columns", columns.length - drawnColumns, table.headerSpan);
+  if (drawnColumns < columns2.length) reportPages(report4, 1, columns2.length, "column", "columns", columns2.length - drawnColumns, table.headerSpan);
   return pagedDraft("matrix", written3, {
-    stats: { items: drawnRows, links: 0, groups: 0, dropped: table.rows.length - drawnRows + columns.length - drawnColumns },
+    stats: { items: drawnRows, links: 0, groups: 0, dropped: table.rows.length - drawnRows + columns2.length - drawnColumns },
     advice: anyNa ? "Some cells are na because the table left them empty: fill each one in from the source, never by guessing." : "Mark the row you recommend with recommend, and give the legend words that say what yes and no mean here.",
     coverage: { noun: "rows", total: table.rows.length, drawn: drawnRows, summarised: 0 }
   });
@@ -172412,20 +172412,20 @@ function writePie(table, title, report4) {
     return null;
   }
   const what = cleanText(table.header[column] ?? "", "total").toLowerCase();
-  const plain3 = slices.length <= MAX_SLICES;
-  const sliced = plain3 ? [slices] : pages(slices, paging(slices.length, MAX_SLICES - 1, MAX_SLICES - 1));
+  const plain4 = slices.length <= MAX_SLICES;
+  const sliced = plain4 ? [slices] : pages(slices, paging(slices.length, MAX_SLICES - 1, MAX_SLICES - 1));
   const whole2 = slices.reduce((sum, slice) => sum + slice.value, 0);
   const written3 = sliced.map((page, index2) => {
     const lines = new SourceLines();
     const name = pageTitle(title, index2, sliced.length);
     const rest = whole2 - page.reduce((sum, slice) => sum + slice.value, 0);
-    const shown = page.length + (plain3 ? 0 : 1);
-    lines.add(`pie ${quote(name)}${options2({ unit: unit3, fold: shown > FOLD_AT ? FOLD_AT : null, desc: plain3 ? `How the ${what} splits across ${countOf2(page.length, "part")}, imported from a table.` : `How the ${what} splits: ${countOf2(page.length, "part")} of ${slices.length}, and one slice for the other ${slices.length - page.length}, imported from a table.` })}`);
+    const shown = page.length + (plain4 ? 0 : 1);
+    lines.add(`pie ${quote(name)}${options2({ unit: unit3, fold: shown > FOLD_AT ? FOLD_AT : null, desc: plain4 ? `How the ${what} splits across ${countOf2(page.length, "part")}, imported from a table.` : `How the ${what} splits: ${countOf2(page.length, "part")} of ${slices.length}, and one slice for the other ${slices.length - page.length}, imported from a table.` })}`);
     lines.gap();
     for (const slice of page) lines.add(`slice ${quote(slice.name)} ${plainNumber(slice.value)}`);
     let others = `The other ${slices.length - page.length}`;
     while (seen.has(others.toLowerCase())) others = `${others} (rest)`;
-    if (!plain3) lines.add(`slice ${quote(others)} ${plainNumber(rest)}`);
+    if (!plain4) lines.add(`slice ${quote(others)} ${plainNumber(rest)}`);
     return { title: name, source: lines.toString(), items: page.length };
   });
   const drawn = sliced.reduce((sum, page) => sum + page.length, 0);
@@ -172480,8 +172480,8 @@ function pageFlows(flows, size) {
   return { pages: out, left };
 }
 function writeSankey(table, title, report4) {
-  const columns = flowColumns(table);
-  if (columns === null) {
+  const columns2 = flowColumns(table);
+  if (columns2 === null) {
     report4.add(DIAGNOSTIC_CODES.importNoShape, table.headerSpan, "The header does not name a source, a target, and a value column.", "Name the columns source, target, and value (or from, to, and amount).");
     return null;
   }
@@ -172489,9 +172489,9 @@ function writeSankey(table, title, report4) {
   let dropped = 0;
   for (const [index2, row] of table.rows.entries()) {
     const span = table.spans[index2] ?? table.headerSpan;
-    const from = cleanText(row[columns.source] ?? "", "");
-    const to = cleanText(row[columns.target] ?? "", "");
-    const amount = cellNumber(row[columns.value] ?? "")?.value ?? 0;
+    const from = cleanText(row[columns2.source] ?? "", "");
+    const to = cleanText(row[columns2.target] ?? "", "");
+    const amount = cellNumber(row[columns2.value] ?? "")?.value ?? 0;
     if (from === "" || to === "" || amount <= 0 || from === to) {
       dropped += 1;
       report4.add(DIAGNOSTIC_CODES.importSkipped, span, "A row was left out: a flow needs a source, a different target, and an amount above zero.", "Fill in the row, or remove it.");
@@ -172509,8 +172509,8 @@ function writeSankey(table, title, report4) {
   if (placed2.left.length > 0) placed2 = pageFlows(flows, MAX_FLOWS);
   const loops = placed2.pages.length > 1 && flows.some((flow, index2) => reaches2(flows.slice(0, index2), flow.to, flow.from));
   if (loops) report4.add(DIAGNOSTIC_CODES.importChanged, table.headerSpan, "Some flows go back to an earlier node, which a sankey cannot draw, so they are drawn on another sankey of the parts.", "A sankey only goes forward. Draw a loop as a flow diagram to see it in one picture.");
-  const unit3 = sharedUnit(table, [columns.value]);
-  const what = cleanText(table.header[columns.value] ?? "", "amount").toLowerCase();
+  const unit3 = sharedUnit(table, [columns2.value]);
+  const what = cleanText(table.header[columns2.value] ?? "", "amount").toLowerCase();
   const written3 = placed2.pages.map((page, index2) => {
     const nodes = new Set(page.flatMap((flow) => [flow.from, flow.to]));
     const name = pageTitle(title, index2, placed2.pages.length);
@@ -173190,10 +173190,10 @@ function readTables(text4, index2, context) {
       context.report.add(DIAGNOSTIC_CODES.importSkipped, span, `A ${match[1]} call whose table name or columns are not written out was left out.`, "Give the table name as a string and the columns as an object literal.");
       continue;
     }
-    const columns = splitTopLevel(text4, object2.open + 1, object2.close).map((part) => readColumn(text4.slice(part.start, part.end))).filter((column) => column !== null);
+    const columns2 = splitTopLevel(text4, object2.open + 1, object2.close).map((part) => readColumn(text4.slice(part.start, part.end))).filter((column) => column !== null);
     const third = args[2];
     const declared3 = DECLARATION.exec(text4.slice(Math.max(0, at3 - DECLARATION_REACH), at3));
-    tables.push({ variable: declared3?.[1] ?? null, name, columns, span, extra: third === void 0 ? "" : text4.slice(third.start, third.end) });
+    tables.push({ variable: declared3?.[1] ?? null, name, columns: columns2, span, extra: third === void 0 ? "" : text4.slice(third.start, third.end) });
   }
   return tables;
 }
@@ -173289,9 +173289,9 @@ function hashAndDecoration(text4) {
 function readDay(text4) {
   const iso = /(\d{4})-(\d{2})-(\d{2})/.exec(text4);
   if (iso !== null) return { year: Number(iso[1]), month: Number(iso[2]), day: Number(iso[3]) };
-  const plain3 = /\b([A-Za-z]{3}) +(\d{1,2}) +\d{1,2}:\d{2}:\d{2} +(\d{4})\b/.exec(text4);
-  const month = plain3 === null ? -1 : MONTHS3.indexOf((plain3[1] ?? "").toLowerCase());
-  return plain3 === null || month === -1 ? null : { year: Number(plain3[3]), month: month + 1, day: Number(plain3[2]) };
+  const plain4 = /\b([A-Za-z]{3}) +(\d{1,2}) +\d{1,2}:\d{2}:\d{2} +(\d{4})\b/.exec(text4);
+  const month = plain4 === null ? -1 : MONTHS3.indexOf((plain4[1] ?? "").toLowerCase());
+  return plain4 === null || month === -1 ? null : { year: Number(plain4[3]), month: month + 1, day: Number(plain4[2]) };
 }
 function readLog(text4) {
   const lines = text4.split("\n");
@@ -174700,15 +174700,15 @@ function cellOf2(operation, column) {
   });
   return grants ? "yes" : "no";
 }
-function matrixSource(rows, columns, title, desc) {
+function matrixSource(rows, columns2, title, desc) {
   const used = /* @__PURE__ */ new Set();
   const lines = new SourceLines();
   lines.add(`matrix ${quote(title)}${options2({ desc })}`);
   lines.gap();
-  lines.add(`columns ${columns.map((column) => quote(cleanText(column.label))).join(" ")}`);
+  lines.add(`columns ${columns2.map((column) => quote(cleanText(column.label))).join(" ")}`);
   lines.gap();
   for (const operation of rows) {
-    const cells = columns.map((column) => cellOf2(operation, column));
+    const cells = columns2.map((column) => cellOf2(operation, column));
     for (const cell of cells) used.add(cell);
     lines.add(`row ${quote(`${operation.method} ${cleanText(operation.path, "/")}`)}${options2({ sub: operation.summary === null ? null : cleanText(operation.summary) })} : ${cells.join(", ")}`);
   }
@@ -174737,13 +174737,13 @@ function writeEndpoints(operations, sections, title, api, context) {
   const parts = [];
   for (const chunk of chunks) {
     const rows = chunk === null ? operations : chunk.flatMap((piece) => piece.operations);
-    for (const [page, columns] of pages2.entries()) {
+    for (const [page, columns2] of pages2.entries()) {
       const index2 = parts.length;
-      const which = pages2.length === 1 ? "" : ` columns ${page * width + 1} to ${page * width + columns.length}`;
+      const which = pages2.length === 1 ? "" : ` columns ${page * width + 1} to ${page * width + columns2.length}`;
       const tags = chunk === null ? "" : chunkTags(chunk);
       const partTitle = chunkTitle(title, index2, count3);
       const name = [tags, which.trim()].filter((part) => part !== "").join(", ");
-      parts.push({ title: `${name === "" ? title : name} (${index2 + 1} of ${count3})`, kind: "matrix", source: matrixSource(rows, columns, partTitle, `${describe4(rows.length)}${tags === "" ? "" : ` Tags: ${tags}.`}${which === "" ? "" : ` Columns ${page * width + 1} to ${page * width + columns.length} of ${all.length}.`}`), items: page === 0 ? rows.length : 0 });
+      parts.push({ title: `${name === "" ? title : name} (${index2 + 1} of ${count3})`, kind: "matrix", source: matrixSource(rows, columns2, partTitle, `${describe4(rows.length)}${tags === "" ? "" : ` Tags: ${tags}.`}${which === "" ? "" : ` Columns ${page * width + 1} to ${page * width + columns2.length} of ${all.length}.`}`), items: page === 0 ? rows.length : 0 });
     }
   }
   report4.add(
@@ -175187,7 +175187,7 @@ var init_blocks = __esm({
 
 // ../../packages/diagrams/src/importers/prisma/index.ts
 function readModel(model, models, context, relations) {
-  const columns = [];
+  const columns2 = [];
   const foreignKeys = /* @__PURE__ */ new Set();
   for (const line3 of model.body) {
     if (line3.text.startsWith("@@")) continue;
@@ -175208,18 +175208,18 @@ function readModel(model, models, context, relations) {
       });
       continue;
     }
-    columns.push({ name, type: type.replace(/\?$/, ""), nullable: type.endsWith("?"), pk: /@id\b/.test(attributes2), unique: /@unique\b/.test(attributes2) });
+    columns2.push({ name, type: type.replace(/\?$/, ""), nullable: type.endsWith("?"), pk: /@id\b/.test(attributes2), unique: /@unique\b/.test(attributes2) });
   }
   const firstList = (args) => args === null ? [] : listArgument(`fields: ${args}`, "fields");
   for (const line3 of model.body) {
-    for (const name of firstList(attributeArguments(line3.text, "@@id"))) for (const column of columns) if (column.name === name) column.pk = true;
+    for (const name of firstList(attributeArguments(line3.text, "@@id"))) for (const column of columns2) if (column.name === name) column.pk = true;
     const unique2 = firstList(attributeArguments(line3.text, "@@unique"));
     if (unique2.length === 1) {
-      for (const column of columns) if (column.name === unique2[0]) column.unique = true;
+      for (const column of columns2) if (column.name === unique2[0]) column.unique = true;
     }
   }
-  for (const column of columns) if (foreignKeys.has(column.name)) column.fk = true;
-  return { key: model.name, label: model.name, columns, span: spanAt4(model.line, model.column, model.keyword.length + model.name.length + 1) };
+  for (const column of columns2) if (foreignKeys.has(column.name)) column.fk = true;
+  return { key: model.name, label: model.name, columns: columns2, span: spanAt4(model.line, model.column, model.keyword.length + model.name.length + 1) };
 }
 function readPrisma(text4, context) {
   const read = readBlocks(text4);
@@ -176079,13 +176079,13 @@ function typeText2(tokens) {
   if (out.length > MAX_TYPE_LENGTH) out = out.slice(0, out.indexOf("(") === -1 ? MAX_TYPE_LENGTH : out.indexOf("(")).trim();
   return out === "" ? "any" : out;
 }
-function readReferences(tokens, start2, from, columns, context, at3) {
+function readReferences(tokens, start2, from, columns2, context, at3) {
   const target2 = readName6(tokens, start2 + 1);
   if (target2 === null) return start2 + 1;
   const list = readNameList(tokens, target2.next);
   context.schema.keys.push({
     fromTable: from.key,
-    fromColumns: columns,
+    fromColumns: columns2,
     toTable: target2.name,
     toColumns: list?.names ?? [],
     offset: at3.offset,
@@ -178320,6 +178320,370 @@ var init_generate_command = __esm({
   }
 });
 
+// ../../packages/diagrams/src/cli/manifest.ts
+function findCliCommand(name) {
+  return CLI_COMMANDS.find((command) => command.name === name);
+}
+var CONFIG, CLI_USAGE_MISTAKES, OFFLINE, CLI_COMMANDS, CLI_ENVIRONMENT;
+var init_manifest = __esm({
+  "../../packages/diagrams/src/cli/manifest.ts"() {
+    "use strict";
+    init_constants();
+    init_wiki_export();
+    init_enabled();
+    init_types2();
+    init_sync_document();
+    init_theme();
+    CONFIG = {
+      flag: "--config",
+      value: "<file>",
+      default: `\`${SETTINGS_FILE.env}\`, else the nearest ${SETTINGS_FILE.names.map((name) => `\`${name}\``).join(" or ")} from the file up to the repository root`,
+      description: "The repository settings file to read: header defaults, and the style rules check applies."
+    };
+    CLI_USAGE_MISTAKES = "A mistake in the command line: an unknown option, a missing operand, a file or glob that matches nothing, or a settings file that cannot be read.";
+    OFFLINE = "No. It reads and writes files on this machine only.";
+    CLI_COMMANDS = [
+      {
+        name: "sync",
+        operands: "<files...>",
+        summary: "Draw the pictures under every diagram fence of Markdown files; `--check` fails when one is stale",
+        description: [
+          "Draws every `diagram` fence of the Markdown files as a light and a dark SVG, and writes the picture block under the fence, so the diagram shows on GitHub, GitLab, and any Markdown viewer. A fence whose picture is already current is left as it is.",
+          'Each word is a Markdown file, a folder (every `.md` file under it), or a quoted glob such as `"docs/**/*.md"`. The command expands the glob itself, so it means the same in every shell, and never looks in `node_modules`, `.git`, or build output.',
+          "With `--check` it writes nothing and exits 1 when any picture is missing or stale, or any diagram has a mistake. That is the check to run in CI."
+        ],
+        options: [
+          { flag: "--check", description: "Write nothing; exit 1 when a picture is missing or stale, or a diagram has a mistake." },
+          { flag: "--assets", value: "<dir>", default: `\`${DEFAULT_ASSET_DIR}\``, description: "The folder the SVGs are written to, relative to each Markdown file." },
+          { flag: "--prefix", value: "<text>", default: "the Markdown file name", description: "The start of each SVG file name and picture id." },
+          { flag: "--format", value: "<format>", values: ["text", "github"], default: "`text`", description: "`github` prints each stale fence and each mistake as a GitHub annotation on its line." },
+          CONFIG
+        ],
+        examples: [
+          { args: 'sync README.md "docs/**/*.md"', says: "Draw every diagram of the README and the docs folder, and write the pictures." },
+          { args: 'sync --check "docs/**/*.md"', says: "Fail when any picture is stale, and write nothing." },
+          { args: 'sync --check --format github "**/*.md"', says: "The same in a GitHub workflow, with an annotation on each stale fence." }
+        ],
+        exits: { ok: "Every picture is current (with `--check`), or every picture was written.", problems: "A picture is stale (with `--check`), or a diagram has a mistake and was not drawn.", usage: CLI_USAGE_MISTAKES },
+        writes: "The Markdown files and their SVGs, unless `--check` is given.",
+        network: OFFLINE,
+        readsSettings: true
+      },
+      {
+        name: "validate",
+        operands: "<file>",
+        summary: "Check every diagram of a Markdown or `.diagram` file; `--strict` also fails on warnings",
+        description: [
+          "Parses every diagram of one file: each `diagram` fence of a Markdown file, or the whole of a `.diagram` file. Each mistake is printed with its line and column in the file, the code, and a hint that says how to fix it. Warnings, such as a label too long to read, are printed and pass unless `--strict` is given."
+        ],
+        options: [{ flag: "--strict", description: "Exit 1 on warnings as well as errors." }, CONFIG],
+        examples: [
+          { args: "validate docs/architecture.md", says: "Check every diagram fence of a Markdown file." },
+          { args: "validate checkout.diagram --strict", says: "Fail on warnings too." }
+        ],
+        exits: { ok: "Every diagram is valid.", problems: "A diagram has an error, or a warning with `--strict`.", usage: CLI_USAGE_MISTAKES },
+        writes: "Nothing.",
+        network: OFFLINE,
+        readsSettings: true
+      },
+      {
+        name: "check",
+        operands: "<files...>",
+        summary: "Check every diagram against a team's style rules; fails on a broken rule at level error",
+        description: [
+          "Checks every diagram of the files against style rules: required icons, naming patterns, allowed tones, a size budget, and forbidden kinds. The rules are the `rules` section of the repository settings file, or with `--org` the rules an organisation saved in Plotwork.",
+          "Each word is a Markdown or `.diagram` file, a folder, or a quoted glob. The header defaults of the settings are applied first, so a diagram is checked as it is drawn."
+        ],
+        options: [
+          { flag: "--org", value: "<slug>", default: `\`${STYLE_RULES.env.org}\`, else the rules of the settings file`, description: `Check against the rules an organisation saved instead, read with the key in \`${STYLE_RULES.env.access}\`.` },
+          { flag: "--format", value: "<format>", values: ["text", "github"], default: "`text`", description: "`github` prints each broken rule as a GitHub annotation on its line." },
+          CONFIG
+        ],
+        examples: [
+          { args: 'check "docs/**/*.md" diagrams', says: "Check the docs and every diagram file under diagrams against the rules of the settings file." },
+          { args: 'check --org acme --format github "**/*.md"', says: "Check against the organisation's saved rules in a GitHub workflow." }
+        ],
+        exits: { ok: "No rule at level error is broken.", problems: "A rule at level error is broken, a diagram has an error, or the saved rules could not be read.", usage: `${CLI_USAGE_MISTAKES} Also when no rules are found, or \`--org\` is given with no key.` },
+        writes: "Nothing.",
+        network: `No, unless \`--org\` or \`${STYLE_RULES.env.org}\` names an organisation: then one request to the Plotwork API reads its rules, with the key in \`${STYLE_RULES.env.access}\`.`,
+        readsSettings: true
+      },
+      {
+        name: "render",
+        operands: "<file|link>",
+        summary: "Draw the first diagram of a file, or a view link, to an SVG that carries its source",
+        description: [
+          "Draws the first diagram of a Markdown or `.diagram` file to one SVG. The source is written into the SVG, so `read` can give it back later; `--no-embed-source` leaves it out.",
+          "The file can also be a `viewUrl`, `svgUrl`, or `pngUrl` a Plotwork tool returned. Quote it: the diagram is decoded from the link on this machine and never fetched."
+        ],
+        options: [
+          { flag: "--out", value: "<svg>", default: "the file name with `.svg`, or `diagram.svg` for a link", description: "The SVG to write." },
+          { flag: "--theme", value: "<theme>", values: PICTURE_SCHEMES, default: "the theme of the settings, else `light`", description: "The colours to draw in; `auto` draws one picture that follows the reader." },
+          { flag: "--no-embed-source", default: "the source is embedded", description: "Leave the source out of the SVG." },
+          CONFIG
+        ],
+        examples: [
+          { args: "render checkout.diagram --out checkout.svg", says: "Draw a diagram file to an SVG." },
+          { args: "render checkout.diagram --theme dark --out checkout.dark.svg", says: "Draw it in the dark theme." },
+          { args: 'render "<viewUrl>" --out flow.svg', says: "Write the picture of a view link a tool returned, with no request." }
+        ],
+        exits: { ok: "The SVG was written.", problems: "The diagram has an error, or the file holds no diagram.", usage: CLI_USAGE_MISTAKES },
+        writes: "One SVG.",
+        network: "No. A view link is decoded on this machine.",
+        readsSettings: true
+      },
+      {
+        name: "read",
+        operands: "<file.svg|link>",
+        summary: "Print the source a Plotwork SVG, a view link, or a hosted link carries, to edit it",
+        description: [
+          "Prints the source a Plotwork picture carries, so the diagram can be changed and drawn again. The target is an SVG file, a view link a tool returned, or a hosted link such as `https://cdn.plotwork.dev/d/<token>.svg`.",
+          "The source goes to standard output, or to `--out`, and everything else to standard error, so `plotwork read picture.svg > picture.diagram` writes only the source. A picture with no embedded source prints what can be read from it, such as its title and labels, and exits 1."
+        ],
+        options: [{ flag: "--out", value: "<file>", default: "standard output", description: "Write the source to a file." }],
+        examples: [
+          { args: "read docs/assets/diagrams/flow.svg > flow.diagram", says: "Get the source back from a picture in the repository." },
+          { args: "read https://cdn.plotwork.dev/d/<token>.svg --out flow.diagram", says: "Get the source of a hosted picture." }
+        ],
+        exits: { ok: "The source was printed or written.", problems: "The picture carries no source, the source has errors, or a hosted link could not be read.", usage: CLI_USAGE_MISTAKES },
+        writes: "The source, only with `--out`.",
+        network: "Only for a hosted link: one request for that picture. A file or a view link is read on this machine.",
+        readsSettings: false
+      },
+      {
+        name: "outline",
+        operands: "<file>",
+        summary: "Print a plain-text outline of every diagram, to check what it says",
+        description: ["Prints every diagram of a file as plain text: its nodes, groups, and connections in words. Use it to check that a diagram says what it should without looking at the picture, or to describe it in a review."],
+        options: [CONFIG],
+        examples: [{ args: "outline docs/architecture.md", says: "Describe every diagram of a page." }],
+        exits: { ok: "Every diagram was outlined.", problems: "A diagram has an error.", usage: CLI_USAGE_MISTAKES },
+        writes: "Nothing.",
+        network: OFFLINE,
+        readsSettings: true
+      },
+      {
+        name: "generate",
+        operands: "",
+        summary: "Make the diagrams the settings' sources name from their files; `--check` fails on drift",
+        description: [
+          "Makes each diagram the `sources` of the settings file name from files of the repository (Terraform, OpenAPI, Compose, Kubernetes, Prisma, SQL, workflows, and more), applies its overrides file, and writes the `.diagram` file or the Markdown fence with its pictures.",
+          "With `--check` it writes nothing and exits 1 when a diagram has drifted from its files, naming each node and edge that was added, removed, or changed. `--capture` first keeps hand edits of a generated diagram in its overrides file, so the next run does not undo them.",
+          "Everything runs on this machine: nothing is fetched and no code in the files is run. `--since` asks git which files changed."
+        ],
+        options: [
+          { flag: "--check", description: "Write nothing; exit 1 when a diagram drifted from its files." },
+          { flag: "--capture", description: "Keep hand edits of each generated diagram in its overrides file first." },
+          { flag: "--source", value: "<name>", default: "every source", description: "Only the source of this name." },
+          { flag: "--since", value: "<ref>", default: "every source", description: "Only the sources whose files changed since a git ref, such as `origin/main`." },
+          { flag: "--format", value: "<format>", values: ["text", "github", "json", "sarif", "junit"], default: "`text`", description: "`github` prints annotations; `json`, `sarif`, and `junit` print a report." },
+          { flag: "--out", value: "<file>", default: "standard output", description: "Write the `json`, `sarif`, or `junit` report to a file, and print the text a person reads." },
+          CONFIG
+        ],
+        examples: [
+          { args: "generate", says: "Make every diagram the settings name, and write them." },
+          { args: "generate --check --since origin/main", says: "Fail when a diagram whose files changed on this branch has drifted." },
+          { args: "generate --check --format sarif --out plotwork.sarif", says: "Write a report for code scanning, and print the summary." }
+        ],
+        exits: { ok: "Every diagram is in step (with `--check`), or every diagram was written.", problems: "A diagram drifted (with `--check`), or a diagram has an error.", usage: `${CLI_USAGE_MISTAKES} Also when there are no settings, no sources, or \`--since\` names a ref git does not know.` },
+        writes: "The diagrams and their pictures, unless `--check` is given; a report with `--out`.",
+        network: "No. `--since` runs git on this machine, which reads the history and fetches nothing.",
+        readsSettings: true
+      },
+      {
+        name: "import-source",
+        operands: "<format> <file|folder>",
+        summary: "Turn SQL, OpenAPI, Terraform, Compose, CSV, a git log, and more into Plotwork source",
+        description: [
+          `Reads a file of another format, or every file of a folder, and prints a Plotwork diagram of it. The formats are ${IMPORT_FORMATS.join(", ")}.`,
+          "Every diagnostic is printed with the line of the file it points at, and says what was left out. A file too big for one picture is split in parts: with `--out`, each part is written beside it as `name.2.diagram` and so on. Nothing in the file is run, and nothing is fetched."
+        ],
+        options: [
+          { flag: "--out", value: "<file>", default: "standard output", description: "Write the source to a file, and the parts of a split import beside it." },
+          { flag: "--title", value: "<text>", default: "a title from the file", description: "The title of the diagram." },
+          { flag: "--format", value: "<format>", values: ["text", "json"], default: "`text`", description: "`json` prints the whole result: the source, the parts, the diagnostics, and the validation." },
+          { flag: "--view", value: "<view>", values: IMPORT_VIEWS, default: "the usual picture of the format", description: "Which picture of a format that has several." },
+          { flag: "--operation", value: "<id>", description: "The OpenAPI operation a sequence view follows." },
+          { flag: "--chart", value: "<chart>", values: IMPORT_CHARTS, default: "`auto`", description: "The chart a CSV or JSON table becomes." },
+          { flag: "--tables", value: "<names>", default: "every table", description: "Only these tables of a schema, by name or prefix, separated by commas, such as `users,org_*`." },
+          { flag: "--tags", value: "<tags>", default: "every endpoint", description: "Only the endpoints of an OpenAPI document with these tags, separated by commas." },
+          { flag: "--paths", value: "<prefixes>", default: "every endpoint", description: "Only the endpoints under these paths, separated by commas, such as `/orders`." },
+          { flag: "--group-by", value: "<frame>", values: IMPORT_GROUP_BY, default: "`module`", description: "How infrastructure resources are framed." },
+          { flag: "--var-file", value: "<files>", description: "Variables files to apply, separated by commas: `.tfvars`, `.bicepparam`, ARM parameters, or `Pulumi.<stack>.yaml`." },
+          { flag: "--root", value: "<folder>", default: "each root is drawn, as a part of its own", description: "The root module, deployment, or program to draw when the folder holds several, by its folder or the end of it." }
+        ],
+        examples: [
+          { args: "import-source sql schema.sql --out schema.diagram", says: "Draw a database schema from its SQL." },
+          { args: "import-source openapi openapi.yaml --tags orders", says: "Draw the endpoints of one tag of an API." },
+          { args: "import-source terraform infra --var-file env/prod.tfvars --out infra.diagram", says: "Draw a Terraform folder with the values of one environment." }
+        ],
+        exits: { ok: "The source was printed or written.", problems: "Nothing could be imported from the file.", usage: `${CLI_USAGE_MISTAKES} Also when the format or a value of \`--view\`, \`--chart\`, or \`--group-by\` is not one it knows.` },
+        writes: "The source, only with `--out`.",
+        network: OFFLINE,
+        readsSettings: false
+      },
+      {
+        name: "import",
+        operands: "<file>",
+        summary: "Convert Mermaid to Plotwork: a `.mmd` file, or every `mermaid` fence of a Markdown file",
+        description: [
+          "Converts Mermaid to Plotwork. A `.mmd` or `.mermaid` file prints its Plotwork source. A Markdown file is reported on fence by fence, and rewritten only with `--write`; a fence that cannot be converted is left as it was.",
+          "Each diagnostic says what was not carried over and how to say it in Plotwork, and the Plotwork validator then checks the result."
+        ],
+        options: [
+          { flag: "--out", value: "<file>", default: "standard output", description: "Write the source of a `.mmd` file to a file." },
+          { flag: "--write", description: "Rewrite the Markdown file with each fence that converts." },
+          { flag: "--format", value: "<format>", values: ["text", "json"], default: "`text`", description: "`json` prints the conversion and its diagnostics as data." },
+          { flag: "--lenient", description: "Convert what can be converted and report the rest, instead of refusing a diagram with a statement it cannot carry." }
+        ],
+        examples: [
+          { args: "import flow.mmd --out flow.diagram", says: "Convert one Mermaid file." },
+          { args: "import README.md --write", says: "Convert every mermaid fence of a page that converts, in place." }
+        ],
+        exits: { ok: "Everything converted.", problems: "A diagram or a fence could not be converted, or the file could not be read.", usage: `${CLI_USAGE_MISTAKES} Also when the file is not \`.mmd\`, \`.mermaid\`, or Markdown.` },
+        writes: "The source with `--out`, or the Markdown file with `--write`.",
+        network: OFFLINE,
+        readsSettings: false
+      },
+      {
+        name: "export",
+        operands: "<file>",
+        summary: "Print paste-ready text of the first diagram for Confluence or Notion",
+        description: [
+          "Writes the first diagram of a file as text to paste into a wiki page. With `--image` the text shows the picture at that address, such as a hosted link; without it the SVG is written beside the output for you to upload, and the text names that file.",
+          "The text goes to standard output or `--out`, and the steps around the paste go to standard error."
+        ],
+        options: [
+          { flag: "--format", value: "<format>", values: WIKI_FORMATS, required: true, description: "The wiki to write for." },
+          { flag: "--image", value: "<https link>", default: "the SVG is written beside the output", description: "An https address the wiki can fetch the picture from." },
+          { flag: "--out", value: "<file>", default: "standard output", description: "Write the text to a file." },
+          { flag: "--theme", value: "<theme>", values: THEME_NAMES, default: "`light`", description: "The colours of the SVG written beside the output." },
+          { flag: "--no-source", default: "the source is included", description: "Leave the diagram source out of the text." }
+        ],
+        examples: [
+          { args: "export checkout.diagram --format notion", says: "Text for a Notion page, with the SVG written beside it to upload." },
+          { args: "export flow.diagram --format confluence --image https://cdn.plotwork.dev/d/<token>.svg", says: "Text for Confluence that shows a hosted picture." }
+        ],
+        exits: { ok: "The text was printed or written.", problems: "The diagram has an error.", usage: `${CLI_USAGE_MISTAKES} Also when \`--format\` is missing or \`--image\` is not an https address.` },
+        writes: "The SVG beside the output when there is no `--image`; the text with `--out`.",
+        network: OFFLINE,
+        readsSettings: false
+      },
+      {
+        name: "icons",
+        operands: "<query>",
+        summary: "Search the bundled icons by name",
+        description: ["Searches the icons bundled with the command line and prints up to 40 matches, one name per line, as it is written in `icon=`. The words of the query are joined, so `plotwork icons api gateway` needs no quotes."],
+        options: [],
+        examples: [{ args: "icons postgres", says: "Find the icon names for Postgres." }],
+        exits: { ok: "The search ran, whether or not anything matched.", problems: "Not used.", usage: "No query was given." },
+        writes: "Nothing.",
+        network: OFFLINE,
+        readsSettings: false
+      }
+    ];
+    CLI_ENVIRONMENT = [
+      { name: SETTINGS_FILE.env, commands: ["sync", "validate", "check", "render", "outline", "generate"], meaning: `The settings file to read when \`--config\` is not given, instead of looking for ${SETTINGS_FILE.names.map((name) => `\`${name}\``).join(" or ")}.` },
+      { name: STYLE_RULES.env.org, commands: ["check"], meaning: "The organisation whose saved style rules to check against when `--org` is not given." },
+      { name: STYLE_RULES.env.access, commands: ["check"], meaning: "An API key of that organisation, sent to read its rules. Never printed." },
+      { name: STYLE_RULES.env.apiUrl, commands: ["check"], meaning: `The API the rules are read from, instead of \`${STYLE_RULES.apiUrl}\`.` },
+      { name: VENDOR_ICONS_ENV, commands: ["sync", "render", "export", "generate"], meaning: "`off` draws no vendor artwork in this run: a product icon becomes a plain shape." },
+      { name: "GITHUB_REPOSITORY, GITHUB_SHA, GITHUB_REF, GITHUB_RUN_ID, GITHUB_SERVER_URL, GITHUB_EVENT_NAME", commands: ["generate"], meaning: "Read only to name the run in a `json` report, when GitHub Actions sets them." }
+    ];
+  }
+});
+
+// ../../packages/diagrams/src/cli/help.ts
+function wrap(text4, indent, first = indent) {
+  const lines = [];
+  let line3 = "";
+  for (const word2 of text4.split(/[ \t\n]+/).filter((entry2) => entry2 !== "")) {
+    const room = HELP_WIDTH - (lines.length === 0 ? first : indent);
+    if (line3 !== "" && line3.length + 1 + word2.length > room) {
+      lines.push(line3);
+      line3 = word2;
+    } else line3 = line3 === "" ? word2 : `${line3} ${word2}`;
+  }
+  if (line3 !== "") lines.push(line3);
+  return lines.join(`
+${" ".repeat(indent)}`).replaceAll(KEEP2, " ");
+}
+function optionUsage(option) {
+  const value = option.values === void 0 ? option.value : option.values.join("|");
+  return value === void 0 ? option.flag : `${option.flag} ${value}`;
+}
+function commandSynopsis(bin, command) {
+  return [bin, command.name, command.operands, ...command.options.map(synopsisWord)].filter((word2) => word2 !== "").join(" ");
+}
+function columns(left, right, width, margin = 2) {
+  const pad = margin + width + 2;
+  const head = `${" ".repeat(margin)}${left}`;
+  if (head.length + 2 > pad) return `${head}
+${" ".repeat(pad)}${wrap(right, pad)}`;
+  return `${head.padEnd(pad)}${wrap(right, pad)}`;
+}
+function usageText(bin) {
+  const head = (command) => `${command.name} ${command.operands}`.trim();
+  const width = Math.min(COMMAND_COLUMN, Math.max(...CLI_COMMANDS.map((command) => head(command).length)));
+  const commands2 = CLI_COMMANDS.map((command) => {
+    const line3 = columns(head(command), plain3(command.summary), width);
+    const options3 = command.options.map(unbroken).join(" ");
+    return options3 === "" ? line3 : `${line3}
+${" ".repeat(width + 4)}${wrap(options3, width + 4)}`;
+  });
+  return [
+    `Usage: ${bin} <command> [options]`,
+    `       ${bin} <command> --help`,
+    "",
+    "Commands:",
+    ...commands2,
+    "",
+    "Options:",
+    columns("--help, -h", "Print this help, or with a command, its options, defaults, examples, and exit codes", width),
+    "",
+    "Settings:",
+    `  ${wrap(`${SETTINGS_COMMANDS.join(", ")} read the repository settings: --config <file>, else ${SETTINGS_FILE.env}, else the nearest ${SETTINGS_FILE.names.join(" or ")} from the file up to the repository root.`, 2)}`,
+    "",
+    "Exit codes:",
+    columns(String(EXIT.ok), "All is well", 1),
+    columns(String(EXIT.problems), "A problem in a diagram: an error, a stale picture, a broken rule, or drift", 1),
+    columns(String(EXIT.usage), "A mistake in the command line", 1)
+  ].join("\n");
+}
+function commandHelpText(bin, command) {
+  const width = Math.min(26, Math.max(0, ...command.options.map((option2) => optionUsage(option2).length)));
+  const option = (entry2) => columns(optionUsage(entry2), plain3(entry2.default === void 0 ? entry2.description : `${entry2.description} Default: ${entry2.default}.`), width);
+  return [
+    `Usage: ${wrap([bin, command.name, command.operands, ...command.options.map(unbroken)].filter((word2) => word2 !== "").join(" "), 7, 7)}`,
+    "",
+    ...command.description.flatMap((paragraph) => [wrap(plain3(paragraph), 0), ""]),
+    ...command.options.length === 0 ? [] : ["Options:", ...command.options.map(option), ""],
+    "Examples:",
+    ...command.examples.flatMap((example) => [`  # ${plain3(example.says)}`, `  ${bin} ${example.args}`]),
+    "",
+    "Exit codes:",
+    columns(String(EXIT.ok), plain3(command.exits.ok), 1),
+    columns(String(EXIT.problems), plain3(command.exits.problems), 1),
+    columns(String(EXIT.usage), plain3(command.exits.usage), 1)
+  ].join("\n");
+}
+var HELP_WIDTH, KEEP2, plain3, synopsisWord, unbroken, SETTINGS_COMMANDS, COMMAND_COLUMN;
+var init_help = __esm({
+  "../../packages/diagrams/src/cli/help.ts"() {
+    "use strict";
+    init_constants();
+    init_commands();
+    init_manifest();
+    HELP_WIDTH = 100;
+    KEEP2 = "\xA0";
+    plain3 = (text4) => text4.replace(/`([^`]*)`/g, "$1");
+    synopsisWord = (option) => option.required === true ? optionUsage(option) : `[${optionUsage(option)}]`;
+    unbroken = (option) => synopsisWord(option).replaceAll(" ", KEEP2);
+    SETTINGS_COMMANDS = CLI_COMMANDS.filter((command) => command.readsSettings).map((command) => command.name);
+    COMMAND_COLUMN = 22;
+  }
+});
+
 // ../../packages/diagrams/src/cli/import-command.ts
 import { mkdirSync as mkdirSync6, readFileSync as readFileSync7, writeFileSync as writeFileSync6 } from "node:fs";
 import { dirname as dirname7 } from "node:path";
@@ -178596,56 +178960,6 @@ var init_read_command = __esm({
 // ../../packages/diagrams/src/cli/run.ts
 import { join as join9 } from "node:path";
 import { parseArgs } from "node:util";
-function usageText(bin) {
-  return `Usage: ${bin} <command> [options]
-
-Commands:
-  validate <file> [--strict] Check every diagram in a .md or diagram file; --strict fails on warnings
-  check <files...>           Check every diagram against the style rules of the settings; fails on a broken rule at level error
-                             Each word is a Markdown or .diagram file, a folder, or a quoted glob
-                             [--org <slug>]  An organisation's saved rules instead, read with the key in PLOTWORK_API_KEY
-  --config <file>            Every command reads repository settings: header defaults and style rules. Without --config,
-                             PLOTWORK_CONFIG, else plotwork.config.json or .plotwork/config.json from the file up to the repository root
-                             [--format github]  Report each finding as a GitHub annotation
-  outline <file>             Print a text outline of every diagram
-  render <file|viewUrl> --out <svg>
-                             Render the first diagram to SVG [--theme light|dark|auto]
-                             The source is written into the SVG; --no-embed-source leaves it out
-                             A viewUrl, pngUrl or svgUrl from a Plotwork tool is read on this machine, never fetched; quote it
-  read <file.svg|link>       Print the source a Plotwork SVG or a viewer link carries, to edit it [--out <file>]
-                             A hosted link (https://cdn.plotwork.dev/d/<token>.svg) is the only thing this CLI fetches
-  sync <files...> [--check]  Write SVGs and picture blocks under each diagram fence; --check fails if any is stale
-                             Each word is a Markdown file, a folder, or a quoted glob such as "docs/**/*.md"
-                             [--assets <dir>] [--prefix <text>]  Asset directory (relative to the file) and an id prefix
-                             [--format github]  Report each stale fence and each mistake as a GitHub annotation
-  import <file>              Convert Mermaid to Plotwork. A .mmd or .mermaid file prints Plotwork source [--out <file>];
-                             a .md file is reported on and rewritten only with --write [--format json] [--lenient]
-  import-source <format> <file or folder>
-                             Turn sql, prisma, drizzle, openapi, terraform, terraform-plan, bicep, arm, pulumi, cloudformation,
-                             compose, kubernetes, github-actions, csv, json, tree, or git-log text into Plotwork source
-                             [--out <file>] [--title <text>] [--format json]
-                             [--view endpoints|map|sequence|git|timeline] [--operation <id>] [--chart <chart>]
-                             [--tables users,org_*]  Only these tables of a schema, by name or prefix
-                             [--tags a,b] [--paths /orders]  Only these endpoints of an OpenAPI document
-                             [--group-by module|network|file]  How infrastructure resources are framed
-                             [--var-file env/dev.tfvars]  Variables files to apply (.tfvars, .bicepparam, ARM
-                             parameters, Pulumi.<stack>.yaml), separated by commas
-                             [--root envs/prod]  The root module, deployment, or program of several to draw
-                             A folder is read file by file; an import split in parts writes <out>.2 and so on beside --out
-  export <file> --format confluence|confluence-wiki|notion
-                             Paste-ready text of the first diagram for a wiki [--image <https link>] [--out <file>]
-                             Without --image the SVG is written beside the output to upload [--theme] [--no-source]
-  generate [--check]         Make each diagram the settings' sources name from its files (Terraform, OpenAPI, Compose,
-                             Kubernetes, Prisma, SQL, workflows, and more), apply its overrides file, and write it with
-                             its pictures; --check writes nothing and fails on drift, saying what changed
-                             [--source <name>]  One source only   [--capture]  Keep hand edits in the overrides first
-                             [--since <ref>]  Only the sources whose files changed since a git ref, such as origin/main
-                             [--format github|json|sarif|junit]  Annotations, the versioned JSON report, or a report for
-                             code scanning or a test view; exit 0 in step, 1 on drift or an error, 2 for a usage mistake
-                             [--out <file>]  Write the report to a file and print the text a person reads
-  icons <query>              Search bundled icons
-  --help, -h                 Print this help`;
-}
 function asTheme(value) {
   return THEME_NAMES.find((name) => name === value) ?? "light";
 }
@@ -178690,12 +179004,13 @@ async function runCli(argv, who = REPOSITORY_CLI) {
   const args = readArgs(argv, usage);
   if (args === null) return EXIT.usage;
   const { values, positionals } = args;
+  const [command, target2] = positionals;
   if (values.help === true) {
-    process.stdout.write(`${usage}
+    const named2 = findCliCommand(command);
+    process.stdout.write(`${named2 === void 0 ? usage : commandHelpText(who.bin, named2)}
 `);
     return EXIT.ok;
   }
-  const [command, target2] = positionals;
   if (command === "generate") {
     const format = values.format === "github" || values.format === "json" || values.format === "sarif" || values.format === "junit" ? values.format : "text";
     if (values.format !== void 0 && format === "text") {
@@ -178763,8 +179078,10 @@ var init_run = __esm({
     init_commands();
     init_export_command();
     init_generate_command();
+    init_help();
     init_import_command();
     init_import_source_command();
+    init_manifest();
     init_read_command();
     init_settings_file();
     init_targets();
@@ -178805,7 +179122,14 @@ var init_run = __esm({
 // ../../packages/diagrams/src/cli/index.ts
 var cli_exports = {};
 __export(cli_exports, {
+  CLI_COMMANDS: () => CLI_COMMANDS,
+  CLI_ENVIRONMENT: () => CLI_ENVIRONMENT,
+  CLI_USAGE_MISTAKES: () => CLI_USAGE_MISTAKES,
   EXIT: () => EXIT,
+  commandHelpText: () => commandHelpText,
+  commandSynopsis: () => commandSynopsis,
+  findCliCommand: () => findCliCommand,
+  optionUsage: () => optionUsage,
   runCli: () => runCli,
   usageText: () => usageText
 });
@@ -178814,11 +179138,13 @@ var init_cli = __esm({
     "use strict";
     init_run();
     init_commands();
+    init_help();
+    init_manifest();
   }
 });
 
 // package.json
-var package_default = { version: "0.1.0-beta.5" };
+var package_default = { version: "0.1.0-beta.6" };
 
 // npm/package-config.json
 var package_config_default = {
@@ -178841,7 +179167,7 @@ var ABOUT = `${BIN} ${package_default.version}
 
 The Plotwork command line. It checks, draws, and syncs diagrams in your repository, offline.
 It counts nothing and sends nothing; the only request it makes is for a hosted link given to read.
-Documentation: https://docs.plotwork.dev/diagrams-in-ci
+Documentation: https://docs.plotwork.dev/cli/overview
 `;
 function nodeMajor() {
   return Number(process.versions.node.split(".")[0]);
