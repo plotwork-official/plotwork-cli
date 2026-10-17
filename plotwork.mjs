@@ -947,6 +947,24 @@ var init_view_links = __esm({
   }
 });
 
+// ../../packages/diagrams/src/constants/mcp-release.ts
+function mcpPackagePin(release = MCP_RELEASE) {
+  return `${release.packageName}@${release.version}`;
+}
+function mcpCommand(release = MCP_RELEASE) {
+  return `npx -y ${mcpPackagePin(release)}`;
+}
+var MCP_RELEASE;
+var init_mcp_release = __esm({
+  "../../packages/diagrams/src/constants/mcp-release.ts"() {
+    "use strict";
+    MCP_RELEASE = {
+      packageName: "@buun_group/plotwork-mcp",
+      version: "0.1.0-beta.4"
+    };
+  }
+});
+
 // ../../packages/diagrams/src/constants/layout-limits.ts
 var LAYOUT_LIMITS;
 var init_layout_limits = __esm({
@@ -3840,6 +3858,7 @@ var init_constants = __esm({
     init_editing();
     init_diagram_links();
     init_view_links();
+    init_mcp_release();
     init_layout_limits();
     init_lint_limits();
     init_style_rules();
@@ -100737,7 +100756,7 @@ function routeOf(edge) {
   return section === void 0 ? [] : [section.startPoint, ...section.bendPoints ?? [], section.endPoint];
 }
 function placeEdges(root) {
-  const placed2 = (root.edges ?? []).map((edge) => {
+  const placed3 = (root.edges ?? []).map((edge) => {
     const label = edge.labels?.[0];
     return {
       id: toEdgeId(Number(edge.id.slice(1))),
@@ -100745,7 +100764,7 @@ function placeEdges(root) {
       label: label === void 0 ? null : { text: label.text ?? "", rect: { x: label.x ?? 0, y: label.y ?? 0, width: label.width ?? 0, height: label.height ?? 0 } }
     };
   });
-  return placed2.sort((a, b) => Number(a.id.slice(1)) - Number(b.id.slice(1)));
+  return placed3.sort((a, b) => Number(a.id.slice(1)) - Number(b.id.slice(1)));
 }
 function routeAroundTabs(edge, tabs, nodes) {
   const cleared = clearTabs({ points: edge.points, labelRect: edge.label?.rect ?? null }, tabs, nodes);
@@ -105955,8 +105974,8 @@ var init_paint_role = __esm({
 });
 
 // ../../packages/diagrams/src/render/flow/paint-edge.ts
-function paintEdge(edge, placed2, theme, crossings2 = []) {
-  const parts = paintArrowLine(placed2.points, {
+function paintEdge(edge, placed3, theme, crossings2 = []) {
+  const parts = paintArrowLine(placed3.points, {
     color: edge.role === void 0 ? theme.edge : roleColor(edge.role, theme),
     line: paintedLine(edge.line, edge.role),
     heads: edge.heads,
@@ -105973,18 +105992,18 @@ function labelIconColor(icon, theme) {
 function nestedBadge(pill2, step) {
   return { x: pill2.x + STEP_METRICS.pillInset, y: pill2.y + (pill2.height - STEP_METRICS.height) / 2, width: stepBadgeWidth(step), height: STEP_METRICS.height };
 }
-function paintEdgeLabel(placed2, icon, theme, step, role) {
-  const label = placed2.label;
+function paintEdgeLabel(placed3, icon, theme, step, role) {
+  const label = placed3.label;
   if (label === null) return "";
-  if (step !== void 0 && label.text === "") return el("g", { "data-edge-step": placed2.id }, [paintStepBadge(label.rect, step, theme)]);
+  if (step !== void 0 && label.text === "") return el("g", { "data-edge-step": placed3.id }, [paintStepBadge(label.rect, step, theme)]);
   const { x, y, width, height } = label.rect;
   const top = y + (height - TYPE_ROLES.edgeLabel.lineHeight) / 2;
   const pill2 = el("rect", { x, y, width, height, rx: EDGE_METRICS.labelRadius, fill: theme.surface, stroke: role === void 0 ? theme.border : roleColor(role, theme), "stroke-width": 1 });
   if (step !== void 0) {
     const badge = nestedBadge(label.rect, step);
     const textLeft = badge.x + badge.width + STEP_METRICS.pillGap;
-    if (icon === null) return el("g", { "data-edge-label": placed2.id }, [pill2, paintStepBadge(badge, step, theme), paintTextBlock({ x: textLeft, top, lines: [label.text], role: "edgeLabel", color: theme.inkSecondary })]);
-    return el("g", { "data-edge-label": placed2.id }, [
+    if (icon === null) return el("g", { "data-edge-label": placed3.id }, [pill2, paintStepBadge(badge, step, theme), paintTextBlock({ x: textLeft, top, lines: [label.text], role: "edgeLabel", color: theme.inkSecondary })]);
+    return el("g", { "data-edge-label": placed3.id }, [
       pill2,
       paintStepBadge(badge, step, theme),
       paintIcon(icon, { x: textLeft + EDGE_METRICS.labelIconSize / 2, y: y + height / 2 }, EDGE_METRICS.labelIconSize, labelIconColor(icon, theme)),
@@ -105993,12 +106012,12 @@ function paintEdgeLabel(placed2, icon, theme, step, role) {
   }
   if (icon === null) {
     const text4 = paintTextBlock({ x: x + width / 2, top, lines: [label.text], role: "edgeLabel", color: theme.inkSecondary, anchor: "middle" });
-    return el("g", { "data-edge-label": placed2.id }, [pill2, text4]);
+    return el("g", { "data-edge-label": placed3.id }, [pill2, text4]);
   }
   const textWidth3 = measureRole(label.text, "edgeLabel");
   const left = x + (width - (EDGE_METRICS.labelIconSize + EDGE_METRICS.labelIconGap + textWidth3)) / 2;
   const iconCenter = { x: left + EDGE_METRICS.labelIconSize / 2, y: y + height / 2 };
-  return el("g", { "data-edge-label": placed2.id }, [
+  return el("g", { "data-edge-label": placed3.id }, [
     pill2,
     paintIcon(icon, iconCenter, EDGE_METRICS.labelIconSize, labelIconColor(icon, theme)),
     paintTextBlock({ x: left + EDGE_METRICS.labelIconSize + EDGE_METRICS.labelIconGap, top, lines: [label.text], role: "edgeLabel", color: theme.inkSecondary })
@@ -106040,10 +106059,10 @@ var init_paint_marks = __esm({
 });
 
 // ../../packages/diagrams/src/render/flow/paint-group.ts
-function paintGroup(group2, placed2, theme) {
-  const { x, y, width, height } = placed2.rect;
-  const colors = groupFrameColors(theme, group2.tone, placed2.depth);
-  return el("g", { "data-group": group2.id, "data-group-type": group2.type, "data-frame": group2.frame, "data-depth": placed2.depth }, [
+function paintGroup(group2, placed3, theme) {
+  const { x, y, width, height } = placed3.rect;
+  const colors = groupFrameColors(theme, group2.tone, placed3.depth);
+  return el("g", { "data-group": group2.id, "data-group-type": group2.type, "data-frame": group2.frame, "data-depth": placed3.depth }, [
     el("rect", {
       x,
       y,
@@ -106058,8 +106077,8 @@ function paintGroup(group2, placed2, theme) {
     })
   ]);
 }
-function paintGroupTab(group2, placed2, theme) {
-  return paintTab(group2, placed2.tab, placed2.depth, theme, { attribute: "data-group-tab", border: null });
+function paintGroupTab(group2, placed3, theme) {
+  return paintTab(group2, placed3.tab, placed3.depth, theme, { attribute: "data-group-tab", border: null });
 }
 function paintTab(owner, tab, depth, theme, look) {
   const { x, y } = tab.rect;
@@ -106120,21 +106139,21 @@ var init_paint_group = __esm({
 });
 
 // ../../packages/diagrams/src/kinds/c4/paint-element.ts
-function paintElement(element, placed2, theme) {
-  const { y, width, height } = placed2.rect;
-  const x = placed2.rect.x + (placed2.slack ?? 0) / 2;
+function paintElement(element, placed3, theme) {
+  const { y, width, height } = placed3.rect;
+  const x = placed3.rect.x + (placed3.slack ?? 0) / 2;
   const tone = theme.tones[element.tone];
   const isTinted = !element.isExternal;
   const chipToneName = (element.icon === null ? null : iconTone(element.icon)) ?? element.tone;
   const chipTone = theme.tones[chipToneName];
   const textLeft = element.icon === null ? NODE_METRICS.paddingX : NODE_METRICS.chipInset + NODE_METRICS.chipSize + NODE_METRICS.chipGap;
-  const [caption, ...description] = placed2.subLines;
-  const labelHeight = blockHeight(placed2.labelLines.length, "label");
+  const [caption, ...description] = placed3.subLines;
+  const labelHeight = blockHeight(placed3.labelLines.length, "label");
   const descriptionHeight = description.length === 0 ? 0 : C4_METRICS.descGap + blockHeight(description.length, "sub");
   const top = y + (height - labelHeight - NODE_METRICS.subGap - TYPE_ROLES.sub.lineHeight - descriptionHeight) / 2;
   const parts = [
     el("rect", {
-      x: placed2.rect.x,
+      x: placed3.rect.x,
       y,
       width,
       height,
@@ -106156,7 +106175,7 @@ function paintElement(element, placed2, theme) {
       parts.push(paintIcon(element.icon, centerOf(chip2), NODE_METRICS.iconSize, isTinted ? bareGlyphColor(theme, chipToneName) : chipTone.ink));
     }
   }
-  parts.push(paintTextBlock({ x: x + textLeft, top, lines: placed2.labelLines, role: "label", color: theme.ink }));
+  parts.push(paintTextBlock({ x: x + textLeft, top, lines: placed3.labelLines, role: "label", color: theme.ink }));
   const captionTop = top + labelHeight + NODE_METRICS.subGap;
   if (caption !== void 0) parts.push(paintTextBlock({ x: x + textLeft, top: captionTop, lines: [caption], role: "sub", color: theme.inkSecondary }));
   if (description.length > 0) {
@@ -106198,20 +106217,20 @@ function tagPath(left, top, width, height, roundsLeft) {
     "Z"
   ].join("");
 }
-function paintRelationshipLabel(relationship, placed2, theme) {
-  const label = placed2.label;
+function paintRelationshipLabel(relationship, placed3, theme) {
+  const label = placed3.label;
   if (label === null) return "";
-  if (!hasText(relationship)) return relationship.step === void 0 ? "" : el("g", { "data-edge-step": placed2.id }, [paintStepBadge(label.rect, relationship.step, theme)]);
+  if (!hasText(relationship)) return relationship.step === void 0 ? "" : el("g", { "data-edge-step": placed3.id }, [paintStepBadge(label.rect, relationship.step, theme)]);
   const { x, y, width, height } = label.rect;
   const parts = pillParts(relationship, label.rect);
   const text4 = pillText(relationship);
   const top = y + (height - TYPE_ROLES.edgeLabel.lineHeight) / 2;
-  const pill2 = el("g", { "data-edge-pill": placed2.id }, [
+  const pill2 = el("g", { "data-edge-pill": placed3.id }, [
     el("rect", { x, y, width, height, rx: EDGE_METRICS.labelRadius, fill: theme.surface }),
     ...parts.tag === null ? [] : [el("path", { d: tagPath(x + parts.tag.left, y, parts.tag.width, height, parts.tag.left === 0), fill: theme.tones.neutral.chipFill })],
     el("rect", { x, y, width, height, rx: EDGE_METRICS.labelRadius, fill: "none", stroke: theme.border, "stroke-width": 1 })
   ]);
-  return el("g", { "data-edge-label": placed2.id }, [
+  return el("g", { "data-edge-label": placed3.id }, [
     pill2,
     ...parts.badge === null || relationship.step === void 0 ? [] : [paintStepBadge(parts.badge, relationship.step, theme)],
     ...parts.labelLeft === null || text4.label === null ? [] : [paintTextBlock({ x: x + parts.labelLeft, top, lines: [text4.label], role: "edgeLabel", color: theme.ink })],
@@ -106235,25 +106254,25 @@ function renderC4Svg(diagram, layout, theme, options3) {
   const elementById = new Map(diagram.elements.map((element) => [element.id, element]));
   const relationshipById = new Map(diagram.relationships.map((relationship) => [relationship.id, relationship]));
   const frames = [...layout.groups].sort((a, b) => a.depth - b.depth);
-  const groups = frames.flatMap((placed2) => {
-    const group2 = groupById.get(placed2.id);
-    return group2 === void 0 ? [] : [paintGroup(group2, placed2, theme)];
+  const groups = frames.flatMap((placed3) => {
+    const group2 = groupById.get(placed3.id);
+    return group2 === void 0 ? [] : [paintGroup(group2, placed3, theme)];
   });
-  const tabs = frames.flatMap((placed2) => {
-    const group2 = groupById.get(placed2.id);
-    return group2 === void 0 ? [] : [paintGroupTab(group2, placed2, theme)];
+  const tabs = frames.flatMap((placed3) => {
+    const group2 = groupById.get(placed3.id);
+    return group2 === void 0 ? [] : [paintGroupTab(group2, placed3, theme)];
   });
-  const edges = layout.edges.flatMap((placed2) => {
-    const edge = edgeById.get(placed2.id);
-    return edge === void 0 ? [] : [paintEdge(edge, placed2, theme)];
+  const edges = layout.edges.flatMap((placed3) => {
+    const edge = edgeById.get(placed3.id);
+    return edge === void 0 ? [] : [paintEdge(edge, placed3, theme)];
   });
-  const nodes = layout.nodes.flatMap((placed2) => {
-    const element = elementById.get(placed2.id);
-    return element === void 0 ? [] : [paintElement(element, placed2, theme)];
+  const nodes = layout.nodes.flatMap((placed3) => {
+    const element = elementById.get(placed3.id);
+    return element === void 0 ? [] : [paintElement(element, placed3, theme)];
   });
-  const labels2 = layout.edges.flatMap((placed2) => {
-    const relationship = relationshipById.get(placed2.id);
-    return relationship === void 0 ? [] : [paintRelationshipLabel(relationship, placed2, theme)];
+  const labels2 = layout.edges.flatMap((placed3) => {
+    const relationship = relationshipById.get(placed3.id);
+    return relationship === void 0 ? [] : [paintRelationshipLabel(relationship, placed3, theme)];
   });
   return paintDocument(
     { size: layout.size, title: diagram.meta.title ?? "C4 diagram", outline: outlineC4(diagram), summary: summarizeC4(diagram), children: [...groups, ...edges, ...tabs, ...nodes, ...labels2] },
@@ -106457,7 +106476,7 @@ function orient(diagram) {
   const candidates2 = diagram.relations.filter((relation2) => relation2.from !== relation2.to);
   const ordered = [...candidates2.filter((relation2) => STRONG.has(relation2.kind)), ...candidates2.filter((relation2) => !STRONG.has(relation2.kind))];
   const outgoing = new Map(ids.map((id) => [id, []]));
-  const placed2 = /* @__PURE__ */ new Map();
+  const placed3 = /* @__PURE__ */ new Map();
   for (const relation2 of ordered) {
     const isUpperFrom = RELATION_SPECS[relation2.kind].upper === "from";
     let upper = isUpperFrom ? relation2.from : relation2.to;
@@ -106469,10 +106488,10 @@ function orient(diagram) {
       isFlipped = true;
     }
     outgoing.get(upper)?.push(lower);
-    placed2.set(relation2.id, { relation: relation2, upper, lower, isUpperFrom: upper === relation2.from, isFlipped });
+    placed3.set(relation2.id, { relation: relation2, upper, lower, isUpperFrom: upper === relation2.from, isFlipped });
   }
   const ranks = ranksOf(ids, outgoing);
-  const relations = candidates2.flatMap((relation2) => placed2.get(relation2.id) ?? []);
+  const relations = candidates2.flatMap((relation2) => placed3.get(relation2.id) ?? []);
   let layerCrossings = 0;
   for (const entry2 of relations) layerCrossings += Math.max(0, (ranks.get(entry2.lower) ?? 0) - (ranks.get(entry2.upper) ?? 0) - 1);
   return { relations, ranks, layerCrossings, loops };
@@ -107162,23 +107181,23 @@ var init_ends = __esm({
 // ../../packages/diagrams/src/kinds/class/layout/marks.ts
 function markEndTexts(diagram, relations, shapes2, noteLinks) {
   const rects = [
-    ...shapes2.classes.map((placed2) => placed2.rect),
-    ...shapes2.packages.map((placed2) => placed2.tab.rect),
-    ...shapes2.notes.map((placed2) => placed2.rect),
-    ...relations.flatMap((placed2) => placed2.label === null ? [] : [placed2.label.rect])
+    ...shapes2.classes.map((placed3) => placed3.rect),
+    ...shapes2.packages.map((placed3) => placed3.tab.rect),
+    ...shapes2.notes.map((placed3) => placed3.rect),
+    ...relations.flatMap((placed3) => placed3.label === null ? [] : [placed3.label.rect])
   ];
-  const obstacles = { rects, lines: [...relations.map((placed2) => ({ owner: placed2.id, points: placed2.points })), ...noteLinks.map((link2) => ({ owner: `note ${link2.note}`, points: link2.points }))] };
-  return relations.map((placed2) => {
-    const source = diagram.relations.find((relation2) => relation2.id === placed2.id);
-    const first = placed2.points[0];
-    const second = placed2.points[1];
-    const last = placed2.points[placed2.points.length - 1];
-    const beforeLast = placed2.points[placed2.points.length - 2];
-    if (source === void 0 || first === void 0 || second === void 0 || last === void 0 || beforeLast === void 0) return placed2;
+  const obstacles = { rects, lines: [...relations.map((placed3) => ({ owner: placed3.id, points: placed3.points })), ...noteLinks.map((link2) => ({ owner: `note ${link2.note}`, points: link2.points }))] };
+  return relations.map((placed3) => {
+    const source = diagram.relations.find((relation2) => relation2.id === placed3.id);
+    const first = placed3.points[0];
+    const second = placed3.points[1];
+    const last = placed3.points[placed3.points.length - 1];
+    const beforeLast = placed3.points[placed3.points.length - 2];
+    if (source === void 0 || first === void 0 || second === void 0 || last === void 0 || beforeLast === void 0) return placed3;
     const isLoop = source.from === source.to;
-    const fromText = source.fromCardinality === null ? null : placeEndText(source.fromCardinality, first, second, placed2.startMark, placed2.id, obstacles, isLoop ? -1 : 1, isLoop);
-    const toText = source.toCardinality === null ? null : placeEndText(source.toCardinality, last, beforeLast, placed2.endMark, placed2.id, obstacles, 1, isLoop);
-    return { ...placed2, fromText, toText };
+    const fromText = source.fromCardinality === null ? null : placeEndText(source.fromCardinality, first, second, placed3.startMark, placed3.id, obstacles, isLoop ? -1 : 1, isLoop);
+    const toText = source.toCardinality === null ? null : placeEndText(source.toCardinality, last, beforeLast, placed3.endMark, placed3.id, obstacles, 1, isLoop);
+    return { ...placed3, fromText, toText };
   });
 }
 var init_marks = __esm({
@@ -107192,27 +107211,27 @@ var init_marks = __esm({
 function extent(layout) {
   return {
     rects: [
-      ...layout.classes.map((placed2) => placed2.rect),
-      ...layout.packages.map((placed2) => placed2.rect),
-      ...layout.notes.map((placed2) => placed2.rect),
-      ...layout.relations.flatMap((placed2) => [placed2.label?.rect, placed2.fromText?.rect, placed2.toText?.rect].flatMap((rect) => rect === void 0 ? [] : [rect]))
+      ...layout.classes.map((placed3) => placed3.rect),
+      ...layout.packages.map((placed3) => placed3.rect),
+      ...layout.notes.map((placed3) => placed3.rect),
+      ...layout.relations.flatMap((placed3) => [placed3.label?.rect, placed3.fromText?.rect, placed3.toText?.rect].flatMap((rect) => rect === void 0 ? [] : [rect]))
     ],
-    points: [...layout.relations.flatMap((placed2) => placed2.points), ...layout.noteLinks.flatMap((link2) => link2.points)]
+    points: [...layout.relations.flatMap((placed3) => placed3.points), ...layout.noteLinks.flatMap((link2) => link2.points)]
   };
 }
 function shift(layout, dx, dy, size) {
   const moveText = (text4) => text4 === null ? text4 : { ...text4, rect: moved(text4.rect, dx, dy) };
   return {
     size,
-    classes: layout.classes.map((placed2) => ({ ...placed2, rect: moved(placed2.rect, dx, dy) })),
-    packages: layout.packages.map((placed2) => ({ ...placed2, rect: moved(placed2.rect, dx, dy), tab: { ...placed2.tab, rect: moved(placed2.tab.rect, dx, dy) } })),
-    notes: layout.notes.map((placed2) => ({ ...placed2, rect: moved(placed2.rect, dx, dy) })),
-    relations: layout.relations.map((placed2) => ({
-      ...placed2,
-      points: placed2.points.map((point) => movedPoint(point, dx, dy)),
-      label: moveText(placed2.label),
-      fromText: moveText(placed2.fromText),
-      toText: moveText(placed2.toText)
+    classes: layout.classes.map((placed3) => ({ ...placed3, rect: moved(placed3.rect, dx, dy) })),
+    packages: layout.packages.map((placed3) => ({ ...placed3, rect: moved(placed3.rect, dx, dy), tab: { ...placed3.tab, rect: moved(placed3.tab.rect, dx, dy) } })),
+    notes: layout.notes.map((placed3) => ({ ...placed3, rect: moved(placed3.rect, dx, dy) })),
+    relations: layout.relations.map((placed3) => ({
+      ...placed3,
+      points: placed3.points.map((point) => movedPoint(point, dx, dy)),
+      label: moveText(placed3.label),
+      fromText: moveText(placed3.fromText),
+      toText: moveText(placed3.toText)
     })),
     noteLinks: layout.noteLinks.map((link2) => ({ ...link2, points: link2.points.map((point) => movedPoint(point, dx, dy)) }))
   };
@@ -107274,7 +107293,7 @@ function slotsFor(length, count3, side) {
   });
 }
 function layoutLoops(loops, cards, direction) {
-  const placed2 = /* @__PURE__ */ new Map();
+  const placed3 = /* @__PURE__ */ new Map();
   const byClass = /* @__PURE__ */ new Map();
   for (const relation2 of loops) byClass.set(relation2.from, [...byClass.get(relation2.from) ?? [], relation2]);
   for (const [id, own2] of byClass) {
@@ -107286,13 +107305,13 @@ function layoutLoops(loops, cards, direction) {
     own2.forEach((relation2, index2) => {
       const slot = slots[index2];
       const labelWidth = relation2.label === null ? 0 : Math.ceil(measureRole(relation2.label, "edgeLabel")) + EDGE_METRICS.labelPaddingX * 2;
-      placed2.set(relation2.id, {
+      placed3.set(relation2.id, {
         points: [frame.point(slot.from, 0), frame.point(slot.from, slot.out), frame.point(slot.to, slot.out), frame.point(slot.to, 0)],
         label: relation2.label === null ? null : { text: relation2.label, rect: frame.label(slot, labelWidth) }
       });
     });
   }
-  return placed2;
+  return placed3;
 }
 var NEST_STEP, NEST_RISE, LABEL_GAP3, LOOP_MARGIN, STACK_GAP, LEAST_LOOP_LENGTH, sideFor, LABEL_ROW;
 var init_loops = __esm({
@@ -107484,7 +107503,7 @@ async function layoutClassOnce(diagram) {
   const laidOut2 = await runElk2(diagram, sizing, orientation);
   const shapes2 = { classes: [], packages: [], notes: [] };
   collectShapes2(laidOut2, diagram, sizing, sizing.tabs, 0, shapes2);
-  const cards = new Map(shapes2.classes.map((placed3) => [placed3.id, placed3.rect]));
+  const cards = new Map(shapes2.classes.map((placed4) => [placed4.id, placed4.rect]));
   const direction = diagram.direction;
   const edges = new Map((laidOut2.edges ?? []).map((edge) => [edge.id, edge]));
   const routes = /* @__PURE__ */ new Map();
@@ -107506,11 +107525,11 @@ async function layoutClassOnce(diagram) {
     const route = routes.get(entry2.relation.id);
     if (route !== void 0) snapRoutes.push({ id: entry2.relation.id, points: route.points, first: entry2.relation.from, last: entry2.relation.to, label: route.label?.rect ?? null });
   }
-  snapPlaces(snapRoutes, cards, shapes2.packages.map((placed3) => placed3.tab.rect), direction).forEach((snapped, index2) => {
+  snapPlaces(snapRoutes, cards, shapes2.packages.map((placed4) => placed4.tab.rect), direction).forEach((snapped, index2) => {
     const route = routes.get(snapRoutes[index2].id);
     if (route !== void 0) routes.set(snapRoutes[index2].id, { points: snapped.points, label: route.label === null || snapped.label === null ? route.label : { ...route.label, rect: snapped.label } });
   });
-  const tabRects = shapes2.packages.map((placed3) => placed3.tab.rect);
+  const tabRects = shapes2.packages.map((placed4) => placed4.tab.rect);
   const boxRects = [...cards.values(), ...shapes2.notes.map((note) => note.rect)];
   for (const [id, route] of routes) {
     const cleared = clearTabs({ points: route.points, labelRect: route.label?.rect ?? null }, tabRects, boxRects);
@@ -107530,13 +107549,13 @@ async function layoutClassOnce(diagram) {
     const card5 = note.target === null ? void 0 : cards.get(note.target);
     if (edge !== void 0 && card5 !== void 0) noteLinks.push({ note: note.id, points: withStubs(routeOf2(edge), card5, null, direction) });
   }
-  const placed2 = diagram.relations.flatMap((relation2) => {
+  const placed3 = diagram.relations.flatMap((relation2) => {
     const route = routes.get(relation2.id);
     if (route === void 0 || route.points.length < 2) return [];
     const spec = RELATION_SPECS[relation2.kind];
     return [{ id: relation2.id, kind: relation2.kind, points: route.points, startMark: spec.fromMark, endMark: spec.toMark, label: route.label, fromText: null, toText: null }];
   });
-  const withTexts = markEndTexts(diagram, placed2, shapes2, noteLinks);
+  const withTexts = markEndTexts(diagram, placed3, shapes2, noteLinks);
   const size = { width: Math.ceil(laidOut2.width ?? 0), height: Math.ceil(laidOut2.height ?? 0) };
   return fitCanvas({ size, classes: shapes2.classes, packages: shapes2.packages, notes: shapes2.notes, relations: withTexts, noteLinks }, CANVAS_METRICS.padding);
 }
@@ -108977,9 +108996,9 @@ function headerPath(x, y, width, height, radius, isWhole) {
   }
   return `M${num(x)} ${num(y + height)}V${num(y + radius)}Q${num(x)} ${num(y)} ${num(x + radius)} ${num(y)}H${num(x + width - radius)}Q${num(x + width)} ${num(y)} ${num(x + width)} ${num(y + radius)}V${num(y + height)}Z`;
 }
-function paintHeader(node3, placed2, theme) {
-  const { x, y, width } = placed2.rect;
-  const { box } = placed2;
+function paintHeader(node3, placed3, theme) {
+  const { x, y, width } = placed3.rect;
+  const { box } = placed3;
   const tone = theme.tones[node3.tone];
   const isWhole = box.rows.length === 0;
   const center = x + width / 2;
@@ -108992,14 +109011,14 @@ function paintHeader(node3, placed2, theme) {
   parts.push(paintRun({ x: center, top: nameTop, text: box.name, role: "tableName", color: theme.ink, anchor: "middle", isItalic: CLASS_TYPE_SPECS[node3.type].isItalic }));
   return parts;
 }
-function paintRows(node3, placed2, theme) {
-  const { x, y } = placed2.rect;
-  const { box } = placed2;
+function paintRows(node3, placed3, theme) {
+  const { x, y } = placed3.rect;
+  const { box } = placed3;
   const markColumn = box.hasMarks ? CLASS_METRICS.markWidth + CLASS_METRICS.markGap : 0;
   const textLeft = x + CLASS_METRICS.paddingX + markColumn;
   const parts = [];
   if (box.dividerAt !== null) {
-    parts.push(el("line", { x1: x, y1: y + box.dividerAt, x2: x + placed2.rect.width, y2: y + box.dividerAt, stroke: theme.border, "stroke-width": 1 }));
+    parts.push(el("line", { x1: x, y1: y + box.dividerAt, x2: x + placed3.rect.width, y2: y + box.dividerAt, stroke: theme.border, "stroke-width": 1 }));
   }
   for (const row of box.rows) {
     const member = node3.members[row.member];
@@ -109017,12 +109036,12 @@ function paintRows(node3, placed2, theme) {
   }
   return parts;
 }
-function paintClass(node3, placed2, theme) {
-  const { x, y, width, height } = placed2.rect;
+function paintClass(node3, placed3, theme) {
+  const { x, y, width, height } = placed3.rect;
   return el("g", { "data-class": node3.id, "data-type": node3.type }, [
     el("rect", { x, y, width, height, rx: CLASS_METRICS.radius, fill: theme.surface, stroke: theme.border, "stroke-width": CLASS_METRICS.borderWidth, filter: LIFT }),
-    ...paintHeader(node3, placed2, theme),
-    ...paintRows(node3, placed2, theme)
+    ...paintHeader(node3, placed3, theme),
+    ...paintRows(node3, placed3, theme)
   ]);
 }
 var init_class2 = __esm({
@@ -109125,19 +109144,19 @@ var init_paint_parts = __esm({
 });
 
 // ../../packages/diagrams/src/kinds/class/render/frame.ts
-function paintPackage(pack2, placed2, theme) {
-  const { x, y, width, height } = placed2.rect;
-  const colors = groupFrameColors(theme, pack2.tone, placed2.depth);
-  return el("g", { "data-package": pack2.id, "data-depth": placed2.depth }, [
+function paintPackage(pack2, placed3, theme) {
+  const { x, y, width, height } = placed3.rect;
+  const colors = groupFrameColors(theme, pack2.tone, placed3.depth);
+  return el("g", { "data-package": pack2.id, "data-depth": placed3.depth }, [
     el("rect", { x, y, width, height, rx: GROUP_METRICS.radius, fill: colors.fill, stroke: colors.border, "stroke-width": GROUP_METRICS.borderWidth })
   ]);
 }
-function paintPackageTab(pack2, placed2, theme) {
-  const tab = { rect: placed2.tab.rect, isFlush: true, label: placed2.tab.label, sub: null };
-  return paintTab({ id: pack2.id, tone: pack2.tone, icon: null, stack: [] }, tab, placed2.depth, theme, { attribute: "data-group-tab", border: null });
+function paintPackageTab(pack2, placed3, theme) {
+  const tab = { rect: placed3.tab.rect, isFlush: true, label: placed3.tab.label, sub: null };
+  return paintTab({ id: pack2.id, tone: pack2.tone, icon: null, stack: [] }, tab, placed3.depth, theme, { attribute: "data-group-tab", border: null });
 }
-function paintNoteCard(placed2, theme) {
-  return paintNote({ rect: placed2.rect, lines: placed2.box.lines }, theme);
+function paintNoteCard(placed3, theme) {
+  return paintNote({ rect: placed3.rect, lines: placed3.box.lines }, theme);
 }
 function paintNoteLink(link2, theme) {
   const parts = paintArrowLine(link2.points, { color: theme.edge, line: "dotted", heads: "none" });
@@ -109188,35 +109207,35 @@ function arrowHeads(start2, end) {
   if (start2 === "arrow" && end === "arrow") return "both";
   return end === "arrow" ? "end" : "none";
 }
-function paintRelation(placed2, theme) {
-  const points = dedupePoints(placed2.points);
+function paintRelation(placed3, theme) {
+  const points = dedupePoints(placed3.points);
   const first = points[0];
   const second = points[1];
   const last = points[points.length - 1];
   const before = points[points.length - 2];
   if (first === void 0 || second === void 0 || last === void 0 || before === void 0) return "";
-  const spec = RELATION_SPECS[placed2.kind];
-  const startLength = markLength(placed2.startMark);
-  const endLength = markLength(placed2.endMark);
+  const spec = RELATION_SPECS[placed3.kind];
+  const startLength = markLength(placed3.startMark);
+  const endLength = markLength(placed3.endMark);
   const route = trimmed(points, startLength, endLength);
   const parts = paintArrowLine(startLength === 0 && endLength > 0 ? route.reverse() : route, {
     color: theme.edge,
     line: spec.line,
-    heads: arrowHeads(placed2.startMark, placed2.endMark)
+    heads: arrowHeads(placed3.startMark, placed3.endMark)
   });
-  if (startLength > 0) parts.push(paintMark(placed2.startMark, first, unitFrom(first, second), theme));
-  if (endLength > 0) parts.push(paintMark(placed2.endMark, last, unitFrom(last, before), theme));
-  return el("g", { "data-relation": placed2.id, "data-kind": placed2.kind }, parts);
+  if (startLength > 0) parts.push(paintMark(placed3.startMark, first, unitFrom(first, second), theme));
+  if (endLength > 0) parts.push(paintMark(placed3.endMark, last, unitFrom(last, before), theme));
+  return el("g", { "data-relation": placed3.id, "data-kind": placed3.kind }, parts);
 }
-function paintRelationLabel(placed2, theme) {
-  return paintEdgeLabel({ id: placed2.id, label: placed2.label }, null, theme);
+function paintRelationLabel(placed3, theme) {
+  return paintEdgeLabel({ id: placed3.id, label: placed3.label }, null, theme);
 }
-function paintEndTexts(placed2, theme) {
-  const texts = [placed2.fromText, placed2.toText].flatMap((text4) => text4 === null ? [] : [text4]);
+function paintEndTexts(placed3, theme) {
+  const texts = [placed3.fromText, placed3.toText].flatMap((text4) => text4 === null ? [] : [text4]);
   if (texts.length === 0) return "";
   return el(
     "g",
-    { "data-ends": placed2.id },
+    { "data-ends": placed3.id },
     texts.map((text4) => paintTextBlock({ x: text4.rect.x, top: text4.rect.y, lines: [text4.text], role: "edgeLabel", color: theme.inkSecondary }))
   );
 }
@@ -109240,17 +109259,17 @@ function renderClassSvg(diagram, layout, theme, options3) {
   const packageById = new Map(diagram.packages.map((pack2) => [pack2.id, pack2]));
   const classById = new Map(diagram.classes.map((node3) => [node3.id, node3]));
   const byDepth = [...layout.packages].sort((a, b) => a.depth - b.depth);
-  const frames = byDepth.flatMap((placed2) => {
-    const pack2 = packageById.get(placed2.id);
-    return pack2 === void 0 ? [] : [paintPackage(pack2, placed2, theme)];
+  const frames = byDepth.flatMap((placed3) => {
+    const pack2 = packageById.get(placed3.id);
+    return pack2 === void 0 ? [] : [paintPackage(pack2, placed3, theme)];
   });
-  const tabs = byDepth.flatMap((placed2) => {
-    const pack2 = packageById.get(placed2.id);
-    return pack2 === void 0 ? [] : [paintPackageTab(pack2, placed2, theme)];
+  const tabs = byDepth.flatMap((placed3) => {
+    const pack2 = packageById.get(placed3.id);
+    return pack2 === void 0 ? [] : [paintPackageTab(pack2, placed3, theme)];
   });
-  const boxes2 = layout.classes.flatMap((placed2) => {
-    const node3 = classById.get(placed2.id);
-    return node3 === void 0 ? [] : [paintClass(node3, placed2, theme)];
+  const boxes2 = layout.classes.flatMap((placed3) => {
+    const node3 = classById.get(placed3.id);
+    return node3 === void 0 ? [] : [paintClass(node3, placed3, theme)];
   });
   return paintDocument(
     {
@@ -109261,12 +109280,12 @@ function renderClassSvg(diagram, layout, theme, options3) {
       children: [
         ...frames,
         ...layout.noteLinks.map((link2) => paintNoteLink(link2, theme)),
-        ...layout.relations.map((placed2) => paintRelation(placed2, theme)),
+        ...layout.relations.map((placed3) => paintRelation(placed3, theme)),
         ...tabs,
         ...boxes2,
-        ...layout.notes.map((placed2) => paintNoteCard(placed2, theme)),
-        ...layout.relations.map((placed2) => paintRelationLabel(placed2, theme)),
-        ...layout.relations.map((placed2) => paintEndTexts(placed2, theme))
+        ...layout.notes.map((placed3) => paintNoteCard(placed3, theme)),
+        ...layout.relations.map((placed3) => paintRelationLabel(placed3, theme)),
+        ...layout.relations.map((placed3) => paintEndTexts(placed3, theme))
       ]
     },
     theme,
@@ -109980,11 +109999,11 @@ function spanOverlays(diagram, frames, shapes2, labels2) {
     const tab = frames.tabs.get(overlay.id);
     const memberRects = overlay.members.flatMap((member) => rects.get(member) ?? []);
     if (tab === void 0 || memberRects.length === 0) continue;
-    const obstacles = [...shapes2.groups.map((group2) => group2.tab.rect), ...shapes2.overlays.map((placed3) => placed3.tab.rect), ...overlays.map((placed3) => placed3.tab.rect), ...shapes2.nodes.map((node3) => node3.rect), ...labels2];
+    const obstacles = [...shapes2.groups.map((group2) => group2.tab.rect), ...shapes2.overlays.map((placed4) => placed4.tab.rect), ...overlays.map((placed4) => placed4.tab.rect), ...shapes2.nodes.map((node3) => node3.rect), ...labels2];
     const fitted = fitOverlay(memberRects, tab, obstacles, groupFrames);
     if (fitted.isGrown) grown2.push(fitted.frame);
-    const placed2 = placeTab(fitted.frame, tab);
-    overlays.push({ id: overlay.id, rect: fitted.frame, tab: { ...placed2, rect: fitted.tab, isFlush: fitted.isFlush }, isSpanning: true });
+    const placed3 = placeTab(fitted.frame, tab);
+    overlays.push({ id: overlay.id, rect: fitted.frame, tab: { ...placed3, rect: fitted.tab, isFlush: fitted.isFlush }, isSpanning: true });
     covers.push(...findCovers(diagram, overlay, fitted.frame, nodeRects));
   }
   return { overlays, covers, grown: grown2 };
@@ -109992,8 +110011,8 @@ function spanOverlays(diagram, frames, shapes2, labels2) {
 function placeLevelEdges(diagram, level2, nodes, direction) {
   const routing = { direction, nodes: new Map(nodes.map((node3) => [node3.id, node3.rect])), detours: 0 };
   return diagram.edges.flatMap((edge) => {
-    const placed2 = level2.has(edge.id) ? routeLevelEdge(edge, routing) : null;
-    return placed2 === null ? [] : [placed2];
+    const placed3 = level2.has(edge.id) ? routeLevelEdge(edge, routing) : null;
+    return placed3 === null ? [] : [placed3];
   });
 }
 function changeBadges(diagram, nodes) {
@@ -110810,20 +110829,20 @@ function isTintedCard(node3) {
   return defaults.isTinted || defaults.icon === null && node3.icon === null && node3.tone !== "neutral";
 }
 function paintCard(frame) {
-  const { node: node3, placed: placed2, theme } = frame;
-  const { y, width, height } = placed2.rect;
-  const x = placed2.rect.x + (placed2.slack ?? 0) / 2;
+  const { node: node3, placed: placed3, theme } = frame;
+  const { y, width, height } = placed3.rect;
+  const x = placed3.rect.x + (placed3.slack ?? 0) / 2;
   const tone = theme.tones[node3.tone];
   const isTinted = isTintedCard(node3);
   const chipToneName = (node3.icon === null ? null : iconTone(node3.icon)) ?? node3.tone;
   const chipTone = theme.tones[chipToneName];
   const textLeft = node3.icon === null ? NODE_METRICS.paddingX : NODE_METRICS.chipInset + NODE_METRICS.chipSize + NODE_METRICS.chipGap;
-  const textHeight3 = blockHeight(placed2.labelLines.length, "label") + (placed2.subLines.length > 0 ? NODE_METRICS.subGap + blockHeight(placed2.subLines.length, "sub") : 0);
+  const textHeight3 = blockHeight(placed3.labelLines.length, "label") + (placed3.subLines.length > 0 ? NODE_METRICS.subGap + blockHeight(placed3.subLines.length, "sub") : 0);
   const marksHeight = stackHeight(node3.stack.length);
   const top = y + (height - textHeight3 - marksHeight) / 2;
   const fill = isTinted ? mix(tone.accent, theme.surface, TINTED_FILL_SHARE2) : theme.surface;
   const parts = [
-    el("rect", { x: placed2.rect.x, y, width, height, rx: NODE_METRICS.radius, fill, ...outlineAttrs(frame, isTinted ? tone.outline : theme.border) })
+    el("rect", { x: placed3.rect.x, y, width, height, rx: NODE_METRICS.radius, fill, ...outlineAttrs(frame, isTinted ? tone.outline : theme.border) })
   ];
   if (node3.icon !== null) {
     const chip2 = { x: x + NODE_METRICS.chipInset, y: y + (height - NODE_METRICS.chipSize) / 2, width: NODE_METRICS.chipSize, height: NODE_METRICS.chipSize };
@@ -110834,35 +110853,35 @@ function paintCard(frame) {
       parts.push(paintIcon(node3.icon, centerOf(chip2), NODE_METRICS.iconSize, isTinted ? bareGlyphColor(theme, chipToneName) : chipTone.ink));
     }
   }
-  parts.push(paintTextBlock({ x: x + textLeft, top, lines: placed2.labelLines, role: "label", color: theme.ink }));
-  if (placed2.subLines.length > 0) {
-    const subTop = top + blockHeight(placed2.labelLines.length, "label") + NODE_METRICS.subGap;
-    parts.push(paintTextBlock({ x: x + textLeft, top: subTop, lines: placed2.subLines, role: "sub", color: theme.inkSecondary }));
+  parts.push(paintTextBlock({ x: x + textLeft, top, lines: placed3.labelLines, role: "label", color: theme.ink }));
+  if (placed3.subLines.length > 0) {
+    const subTop = top + blockHeight(placed3.labelLines.length, "label") + NODE_METRICS.subGap;
+    parts.push(paintTextBlock({ x: x + textLeft, top: subTop, lines: placed3.subLines, role: "sub", color: theme.inkSecondary }));
   }
   if (node3.stack.length > 0) parts.push(...paintMarks(node3.stack, x + textLeft, top + textHeight3 + NODE_METRICS.stackTop, theme, theme.tones.neutral.chipFill));
-  if (node3.change !== void 0) parts.push(paintChangeBadge(node3.change, placed2.rect, theme));
+  if (node3.change !== void 0) parts.push(paintChangeBadge(node3.change, placed3.rect, theme));
   return el("g", { "data-node": node3.id, "data-type": node3.type }, parts);
 }
 function paintPill(frame) {
-  const { node: node3, placed: placed2, theme } = frame;
-  const { x, y, width, height } = placed2.rect;
-  const top = y + (height - blockHeight(placed2.labelLines.length, "label")) / 2;
+  const { node: node3, placed: placed3, theme } = frame;
+  const { x, y, width, height } = placed3.rect;
+  const top = y + (height - blockHeight(placed3.labelLines.length, "label")) / 2;
   const parts = [el("rect", { x, y, width, height, rx: height / 2, fill: theme.surface, ...outlineAttrs(frame, theme.edge) })];
   if (node3.icon === null) {
-    parts.push(paintTextBlock({ x: x + width / 2, top, lines: placed2.labelLines, role: "label", color: theme.ink, anchor: "middle" }));
+    parts.push(paintTextBlock({ x: x + width / 2, top, lines: placed3.labelLines, role: "label", color: theme.ink, anchor: "middle" }));
   } else {
     const glyphTone = iconTone(node3.icon) ?? node3.tone;
-    const inset2 = x + (placed2.slack ?? 0) / 2;
+    const inset2 = x + (placed3.slack ?? 0) / 2;
     const iconCenter = { x: inset2 + NODE_METRICS.pillPaddingX + NODE_METRICS.iconSize / 2, y: y + height / 2 };
     parts.push(paintIcon(node3.icon, iconCenter, NODE_METRICS.iconSize, bareGlyphColor(theme, glyphTone)));
     const textX2 = inset2 + NODE_METRICS.pillPaddingX + NODE_METRICS.iconSize + NODE_METRICS.pillIconGap;
-    parts.push(paintTextBlock({ x: textX2, top, lines: placed2.labelLines, role: "label", color: theme.ink }));
+    parts.push(paintTextBlock({ x: textX2, top, lines: placed3.labelLines, role: "label", color: theme.ink }));
   }
-  if (node3.change !== void 0) parts.push(paintChangeBadge(node3.change, placed2.rect, theme));
+  if (node3.change !== void 0) parts.push(paintChangeBadge(node3.change, placed3.rect, theme));
   return el("g", { "data-node": node3.id, "data-type": node3.type }, parts);
 }
-function paintNode(node3, placed2, theme) {
-  const frame = { node: node3, placed: placed2, theme };
+function paintNode(node3, placed3, theme) {
+  const frame = { node: node3, placed: placed3, theme };
   const shape = FLOW_NODE_TYPE_DEFAULTS[node3.type].shape;
   if (shape === "pill") return paintPill(frame);
   return paintCard(frame);
@@ -110884,9 +110903,9 @@ var init_paint_node = __esm({
 });
 
 // ../../packages/diagrams/src/render/flow/paint-overlay.ts
-function paintOverlay(overlay, placed2, theme) {
-  const { x, y, width, height } = placed2.rect;
-  return el("g", { "data-overlay": overlay.id, "data-spanning": placed2.isSpanning ? "true" : "false" }, [
+function paintOverlay(overlay, placed3, theme) {
+  const { x, y, width, height } = placed3.rect;
+  return el("g", { "data-overlay": overlay.id, "data-spanning": placed3.isSpanning ? "true" : "false" }, [
     el("rect", {
       x,
       y,
@@ -110900,8 +110919,8 @@ function paintOverlay(overlay, placed2, theme) {
     })
   ]);
 }
-function paintOverlayTab(overlay, placed2, theme) {
-  return paintTab(overlay, placed2.tab, 0, theme, { attribute: "data-overlay-tab", border: strokeOf(overlay, theme) });
+function paintOverlayTab(overlay, placed3, theme) {
+  return paintTab(overlay, placed3.tab, 0, theme, { attribute: "data-overlay-tab", border: strokeOf(overlay, theme) });
 }
 var strokeOf;
 var init_paint_overlay = __esm({
@@ -110919,35 +110938,35 @@ function renderFlowSvg(diagram, layout, theme, options3) {
   const groupById = new Map(diagram.groups.map((group2) => [group2.id, group2]));
   const nodeById = new Map(diagram.nodes.map((node3) => [node3.id, node3]));
   const edgeById = new Map(diagram.edges.map((edge) => [edge.id, edge]));
-  const groups = [...layout.groups].sort((a, b) => a.depth - b.depth).flatMap((placed2) => {
-    const group2 = groupById.get(placed2.id);
-    return group2 === void 0 ? [] : [paintGroup(group2, placed2, theme)];
+  const groups = [...layout.groups].sort((a, b) => a.depth - b.depth).flatMap((placed3) => {
+    const group2 = groupById.get(placed3.id);
+    return group2 === void 0 ? [] : [paintGroup(group2, placed3, theme)];
   });
-  const groupTabs = [...layout.groups].sort((a, b) => a.depth - b.depth).flatMap((placed2) => {
-    const group2 = groupById.get(placed2.id);
-    return group2 === void 0 ? [] : [paintGroupTab(group2, placed2, theme)];
+  const groupTabs = [...layout.groups].sort((a, b) => a.depth - b.depth).flatMap((placed3) => {
+    const group2 = groupById.get(placed3.id);
+    return group2 === void 0 ? [] : [paintGroupTab(group2, placed3, theme)];
   });
   const overlayById = new Map(diagram.overlays.map((overlay) => [overlay.id, overlay]));
-  const overlays = layout.overlays.flatMap((placed2) => {
-    const overlay = overlayById.get(placed2.id);
-    return overlay === void 0 ? [] : [paintOverlay(overlay, placed2, theme)];
+  const overlays = layout.overlays.flatMap((placed3) => {
+    const overlay = overlayById.get(placed3.id);
+    return overlay === void 0 ? [] : [paintOverlay(overlay, placed3, theme)];
   });
-  const overlayTabs = layout.overlays.flatMap((placed2) => {
-    const overlay = overlayById.get(placed2.id);
-    return overlay === void 0 ? [] : [paintOverlayTab(overlay, placed2, theme)];
+  const overlayTabs = layout.overlays.flatMap((placed3) => {
+    const overlay = overlayById.get(placed3.id);
+    return overlay === void 0 ? [] : [paintOverlayTab(overlay, placed3, theme)];
   });
   const hops = findFlowHops(layout.edges, layout.nodes);
-  const edges = layout.edges.flatMap((placed2) => {
-    const edge = edgeById.get(placed2.id);
-    return edge === void 0 ? [] : [paintEdge(edge, placed2, theme, hops.get(placed2.id))];
+  const edges = layout.edges.flatMap((placed3) => {
+    const edge = edgeById.get(placed3.id);
+    return edge === void 0 ? [] : [paintEdge(edge, placed3, theme, hops.get(placed3.id))];
   });
-  const nodes = layout.nodes.flatMap((placed2) => {
-    const node3 = nodeById.get(placed2.id);
-    return node3 === void 0 ? [] : [paintNode(node3, placed2, theme)];
+  const nodes = layout.nodes.flatMap((placed3) => {
+    const node3 = nodeById.get(placed3.id);
+    return node3 === void 0 ? [] : [paintNode(node3, placed3, theme)];
   });
-  const labels2 = layout.edges.map((placed2) => {
-    const edge = edgeById.get(placed2.id);
-    return paintEdgeLabel(placed2, edge?.icon ?? null, theme, edge?.step, edge?.role);
+  const labels2 = layout.edges.map((placed3) => {
+    const edge = edgeById.get(placed3.id);
+    return paintEdgeLabel(placed3, edge?.icon ?? null, theme, edge?.step, edge?.role);
   });
   const legend2 = layout.legend === void 0 ? [] : [paintRoleLegend(layout.legend, theme)];
   return paintDocument(
@@ -113482,30 +113501,30 @@ function placeMilestone(id, label, day, centerX, top) {
   };
 }
 function placeRows(diagram, xOf, laneTops) {
-  const placed2 = { rows: [], bars: [], milestones: [], anchors: /* @__PURE__ */ new Map() };
+  const placed3 = { rows: [], bars: [], milestones: [], anchors: /* @__PURE__ */ new Map() };
   const half = GANTT_METRICS.milestoneSize / 2;
   diagram.sections.forEach((section, laneIndex) => {
     section.items.forEach((item, offset) => {
       const top = (laneTops[laneIndex] ?? 0) + GANTT_METRICS.lanePaddingY + offset * ROW_PITCH;
-      const rowIndex = placed2.rows.length;
+      const rowIndex = placed3.rows.length;
       if (item.kind === "task") {
         const x = xOf(item.start);
         const bar = placeBar(item, x, Math.max(GANTT_METRICS.minBarWidth, xOf(item.endsBefore) - x), top);
         const barBlock = { left: bar.rect.x, right: bar.rect.x + bar.rect.width };
         const labelBlock = { left: bar.label.x, right: bar.label.x + bar.label.width };
-        placed2.bars.push(bar);
-        placed2.anchors.set(item.id, { rect: bar.rect, isDiamond: false, rowIndex });
-        placed2.rows.push({ id: item.id, top, centerY: top + GANTT_METRICS.barHeight / 2, blocks: bar.isLabelInside ? [barBlock] : [barBlock, labelBlock], right: bar.isLabelInside ? barBlock.right : labelBlock.right });
+        placed3.bars.push(bar);
+        placed3.anchors.set(item.id, { rect: bar.rect, isDiamond: false, rowIndex });
+        placed3.rows.push({ id: item.id, top, centerY: top + GANTT_METRICS.barHeight / 2, blocks: bar.isLabelInside ? [barBlock] : [barBlock, labelBlock], right: bar.isLabelInside ? barBlock.right : labelBlock.right });
       } else {
         const milestone = placeMilestone(item.id, item.label, item.day, xOf(item.day), top);
-        placed2.milestones.push(milestone);
-        placed2.anchors.set(item.id, { rect: { x: milestone.center.x - half, y: milestone.center.y - half, width: 2 * half, height: 2 * half }, isDiamond: true, rowIndex });
+        placed3.milestones.push(milestone);
+        placed3.anchors.set(item.id, { rect: { x: milestone.center.x - half, y: milestone.center.y - half, width: 2 * half, height: 2 * half }, isDiamond: true, rowIndex });
         const textEnd = milestone.date.x + milestone.date.width;
-        placed2.rows.push({ id: item.id, top, centerY: milestone.center.y, blocks: [{ left: milestone.center.x - half, right: milestone.center.x + half }, { left: milestone.label.x, right: textEnd }], right: textEnd });
+        placed3.rows.push({ id: item.id, top, centerY: milestone.center.y, blocks: [{ left: milestone.center.x - half, right: milestone.center.x + half }, { left: milestone.label.x, right: textEnd }], right: textEnd });
       }
     });
   });
-  return placed2;
+  return placed3;
 }
 function placeToday(x, top, bottom, canvasWidth) {
   const text4 = "Today";
@@ -114159,10 +114178,10 @@ function resolveWindows(ir, calendar, ctx) {
     if (windows.has(task)) return windows.get(task) ?? null;
     if (visiting.has(task)) return fail2(task, "it waits for itself through other tasks.", "Remove one `after` or `until` so the chain has a first task with a date.");
     visiting.add(task);
-    const placed2 = place2(task, index2);
+    const placed3 = place2(task, index2);
     visiting.delete(task);
-    windows.set(task, placed2);
-    return placed2;
+    windows.set(task, placed3);
+    return placed3;
   };
   const windowOfKey = (task, key, what, hint2) => {
     const target2 = byKey.get(key);
@@ -114693,8 +114712,8 @@ function reportCycles(items2, waiting, report4) {
 function placeItem(item, placedById, itemById, calendar, report4) {
   const released = item.after.map((token) => {
     const dependency = itemById.get(token.text);
-    const placed2 = placedById.get(token.text);
-    return dependency === void 0 || placed2 === void 0 ? null : releaseDay(dependency, placed2);
+    const placed3 = placedById.get(token.text);
+    return dependency === void 0 || placed3 === void 0 ? null : releaseDay(dependency, placed3);
   });
   if (released.includes(null)) return null;
   const waited = released.length === 0 ? null : Math.max(...released.map((day) => day ?? 0));
@@ -114715,10 +114734,10 @@ function placeItem(item, placedById, itemById, calendar, report4) {
   }
   return { start: start2, endsBefore: item.end.day + 1, movedFrom };
 }
-function buildItem(item, placed2) {
+function buildItem(item, placed3) {
   const common = { id: item.idToken.text, label: item.label, tone: item.tone, progress: item.progress, isCritical: item.isCritical, after: item.after.map((token) => token.text), at: { line: item.idToken.line, column: item.idToken.column, length: item.idToken.length } };
-  if (item.kind === "milestone") return { ...common, kind: "milestone", day: placed2.start };
-  return { ...common, kind: "task", start: placed2.start, endsBefore: placed2.endsBefore, duration: item.duration?.value ?? null, ...placed2.movedFrom === null ? {} : { movedFrom: placed2.movedFrom } };
+  if (item.kind === "milestone") return { ...common, kind: "milestone", day: placed3.start };
+  return { ...common, kind: "task", start: placed3.start, endsBefore: placed3.endsBefore, duration: item.duration?.value ?? null, ...placed3.movedFrom === null ? {} : { movedFrom: placed3.movedFrom } };
 }
 function scheduleSections(sections, calendar, report4) {
   const items2 = sections.flatMap((section) => section.items);
@@ -114739,8 +114758,8 @@ function scheduleSections(sections, calendar, report4) {
   const queue = items2.filter((item) => missing.get(item.idToken.text) === 0);
   for (let head = 0; head < queue.length; head += 1) {
     const item = queue[head];
-    const placed2 = placeItem(item, placedById, itemById, calendar, report4);
-    if (placed2 !== null) placedById.set(item.idToken.text, placed2);
+    const placed3 = placeItem(item, placedById, itemById, calendar, report4);
+    if (placed3 !== null) placedById.set(item.idToken.text, placed3);
     for (const next of dependents.get(item.idToken.text) ?? []) {
       const remaining = (missing.get(next.idToken.text) ?? 1) - 1;
       missing.set(next.idToken.text, remaining);
@@ -114754,8 +114773,8 @@ function scheduleSections(sections, calendar, report4) {
     tone: section.tone,
     at: section.at,
     items: section.items.flatMap((item) => {
-      const placed2 = placedById.get(item.idToken.text);
-      return placed2 === void 0 ? [] : [buildItem(item, placed2)];
+      const placed3 = placedById.get(item.idToken.text);
+      return placed3 === void 0 ? [] : [buildItem(item, placed3)];
     })
   }));
 }
@@ -114767,7 +114786,7 @@ var init_schedule = __esm({
     init_suggest();
     init_dates();
     init_duration();
-    releaseDay = (item, placed2) => item.kind === "task" ? placed2.endsBefore : placed2.start;
+    releaseDay = (item, placed3) => item.kind === "task" ? placed3.endsBefore : placed3.start;
   }
 });
 
@@ -114959,15 +114978,15 @@ function paintBar(task, bar, tone, theme, laneFill) {
 function diamondPath(centerX, centerY, half) {
   return `M${num(centerX)} ${num(centerY - half)}L${num(centerX + half)} ${num(centerY)}L${num(centerX)} ${num(centerY + half)}L${num(centerX - half)} ${num(centerY)}Z`;
 }
-function paintMilestone(milestone, placed2, tone, theme, laneFill) {
+function paintMilestone(milestone, placed3, tone, theme, laneFill) {
   const style = theme.tones[tone];
-  const { x, y } = placed2.center;
+  const { x, y } = placed3.center;
   const isDone = milestone.progress === "done";
   const half = GANTT_METRICS.milestoneSize / 2 - DIAMOND_STROKE / 2;
   return [
     el("path", { d: diamondPath(x, y, half), fill: isDone ? style.outline : theme.surface, stroke: style.outline, "stroke-width": DIAMOND_STROKE, "stroke-linejoin": "round", "data-milestone": milestone.id, "data-progress": milestone.progress, "data-critical": milestone.isCritical ? "true" : null }),
-    paintTextBlock({ x: placed2.label.x, top: centredTop(y, "label"), lines: [placed2.label.text], role: "label", color: isDone ? theme.inkSecondary : theme.ink, halo: laneFill }),
-    paintTextBlock({ x: placed2.date.x, top: centredTop(y, "sub"), lines: [placed2.date.text], role: "sub", color: theme.inkSecondary, halo: laneFill })
+    paintTextBlock({ x: placed3.label.x, top: centredTop(y, "label"), lines: [placed3.label.text], role: "label", color: isDone ? theme.inkSecondary : theme.ink, halo: laneFill }),
+    paintTextBlock({ x: placed3.date.x, top: centredTop(y, "sub"), lines: [placed3.date.text], role: "sub", color: theme.inkSecondary, halo: laneFill })
   ].join("");
 }
 var centredTop, BAR_STROKE, DIAMOND_STROKE;
@@ -115072,8 +115091,8 @@ function renderGanttSvg(diagram, layout, theme, options3) {
         const bar = barById.get(item.id);
         return bar === void 0 ? "" : paintBar(item, bar, tone, theme, laneFill);
       }
-      const placed2 = milestoneById.get(item.id);
-      return placed2 === void 0 ? "" : paintMilestone(item, placed2, tone, theme, laneFill);
+      const placed3 = milestoneById.get(item.id);
+      return placed3 === void 0 ? "" : paintMilestone(item, placed3, tone, theme, laneFill);
     });
   });
   return paintDocument(
@@ -115521,7 +115540,7 @@ function rowBlock(item) {
   const ownRow = hasTags && inline < 0 && lines.length > 0;
   let top = 0;
   let tags = null;
-  const placed2 = [];
+  const placed3 = [];
   lines.forEach((line3, index2) => {
     if (ownRow && index2 === plain4) {
       tags = { line: -1, top, box: GIT_METRICS.tagHeight };
@@ -115529,7 +115548,7 @@ function rowBlock(item) {
     }
     const box = index2 === inline ? Math.max(lineHeight(line3.role), GIT_METRICS.tagHeight) : lineHeight(line3.role);
     if (index2 === inline) tags = { line: index2, top, box };
-    placed2.push({ ...line3, top, box });
+    placed3.push({ ...line3, top, box });
     top += box;
   });
   if (hasTags && lines.length === 0) {
@@ -115539,7 +115558,7 @@ function rowBlock(item) {
     tags = { line: -1, top, box: GIT_METRICS.tagHeight };
     top += GIT_METRICS.tagHeight;
   }
-  return { lines: placed2, tags, height: top };
+  return { lines: placed3, tags, height: top };
 }
 function fillRow(marker, item, columnX, messageX) {
   const block = rowBlock(item);
@@ -115561,10 +115580,10 @@ function fillRow(marker, item, columnX, messageX) {
   let tagX = after === void 0 ? messageX : messageX + lineWidth(after.text, after.role) + GIT_METRICS.rowItemGap;
   const tagCentre = spot === null ? marker.center.y : blockTop + spot.top + spot.box / 2;
   const tags = item.tags.map((tag) => {
-    const placed2 = { rect: { x: tagX, y: tagCentre - GIT_METRICS.tagHeight / 2, width: tag.width, height: GIT_METRICS.tagHeight }, text: tag.text, isShortened: tag.isShortened };
+    const placed3 = { rect: { x: tagX, y: tagCentre - GIT_METRICS.tagHeight / 2, width: tag.width, height: GIT_METRICS.tagHeight }, text: tag.text, isShortened: tag.isShortened };
     tagX += tag.width + GIT_METRICS.tagGap;
-    right = Math.max(right, placed2.rect.x + placed2.rect.width);
-    return placed2;
+    right = Math.max(right, placed3.rect.x + placed3.rect.width);
+    return placed3;
   });
   return { texts, tags, right };
 }
@@ -115605,8 +115624,8 @@ function layoutDown(diagram, history) {
   const idWidth = items2.reduce((widest8, item) => Math.max(widest8, ...item.text.lines.filter((line3) => !inMessage(line3)).map((line3) => lineWidth(line3.text, line3.role))), 0);
   const messageX = idWidth === 0 ? columnX : columnX + idWidth + GIT_METRICS.rowItemGap;
   const frame = { diagram, history, orientation: "down", items: items2, time: time3, lane: laneX, offsets: offsets2, stub: STUB };
-  const placed2 = placeMarkers(frame).map((marker) => ({ marker, ...fillRow(marker, items2[marker.index], columnX, messageX) }));
-  const textRight = placed2.reduce((farthest, entry2) => Math.max(farthest, entry2.right), 0);
+  const placed3 = placeMarkers(frame).map((marker) => ({ marker, ...fillRow(marker, items2[marker.index], columnX, messageX) }));
+  const textRight = placed3.reduce((farthest, entry2) => Math.max(farthest, entry2.right), 0);
   const lastTab = tabs[tabs.length - 1];
   const width = Math.ceil(Math.max(textRight, lastLane + (lastTab?.size.width ?? 0) / 2, columnX) + GIT_METRICS.padding);
   const height = Math.ceil(cursor + GIT_METRICS.padding);
@@ -115619,13 +115638,13 @@ function layoutDown(diagram, history) {
     orientation: "down",
     tabs: placedTabs,
     lanes: placeLanes(frame, () => GIT_METRICS.padding + GIT_METRICS.tabHeight + GUIDE_GAP, height - GIT_METRICS.padding),
-    leaders: placed2.flatMap((entry2) => {
+    leaders: placed3.flatMap((entry2) => {
       const from = entry2.marker.center.x + entry2.marker.outer + LEADER_GAP;
       const to = columnX - LEADER_GAP;
       return (entry2.texts.length > 0 || entry2.tags.length > 0) && to - from > LEADER_GAP ? [[{ x: from, y: entry2.marker.center.y }, { x: to, y: entry2.marker.center.y }]] : [];
     }),
     links: placeLinks(frame),
-    commits: placed2.map((entry2) => ({ ...entry2.marker, texts: entry2.texts, tags: entry2.tags }))
+    commits: placed3.map((entry2) => ({ ...entry2.marker, texts: entry2.texts, tags: entry2.tags }))
   };
 }
 var GUIDE_GAP, ROW_AIR, STUB, LEADER_GAP;
@@ -115704,9 +115723,9 @@ function hang(marker, item, reach2) {
   const x = textStart(marker.center.x, reach2);
   let top = marker.center.y + item.outer + GIT_METRICS.textGap;
   const texts = item.text.lines.map((line3) => {
-    const placed2 = { x, top, text: line3.text, role: line3.role, isMuted: line3.isMuted };
+    const placed3 = { x, top, text: line3.text, role: line3.role, isMuted: line3.isMuted };
     top += lineHeight(line3.role);
-    return placed2;
+    return placed3;
   });
   const stackTop = marker.center.y - item.outer - GIT_METRICS.textGap - item.tagHeight;
   const tags = item.tags.map((tag, at3) => ({
@@ -117227,7 +117246,7 @@ function scaleItem(marks) {
     width,
     place: (left, centerY) => {
       let x = left + labelWidth + SCALE_LABEL_GAP;
-      const placed2 = SCORES.map((score) => {
+      const placed3 = SCORES.map((score) => {
         const mark = {
           score,
           center: { x: x + legend.markRadius, y: centerY },
@@ -117237,7 +117256,7 @@ function scaleItem(marks) {
         x += pairWidth(score) + legend.pairGap;
         return mark;
       });
-      return { scale: { label: { x: left, top: topFor(centerY, "sub"), text: SCALE_LABEL }, marks: placed2 } };
+      return { scale: { label: { x: left, top: topFor(centerY, "sub"), text: SCALE_LABEL }, marks: placed3 } };
     }
   };
 }
@@ -118602,13 +118621,13 @@ function settleBand(band) {
     const open2 = byStart.filter((index2) => !order.includes(index2));
     order.push(open2.find((index2) => waiting(index2) === 0) ?? open2.reduce((best, index2) => waiting(index2) < waiting(best) ? index2 : best, open2[0]));
   }
-  const placed2 = [];
+  const placed3 = [];
   for (const index2 of order) {
     const use = uses[index2];
-    let track = Math.max(0, ...[...above[index2]].map((first) => uses[first]).filter((first) => placed2.includes(first)).map((first) => first.track + 1));
-    while (placed2.some((other) => other.track === track && other.from - LAYERS_METRICS.trackGapX <= use.to && use.from - LAYERS_METRICS.trackGapX <= other.to)) track += 1;
+    let track = Math.max(0, ...[...above[index2]].map((first) => uses[first]).filter((first) => placed3.includes(first)).map((first) => first.track + 1));
+    while (placed3.some((other) => other.track === track && other.from - LAYERS_METRICS.trackGapX <= use.to && use.from - LAYERS_METRICS.trackGapX <= other.to)) track += 1;
     use.track = track;
-    placed2.push(use);
+    placed3.push(use);
   }
   band.tracks = uses.reduce((most, use) => Math.max(most, use.track + 1), 0);
   band.height = band.tracks === 0 ? band.base : 2 * LAYERS_METRICS.trackPad + band.tracks * LAYERS_METRICS.trackHeight;
@@ -118919,9 +118938,9 @@ function placeAside(plan, x, height, showCount) {
   let y = LAYERS_METRICS.canvasPadding + LAYERS_METRICS.tabZone;
   const blocks2 = aside.blocks.map((block, position) => {
     const fit = plan.fits[position];
-    const placed2 = placeBlock(block, { x: x + LAYERS_METRICS.asidePadding, y, width: plan.width - 2 * LAYERS_METRICS.asidePadding, height: fit.height }, fit);
+    const placed3 = placeBlock(block, { x: x + LAYERS_METRICS.asidePadding, y, width: plan.width - 2 * LAYERS_METRICS.asidePadding, height: fit.height }, fit);
     y += fit.height + LAYERS_METRICS.asideBlockGap;
-    return placed2;
+    return placed3;
   });
   return { kind: "aside", index: plan.index, label: aside.label, icon: aside.icon, rect: { x, y: LAYERS_METRICS.canvasPadding, width: plan.width, height }, tone: aside.tone, tab: fitTab2(aside.label, aside.icon, showCount ? String(blocks2.length) : null, { x, y: LAYERS_METRICS.canvasPadding, width: plan.width }), blocks: blocks2 };
 }
@@ -119136,9 +119155,9 @@ function paintFrame(frame, theme) {
     el("rect", { ...frame.rect, rx: LAYERS_METRICS.layerRadius, fill: colors.fill, stroke: colors.border, "stroke-width": GROUP_METRICS.borderWidth, "stroke-dasharray": frame.kind === "aside" ? GROUP_METRICS.dashPattern : null })
   ]);
 }
-function paintLine(placed2, theme) {
-  const parts = paintArrowLine(placed2.points, { color: lineColor(theme), line: placed2.link.line, heads: placed2.link.heads });
-  return parts.length === 0 ? "" : el("g", { "data-link": `link-${placed2.index}`, "data-from": placed2.link.from, "data-to": placed2.link.to }, parts);
+function paintLine(placed3, theme) {
+  const parts = paintArrowLine(placed3.points, { color: lineColor(theme), line: placed3.link.line, heads: placed3.link.heads });
+  return parts.length === 0 ? "" : el("g", { "data-link": `link-${placed3.index}`, "data-from": placed3.link.from, "data-to": placed3.link.to }, parts);
 }
 function paintLabel({ label, index: index2 }, theme) {
   if (label === null) return "";
@@ -119734,7 +119753,7 @@ function layoutRisk(diagram) {
   const cells = stacks.map((row, r) => {
     const impact = GRID_LEVELS - r;
     const height = rowHeights[r];
-    const placed2 = row.map((stack, c) => {
+    const placed3 = row.map((stack, c) => {
       const rect = { x: gridX + c * (cellWidth + M3.cellGap), y: top, width: cellWidth, height };
       const used = stack.reduce((sum, { chip: chip2 }) => sum + chip2.height, 0) + Math.max(0, stack.length - 1) * M3.riskChipGap;
       let y = top + (height - used) / 2;
@@ -119747,7 +119766,7 @@ function layoutRisk(diagram) {
       return { rect, band: bandIndexOf((c + 1) * impact), chips };
     });
     top += height + M3.cellGap;
-    return placed2;
+    return placed3;
   });
   const axisTitle = (text4, room) => {
     const block = fitBlock2(text4, "groupLabel", room, room, 1);
@@ -119883,7 +119902,7 @@ function layoutTable(diagram) {
     const bodyHeight = Math.max(M4.rowMin, content + M4.cellPadY * 2);
     const band = isRecommended ? M4.cardInset + M4.tabHeight : 0;
     const total = totals?.[at3];
-    const placed2 = {
+    const placed3 = {
       index: at3,
       rect: { x: frameX, y, width, height: band + bodyHeight + (isRecommended ? M4.cardInset : 0) },
       bodyTop: y + band,
@@ -119897,8 +119916,8 @@ function layoutTable(diagram) {
       tabWidth: isRecommended ? tabWidth2 : 0,
       total: total === void 0 ? null : { text: String(total.total), share: total.total / total.most }
     };
-    y += placed2.rect.height;
-    return placed2;
+    y += placed3.rect.height;
+    return placed3;
   });
   const frame = { x: frameX, y: frameY, width, height: y - frameY };
   const legend2 = tableLegend(diagram, frameX, frame.y + frame.height + M4.legendGap);
@@ -120880,45 +120899,45 @@ function paintTotalHead(layout, theme) {
   if (total === null) return "";
   return paintTextBlock({ x: total.x + total.width / 2, top: headTop(layout) + (layout.titleBand - TYPE_ROLES.label.lineHeight) / 2, lines: ["Total"], role: "label", color: theme.ink, anchor: "middle" });
 }
-function paintName(row, placed2, layout, theme) {
-  const strip = { x: layout.frame.x, y: placed2.bodyTop, width: layout.firstWidth, height: placed2.bodyHeight };
+function paintName(row, placed3, layout, theme) {
+  const strip = { x: layout.frame.x, y: placed3.bodyTop, width: layout.firstWidth, height: placed3.bodyHeight };
   const centerY = strip.y + strip.height / 2;
   const parts = [el("rect", { ...strip, fill: "none" })];
   if (row.icon !== null) {
     const chip2 = { x: strip.x + M7.chipInset, y: centerY - M7.chipSize / 2, width: M7.chipSize, height: M7.chipSize };
-    const toneName = iconTone(row.icon) ?? placed2.tone;
+    const toneName = iconTone(row.icon) ?? placed3.tone;
     const style = theme.tones[toneName];
     if (isColorIcon(row.icon)) parts.push(paintIcon(row.icon, centerOf(chip2), M7.chipSize, theme.ink));
-    else parts.push(el("rect", { ...chip2, rx: M7.chipRadius, fill: placed2.isRecommended ? theme.surface : style.chipFill }), paintIcon(row.icon, centerOf(chip2), M7.iconSize, placed2.isRecommended ? bareGlyphColor(theme, toneName) : style.ink));
+    else parts.push(el("rect", { ...chip2, rx: M7.chipRadius, fill: placed3.isRecommended ? theme.surface : style.chipFill }), paintIcon(row.icon, centerOf(chip2), M7.iconSize, placed3.isRecommended ? bareGlyphColor(theme, toneName) : style.ink));
   }
   const lead = row.icon === null ? M7.namePaddingX : M7.chipInset + M7.chipSize + M7.chipGap;
-  const nameHeight = placed2.name.lines.length * TYPE_ROLES.label.lineHeight;
-  const textHeight3 = nameHeight + (placed2.sub === null ? 0 : NODE_METRICS.subGap + TYPE_ROLES.sub.lineHeight);
+  const nameHeight = placed3.name.lines.length * TYPE_ROLES.label.lineHeight;
+  const textHeight3 = nameHeight + (placed3.sub === null ? 0 : NODE_METRICS.subGap + TYPE_ROLES.sub.lineHeight);
   const top = centerY - textHeight3 / 2;
-  parts.push(paintTextBlock({ x: strip.x + lead, top, lines: placed2.name.lines, role: "label", color: theme.ink }));
-  if (placed2.sub !== null) parts.push(paintTextBlock({ x: strip.x + lead, top: top + nameHeight + NODE_METRICS.subGap, lines: placed2.sub.lines, role: "sub", color: theme.inkSecondary }));
-  return el("g", { "data-node": `row-${placed2.index}`, "data-type": "row" }, parts);
+  parts.push(paintTextBlock({ x: strip.x + lead, top, lines: placed3.name.lines, role: "label", color: theme.ink }));
+  if (placed3.sub !== null) parts.push(paintTextBlock({ x: strip.x + lead, top: top + nameHeight + NODE_METRICS.subGap, lines: placed3.sub.lines, role: "sub", color: theme.inkSecondary }));
+  return el("g", { "data-node": `row-${placed3.index}`, "data-type": "row" }, parts);
 }
-function paintTotal(placed2, total, theme) {
-  if (placed2.total === null) return "";
+function paintTotal(placed3, total, theme) {
+  if (placed3.total === null) return "";
   const centerX = total.x + total.width / 2;
-  const top = placed2.bodyTop + placed2.bodyHeight / 2 - (TYPE_ROLES.label.lineHeight + M7.barGap + M7.barHeight) / 2;
+  const top = placed3.bodyTop + placed3.bodyHeight / 2 - (TYPE_ROLES.label.lineHeight + M7.barGap + M7.barHeight) / 2;
   const bar = { x: centerX - M7.barWidth / 2, y: top + TYPE_ROLES.label.lineHeight + M7.barGap, height: M7.barHeight, rx: M7.barHeight / 2 };
-  return el("g", { "data-total": placed2.total.text }, [
-    paintTextBlock({ x: centerX, top, lines: [placed2.total.text], role: "label", color: theme.ink, anchor: "middle" }),
+  return el("g", { "data-total": placed3.total.text }, [
+    paintTextBlock({ x: centerX, top, lines: [placed3.total.text], role: "label", color: theme.ink, anchor: "middle" }),
     el("rect", { ...bar, width: M7.barWidth, fill: trackColor(theme) }),
-    placed2.total.share > 0 ? el("rect", { ...bar, width: Math.max(M7.barHeight, M7.barWidth * placed2.total.share), fill: markColor(theme, placed2.tone) }) : ""
+    placed3.total.share > 0 ? el("rect", { ...bar, width: Math.max(M7.barHeight, M7.barWidth * placed3.total.share), fill: markColor(theme, placed3.tone) }) : ""
   ]);
 }
-function paintRecommended(placed2, layout, theme) {
+function paintRecommended(placed3, layout, theme) {
   const x = layout.frame.x + M7.rowInset;
-  const y = placed2.rect.y + M7.cardInset;
-  const card5 = el("rect", { x, y, width: layout.frame.width - M7.rowInset * 2, height: placed2.rect.height - M7.cardInset * 2, rx: M7.rowRadius, fill: rowWash(theme, placed2.tone), stroke: rowStroke(theme, placed2.tone), "stroke-width": RECOMMENDED_STROKE, "data-recommended": "true" });
-  const wash = rowWash(theme, placed2.tone);
+  const y = placed3.rect.y + M7.cardInset;
+  const card5 = el("rect", { x, y, width: layout.frame.width - M7.rowInset * 2, height: placed3.rect.height - M7.cardInset * 2, rx: M7.rowRadius, fill: rowWash(theme, placed3.tone), stroke: rowStroke(theme, placed3.tone), "stroke-width": RECOMMENDED_STROKE, "data-recommended": "true" });
+  const wash = rowWash(theme, placed3.tone);
   const tab = el("g", { "data-group-tab": "recommended" }, [
     // Nothing crosses the card, so nothing is drawn under the heading; the unpainted box is what the fit audit measures it against.
-    el("rect", { x, y, width: placed2.tabWidth, height: M7.tabHeight, fill: "none" }),
-    paintIcon("lucide:badge-check", { x: x + GROUP_METRICS.tabPaddingX + M7.tabIcon / 2, y: y + M7.tabHeight / 2 }, M7.tabIcon, ensureContrast(theme.tones[placed2.tone].ink, wash, ICON_CONTRAST, theme.ink)),
+    el("rect", { x, y, width: placed3.tabWidth, height: M7.tabHeight, fill: "none" }),
+    paintIcon("lucide:badge-check", { x: x + GROUP_METRICS.tabPaddingX + M7.tabIcon / 2, y: y + M7.tabHeight / 2 }, M7.tabIcon, ensureContrast(theme.tones[placed3.tone].ink, wash, ICON_CONTRAST, theme.ink)),
     paintTextBlock({ x: x + GROUP_METRICS.tabPaddingX + M7.tabIcon + M7.tabIconGap, top: y + (M7.tabHeight - TYPE_ROLES.groupLabel.lineHeight) / 2, lines: [RECOMMENDED_LABEL], role: "groupLabel", color: theme.ink })
   ]);
   return el("g", {}, [card5, tab]);
@@ -120939,12 +120958,12 @@ function paintLegend2(diagram, layout, theme) {
 function paintTable(diagram, layout, theme) {
   return [
     ...paintBack(layout, theme),
-    ...layout.rows.filter((placed2) => placed2.isRecommended).map((placed2) => paintRecommended(placed2, layout, theme)),
+    ...layout.rows.filter((placed3) => placed3.isRecommended).map((placed3) => paintRecommended(placed3, layout, theme)),
     el("g", { "data-header": "true" }, [...layout.columns.map((column) => paintHead(column, layout, theme)), paintTotalHead(layout, theme)]),
-    ...layout.rows.map((placed2) => {
-      const row = diagram.rows[placed2.index];
-      const cells = layout.columns.map((column, place2) => paintCell(row.cells[place2], placed2.texts[place2] ?? null, { x: column.x, y: placed2.bodyTop, width: column.width, height: placed2.bodyHeight }, placed2.tone, theme, `cell-${placed2.index}-${place2}`));
-      return el("g", { "data-row": placed2.index }, [paintName(row, placed2, layout, theme), ...cells, layout.total === null ? "" : paintTotal(placed2, layout.total, theme)]);
+    ...layout.rows.map((placed3) => {
+      const row = diagram.rows[placed3.index];
+      const cells = layout.columns.map((column, place2) => paintCell(row.cells[place2], placed3.texts[place2] ?? null, { x: column.x, y: placed3.bodyTop, width: column.width, height: placed3.bodyHeight }, placed3.tone, theme, `cell-${placed3.index}-${place2}`));
+      return el("g", { "data-row": placed3.index }, [paintName(row, placed3, layout, theme), ...cells, layout.total === null ? "" : paintTotal(placed3, layout.total, theme)]);
     }),
     el("rect", { ...layout.frame, rx: M7.radius, fill: "none", stroke: theme.border, "stroke-width": 1, "data-matrix": "frame" }),
     paintTitle(layout.title, theme),
@@ -122433,27 +122452,27 @@ var init_paint_link = __esm({
 });
 
 // ../../packages/diagrams/src/kinds/mindmap/render/paint-topic.ts
-function paintFrame2(placed2, colors) {
-  const { x, y, width, height } = placed2.rect;
-  const stroke = { fill: colors.fill, stroke: colors.stroke, "stroke-width": placed2.depth === 0 ? SHAPE_METRICS.rootBorderWidth : SHAPE_METRICS.borderWidth, filter: LIFT };
-  if (placed2.shape === "circle") return el("ellipse", { cx: x + width / 2, cy: y + height / 2, rx: width / 2, ry: height / 2, ...stroke });
-  if (placed2.shape === "hexagon") return el("path", { d: roundedPolygon(hexagonCorners(x, y, width, height), SHAPE_METRICS.hexagonRadius), "stroke-linejoin": "round", ...stroke });
-  const radius = cornerRadius(placed2.shape, height);
+function paintFrame2(placed3, colors) {
+  const { x, y, width, height } = placed3.rect;
+  const stroke = { fill: colors.fill, stroke: colors.stroke, "stroke-width": placed3.depth === 0 ? SHAPE_METRICS.rootBorderWidth : SHAPE_METRICS.borderWidth, filter: LIFT };
+  if (placed3.shape === "circle") return el("ellipse", { cx: x + width / 2, cy: y + height / 2, rx: width / 2, ry: height / 2, ...stroke });
+  if (placed3.shape === "hexagon") return el("path", { d: roundedPolygon(hexagonCorners(x, y, width, height), SHAPE_METRICS.hexagonRadius), "stroke-linejoin": "round", ...stroke });
+  const radius = cornerRadius(placed3.shape, height);
   return el("rect", { x, y, width, height, rx: num(radius), ...stroke });
 }
-function paintTopicIcon(topic, placed2, colors, theme) {
-  const place2 = placed2.box.icon;
+function paintTopicIcon(topic, placed3, colors, theme) {
+  const place2 = placed3.box.icon;
   if (topic.icon === null || place2 === null) return "";
   const own2 = iconTone(topic.icon);
   const color = isColorIcon(topic.icon) ? theme.ink : own2 === null ? colors.icon : bareGlyphColor(theme, own2);
-  return paintIcon(topic.icon, { x: placed2.rect.x + place2.x, y: placed2.rect.y + place2.y }, place2.size, color);
+  return paintIcon(topic.icon, { x: placed3.rect.x + place2.x, y: placed3.rect.y + place2.y }, place2.size, color);
 }
-function paintTopic(topic, placed2, theme) {
-  const colors = topicColors(theme, placed2.tone, placed2.depth);
-  return el("g", { "data-node": `t${placed2.index}`, "data-depth": placed2.depth, "data-shape": placed2.shape, "data-tone": placed2.tone }, [
-    paintFrame2(placed2, colors),
-    paintTopicIcon(topic, placed2, colors, theme),
-    paintTextBlock({ x: placed2.rect.x + placed2.box.textX, top: placed2.rect.y + placed2.box.textTop, lines: placed2.box.lines, role: placed2.box.role, color: colors.text, anchor: "middle" })
+function paintTopic(topic, placed3, theme) {
+  const colors = topicColors(theme, placed3.tone, placed3.depth);
+  return el("g", { "data-node": `t${placed3.index}`, "data-depth": placed3.depth, "data-shape": placed3.shape, "data-tone": placed3.tone }, [
+    paintFrame2(placed3, colors),
+    paintTopicIcon(topic, placed3, colors, theme),
+    paintTextBlock({ x: placed3.rect.x + placed3.box.textX, top: placed3.rect.y + placed3.box.textTop, lines: placed3.box.lines, role: placed3.box.role, color: colors.text, anchor: "middle" })
   ]);
 }
 var init_paint_topic = __esm({
@@ -122473,7 +122492,7 @@ async function renderMindmap(diagram, theme, document2) {
   const layout = await layoutMindmap(diagram);
   const flat3 = flattenMindmap(diagram);
   const links = layout.links.map((link2) => paintLink2(link2, layout.topics[link2.to], theme));
-  const topics2 = layout.topics.map((placed2) => paintTopic(flat3[placed2.index].topic, placed2, theme));
+  const topics2 = layout.topics.map((placed3) => paintTopic(flat3[placed3.index].topic, placed3, theme));
   const svg = paintDocument(
     { size: layout.size, title: mindmapTitle(diagram), outline: outlineMindmap(diagram), summary: summarizeMindmap(diagram), children: [...links, ...topics2] },
     theme,
@@ -122907,11 +122926,11 @@ function spread(desired, pitch) {
       blocks2.pop();
     }
   });
-  const placed2 = [];
+  const placed3 = [];
   for (const block of blocks2) {
-    for (let step = 0; step < block.count; step += 1) placed2.push(block.sum / block.count + placed2.length * pitch);
+    for (let step = 0; step < block.count; step += 1) placed3.push(block.sum / block.count + placed3.length * pitch);
   }
-  return placed2;
+  return placed3;
 }
 function columnOf(seeds, sides, side) {
   const members2 = seeds.filter((_, index2) => sides[index2] === side).sort((a, b) => a.desiredY - b.desiredY || a.middle - b.middle);
@@ -124117,27 +124136,27 @@ function candidatesFor2(request, gap2) {
     { rect: { x: center.x - near3 - gap2 - width, y: center.y + near3 + gap2, width, height }, anchor: "end" }
   ];
 }
-function isFree(rect, request, world, placed2, mayLeaveZone) {
+function isFree(rect, request, world, placed3, mayLeaveZone) {
   const isInZone = isWithin(rect, request.zone, M9.edgeInset);
   const reachesAcross = mayLeaveZone && isWithin(rect, world.plot, M9.edgeInset) && overlaps6(rect, request.zone);
   if (!isInZone && !reachesAcross) return false;
   if (world.chips.some((chip2, index2) => index2 !== request.index && overlaps6(rect, chip2, M9.keepOff - 1))) return false;
   if (world.tabs.some((tab) => overlaps6(rect, tab, M9.keepOff))) return false;
-  return !placed2.some((other) => overlaps6(rect, other, M9.keepOff));
+  return !placed3.some((other) => overlaps6(rect, other, M9.keepOff));
 }
 function placeLabels2(requests, world) {
   const freeCount = (request) => candidatesFor2(request, M9.labelGap).filter((candidate2) => isFree(candidate2.rect, request, world, [], false)).length;
   const order = requests.map((request) => ({ request, options: freeCount(request) })).sort((a, b) => a.options - b.options || a.request.index - b.request.index);
-  const placed2 = [];
+  const placed3 = [];
   const result = /* @__PURE__ */ new Map();
   for (const { request } of order) {
     let label = null;
     for (const attempt of ATTEMPTS) {
-      const found = candidatesFor2(request, attempt.gap).find((candidate2) => isFree(candidate2.rect, request, world, placed2, attempt.mayLeaveZone));
+      const found = candidatesFor2(request, attempt.gap).find((candidate2) => isFree(candidate2.rect, request, world, placed3, attempt.mayLeaveZone));
       if (found === void 0) continue;
       const hasHalo = world.lines.some((line3) => overlaps6(found.rect, line3, M9.keepOff));
       label = { lines: request.lines, rect: found.rect, anchor: found.anchor, hasHalo, isShortened: request.isShortened };
-      placed2.push(found.rect);
+      placed3.push(found.rect);
       break;
     }
     result.set(request.index, label);
@@ -125064,26 +125083,26 @@ var init_paint_plot = __esm({
 });
 
 // ../../packages/diagrams/src/kinds/quadrant/paint-point.ts
-function paintPointMark(point, placed2, theme) {
+function paintPointMark(point, placed3, theme) {
   const icon = point.icon;
-  const attrs = { "data-point": placed2.index, "data-zone": placed2.zone };
+  const attrs = { "data-point": placed3.index, "data-zone": placed3.zone };
   if (icon === null) {
-    return el("g", attrs, [el("circle", { cx: placed2.center.x, cy: placed2.center.y, r: M13.dotRadius, fill: bareGlyphColor(theme, placed2.tone), stroke: theme.surface, "stroke-width": M13.dotRing })]);
+    return el("g", attrs, [el("circle", { cx: placed3.center.x, cy: placed3.center.y, r: M13.dotRadius, fill: bareGlyphColor(theme, placed3.tone), stroke: theme.surface, "stroke-width": M13.dotRing })]);
   }
-  if (isColorIcon(icon)) return el("g", attrs, [paintIcon(icon, placed2.center, M13.chipSize, theme.ink)]);
-  const color = bareGlyphColor(theme, iconTone(icon) ?? placed2.tone);
-  const chip2 = around(placed2.center, M13.chipSize / 2);
+  if (isColorIcon(icon)) return el("g", attrs, [paintIcon(icon, placed3.center, M13.chipSize, theme.ink)]);
+  const color = bareGlyphColor(theme, iconTone(icon) ?? placed3.tone);
+  const chip2 = around(placed3.center, M13.chipSize / 2);
   return el("g", attrs, [el("rect", { ...chip2, rx: M13.chipRadius, fill: theme.surface, stroke: color, "stroke-width": M13.strokeWidth }), paintIcon(icon, centerOf(chip2), M13.iconSize, color)]);
 }
 function textX(label) {
   if (label.anchor === "start") return label.rect.x;
   return label.anchor === "end" ? label.rect.x + label.rect.width : label.rect.x + label.rect.width / 2;
 }
-function paintPointLabel(placed2, theme) {
-  const label = placed2.label;
+function paintPointLabel(placed3, theme) {
+  const label = placed3.label;
   if (label === null) return "";
   const text4 = paintTextBlock({ x: textX(label), top: label.rect.y, lines: label.lines, role: "label", color: theme.ink, anchor: label.anchor, ...label.hasHalo ? { halo: theme.surface } : {} });
-  return el("g", { "data-point-label": placed2.index }, [text4]);
+  return el("g", { "data-point-label": placed3.index }, [text4]);
 }
 var M13;
 var init_paint_point = __esm({
@@ -125147,8 +125166,8 @@ function renderQuadrantSvg(diagram, layout, theme, options3) {
         ...layout.zones.map((zone) => paintZoneTab(diagram, zone, theme)),
         ...layout.xAxis === null ? [] : [paintAxis3(layout.xAxis, theme)],
         ...layout.yAxis === null ? [] : [paintAxis3(layout.yAxis, theme)],
-        ...layout.points.map((placed2) => paintPointMark(diagram.points[placed2.index], placed2, theme)),
-        ...layout.points.map((placed2) => paintPointLabel(placed2, theme))
+        ...layout.points.map((placed3) => paintPointMark(diagram.points[placed3.index], placed3, theme)),
+        ...layout.points.map((placed3) => paintPointLabel(placed3, theme))
       ]
     },
     theme,
@@ -125480,19 +125499,19 @@ function pillAt(text4, centre2) {
   return { rect: { x: centre2.x - width / 2, y: centre2.y - SANKEY_METRICS.pillHeight / 2, width, height: SANKEY_METRICS.pillHeight }, text: text4 };
 }
 function placeStubs(totals, nodes, place2, originY) {
-  return nodes.flatMap((placed2) => {
-    const t = totals[placed2.index];
+  return nodes.flatMap((placed3) => {
+    const t = totals[placed3.index];
     if (t === void 0 || t.lost === 0) return [];
     const isLoss = t.lost > 0;
-    const base = originY + (place2.top[placed2.index] ?? 0) + ((place2.height[placed2.index] ?? 0) - t.through * place2.scale) / 2;
+    const base = originY + (place2.top[placed3.index] ?? 0) + ((place2.height[placed3.index] ?? 0) - t.through * place2.scale) / 2;
     const from = base + (isLoss ? t.out : t.into) * place2.scale;
     const middle2 = from + Math.abs(t.lost) * place2.scale / 2;
     const half = Math.max(Math.abs(t.lost) * place2.scale, SANKEY_METRICS.stubMin) / 2;
-    const edge = isLoss ? placed2.rect.x + placed2.rect.width : placed2.rect.x;
+    const edge = isLoss ? placed3.rect.x + placed3.rect.width : placed3.rect.x;
     const tip = isLoss ? edge + SANKEY_METRICS.stubLength : edge - SANKEY_METRICS.stubLength;
     const points = isLoss ? [{ x: edge, y: middle2 - half }, { x: tip, y: middle2 }, { x: edge, y: middle2 + half }] : [{ x: tip, y: middle2 - half }, { x: edge, y: middle2 }, { x: tip, y: middle2 + half }];
     const amount = Math.abs(t.lost);
-    return [{ node: placed2.index, kind: isLoss ? "loss" : "gain", points, amount, pill: null }];
+    return [{ node: placed3.index, kind: isLoss ? "loss" : "gain", points, amount, pill: null }];
   });
 }
 function placePills(diagram, ribbons, stubs, nodes, width) {
@@ -125770,8 +125789,8 @@ function placeItems2(chains, order, minimum, target2) {
     for (let column = 1; column < order.length; column += 1) pull(order[column] ?? [], chains.ins, true);
   }
   const shift2 = Math.min(...top);
-  const placed2 = top.map((y) => y - shift2);
-  return { top: placed2, height, scale, extent: Math.max(...placed2.map((y, id) => y + heightOf(id))) };
+  const placed3 = top.map((y) => y - shift2);
+  return { top: placed3, height, scale, extent: Math.max(...placed3.map((y, id) => y + heightOf(id))) };
 }
 var RELAX_PASSES, PULL;
 var init_place = __esm({
@@ -126515,21 +126534,21 @@ var init_look6 = __esm({
 });
 
 // ../../packages/diagrams/src/kinds/sankey/paint-node.ts
-function paintNode2(placed2, theme) {
-  const look = cardLook(theme, placed2.tone);
-  const { x, y, width, height } = placed2.rect;
-  const parts = [el("rect", { x, y, width, height, rx: placed2.radius, fill: look.fill, stroke: look.stroke, "stroke-width": 1 })];
-  if (placed2.icon !== null) {
-    const center = centerOf(placed2.icon.rect);
-    if (isColorIcon(placed2.icon.ref)) {
-      parts.push(paintIcon(placed2.icon.ref, center, SANKEY_METRICS.chipSize, theme.ink));
+function paintNode2(placed3, theme) {
+  const look = cardLook(theme, placed3.tone);
+  const { x, y, width, height } = placed3.rect;
+  const parts = [el("rect", { x, y, width, height, rx: placed3.radius, fill: look.fill, stroke: look.stroke, "stroke-width": 1 })];
+  if (placed3.icon !== null) {
+    const center = centerOf(placed3.icon.rect);
+    if (isColorIcon(placed3.icon.ref)) {
+      parts.push(paintIcon(placed3.icon.ref, center, SANKEY_METRICS.chipSize, theme.ink));
     } else {
-      parts.push(el("rect", { ...placed2.icon.rect, rx: SANKEY_METRICS.chipRadius, fill: look.chipFill }), paintIcon(placed2.icon.ref, center, SANKEY_METRICS.chipIconSize, iconColor2(theme, placed2.icon.ref, placed2.tone)));
+      parts.push(el("rect", { ...placed3.icon.rect, rx: SANKEY_METRICS.chipRadius, fill: look.chipFill }), paintIcon(placed3.icon.ref, center, SANKEY_METRICS.chipIconSize, iconColor2(theme, placed3.icon.ref, placed3.tone)));
     }
   }
-  parts.push(paintTextBlock({ x: placed2.label.x, top: placed2.label.top, lines: placed2.label.lines, role: "label", color: theme.ink }));
-  if (placed2.value !== null) parts.push(paintTextBlock({ x: placed2.value.x, top: placed2.value.top, lines: [placed2.value.text], role: "sub", color: theme.inkSecondary }));
-  return el("g", { "data-node": `node-${placed2.index}`, "data-type": "node", "data-tone": placed2.tone }, parts);
+  parts.push(paintTextBlock({ x: placed3.label.x, top: placed3.label.top, lines: placed3.label.lines, role: "label", color: theme.ink }));
+  if (placed3.value !== null) parts.push(paintTextBlock({ x: placed3.value.x, top: placed3.value.top, lines: [placed3.value.text], role: "sub", color: theme.inkSecondary }));
+  return el("g", { "data-node": `node-${placed3.index}`, "data-type": "node", "data-tone": placed3.tone }, parts);
 }
 function paintPill5(pill2, id, theme) {
   const { x, y, width, height } = pill2.rect;
@@ -127203,23 +127222,23 @@ function badgeFor(column) {
 function topRounded(x, y, width, height, radius) {
   return `M${x} ${y + height}V${y + radius}Q${x} ${y} ${x + radius} ${y}H${x + width - radius}Q${x + width} ${y} ${x + width} ${y + radius}V${y + height}Z`;
 }
-function paintHeader3(table, placed2, theme) {
-  const { x, y, width } = placed2.rect;
+function paintHeader3(table, placed3, theme) {
+  const { x, y, width } = placed3.rect;
   const tone = theme.tones[table.tone];
   const hasSub = table.sub !== null;
   const textLeft = x + NODE_METRICS.chipInset + NODE_METRICS.chipSize + NODE_METRICS.chipGap;
   const blockHeight2 = TYPE_ROLES.tableName.lineHeight + (hasSub ? NODE_METRICS.subGap + TYPE_ROLES.sub.lineHeight : 0);
-  const top = y + (placed2.headerHeight - blockHeight2) / 2;
+  const top = y + (placed3.headerHeight - blockHeight2) / 2;
   const parts = [
-    el("path", { d: topRounded(x, y, width, placed2.headerHeight, SCHEMA_METRICS.radius), fill: tone.chipFill }),
-    el("line", { x1: x, y1: y + placed2.headerHeight, x2: x + width, y2: y + placed2.headerHeight, stroke: theme.border, "stroke-width": 1 })
+    el("path", { d: topRounded(x, y, width, placed3.headerHeight, SCHEMA_METRICS.radius), fill: tone.chipFill }),
+    el("line", { x1: x, y1: y + placed3.headerHeight, x2: x + width, y2: y + placed3.headerHeight, stroke: theme.border, "stroke-width": 1 })
   ];
   if (table.icon !== null) {
-    parts.push(paintIcon(table.icon, { x: x + NODE_METRICS.chipInset + NODE_METRICS.chipSize / 2, y: y + placed2.headerHeight / 2 }, NODE_METRICS.iconSize, tone.ink));
+    parts.push(paintIcon(table.icon, { x: x + NODE_METRICS.chipInset + NODE_METRICS.chipSize / 2, y: y + placed3.headerHeight / 2 }, NODE_METRICS.iconSize, tone.ink));
   }
   parts.push(paintTextBlock({ x: textLeft, top, lines: [table.label], role: "tableName", color: theme.ink }));
   if (hasSub) {
-    parts.push(paintTextBlock({ x: textLeft, top: top + TYPE_ROLES.tableName.lineHeight + NODE_METRICS.subGap, lines: placed2.subLines, role: "sub", color: theme.inkSecondary }));
+    parts.push(paintTextBlock({ x: textLeft, top: top + TYPE_ROLES.tableName.lineHeight + NODE_METRICS.subGap, lines: placed3.subLines, role: "sub", color: theme.inkSecondary }));
   }
   return parts;
 }
@@ -127238,8 +127257,8 @@ function paintBadge(badge, x, centerY, theme) {
     })
   ];
 }
-function paintRow(column, rowTop, placed2, theme) {
-  const { x, width } = placed2.rect;
+function paintRow(column, rowTop, placed3, theme) {
+  const { x, width } = placed3.rect;
   const centerY = rowTop + SCHEMA_METRICS.rowHeight / 2;
   const lineTop = rowTop + (SCHEMA_METRICS.rowHeight - TYPE_ROLES.columnName.lineHeight) / 2;
   const badge = badgeFor(column);
@@ -127252,12 +127271,12 @@ function paintRow(column, rowTop, placed2, theme) {
   if (column.note !== null) parts.unshift(textEl("title", {}, column.note));
   return el("g", { "data-column": column.name }, parts);
 }
-function paintTable2(table, placed2, theme) {
-  const { x, y, width, height } = placed2.rect;
-  const rows = table.columns.map((column, index2) => paintRow(column, placed2.rowTops[index2] ?? y, placed2, theme));
+function paintTable2(table, placed3, theme) {
+  const { x, y, width, height } = placed3.rect;
+  const rows = table.columns.map((column, index2) => paintRow(column, placed3.rowTops[index2] ?? y, placed3, theme));
   return el("g", { "data-table": table.id }, [
     el("rect", { x, y, width, height, rx: SCHEMA_METRICS.radius, fill: theme.surface, stroke: theme.border, "stroke-width": SCHEMA_METRICS.borderWidth, filter: LIFT }),
-    ...paintHeader3(table, placed2, theme),
+    ...paintHeader3(table, placed3, theme),
     ...rows
   ]);
 }
@@ -127273,9 +127292,9 @@ var init_paint_table2 = __esm({
 // ../../packages/diagrams/src/render/schema/render-schema.ts
 function renderSchemaSvg(diagram, layout, theme, options3) {
   const tableById = new Map(diagram.tables.map((table) => [table.id, table]));
-  const tables = layout.tables.flatMap((placed2) => {
-    const table = tableById.get(placed2.id);
-    return table === void 0 ? [] : [paintTable2(table, placed2, theme)];
+  const tables = layout.tables.flatMap((placed3) => {
+    const table = tableById.get(placed3.id);
+    return table === void 0 ? [] : [paintTable2(table, placed3, theme)];
   });
   return paintDocument(
     {
@@ -128115,9 +128134,9 @@ function placeBlock2(item, ctx, y) {
       dividers.push({ y: cursor, keyword: item.blockType === "alt" ? "else" : "and", label: branch.label });
       cursor += SEQUENCE_METRICS.blockBranchHeader;
     }
-    const placed2 = placeItems3(branch.items, ctx, cursor);
-    cursor = placed2.y;
-    extent2 = merge(extent2, placed2.extent);
+    const placed3 = placeItems3(branch.items, ctx, cursor);
+    cursor = placed3.y;
+    extent2 = merge(extent2, placed3.extent);
   });
   cursor += SEQUENCE_METRICS.blockBottomPadding;
   const reach2 = extent2 ?? { minX: ctx.centers[0] ?? 0, maxX: ctx.centers[ctx.centers.length - 1] ?? 0 };
@@ -128132,9 +128151,9 @@ function placeItems3(items2, ctx, startY) {
   let y = startY;
   let extent2 = null;
   for (const item of items2) {
-    const placed2 = item.kind === "message" ? placeMessage(item, ctx, y) : item.kind === "note" ? placeNote(item, ctx, y) : placeBlock2(item, ctx, y);
-    y = placed2.y;
-    extent2 = merge(extent2, placed2.extent);
+    const placed3 = item.kind === "message" ? placeMessage(item, ctx, y) : item.kind === "note" ? placeNote(item, ctx, y) : placeBlock2(item, ctx, y);
+    y = placed3.y;
+    extent2 = merge(extent2, placed3.extent);
   }
   return { y, extent: extent2 };
 }
@@ -128550,9 +128569,9 @@ function renderSequenceSvg(diagram, layout, theme, options3) {
       })
     )
   );
-  const actors = layout.actors.flatMap((placed2) => {
-    const actor = actorById.get(placed2.id);
-    return actor === void 0 ? [] : [paintNode(actorAsNode(actor), { id: actorAsNode(actor).id, rect: placed2.rect, labelLines: placed2.labelLines, subLines: placed2.subLines }, theme)];
+  const actors = layout.actors.flatMap((placed3) => {
+    const actor = actorById.get(placed3.id);
+    return actor === void 0 ? [] : [paintNode(actorAsNode(actor), { id: actorAsNode(actor).id, rect: placed3.rect, labelLines: placed3.labelLines, subLines: placed3.subLines }, theme)];
   });
   return paintDocument(
     {
@@ -129496,8 +129515,8 @@ function buildElkGraph2(input2) {
   };
   for (const region of diagram.regions) containers.get(region.parent)?.children?.push(containers.get(regionKey(region.parent, region.index)));
   const order = (node3) => node3.kind === "start" ? 0 : node3.kind === "end" ? 2 : 1;
-  const placed2 = [...diagram.states].sort((a, b) => order(a) - order(b));
-  for (const node3 of placed2) {
+  const placed3 = [...diagram.states].sort((a, b) => order(a) - order(b));
+  for (const node3 of placed3) {
     const item = node3.kind === "composite" ? containers.get(node3.id) : leafNode(node3, input2);
     containerOf(node3.parent, node3.region).children?.push(item);
   }
@@ -129952,7 +129971,7 @@ function pillOf(edge, measured) {
 function placeNotes(laid, origins, composites) {
   const { prepared } = laid;
   const { diagram, units, noteBoxes } = prepared;
-  const placed2 = [];
+  const placed3 = [];
   const stacked = /* @__PURE__ */ new Map();
   diagram.notes.forEach((note) => {
     const box = noteBoxes.get(note);
@@ -129962,7 +129981,7 @@ function placeNotes(laid, origins, composites) {
       const slot = unit3.notes.find((candidate2) => candidate2.index === diagram.notes.filter((other) => other.target === note.target).indexOf(note));
       if (slot === void 0) return;
       const at3 = (point) => ({ x: origin.x + point.x, y: origin.y + point.y });
-      placed2.push({ target: note.target, rect: { x: origin.x + slot.rect.x, y: origin.y + slot.rect.y, width: box.width, height: box.height }, lines: box.lines, connector: { from: at3(slot.connector.from), to: at3(slot.connector.to) } });
+      placed3.push({ target: note.target, rect: { x: origin.x + slot.rect.x, y: origin.y + slot.rect.y, width: box.width, height: box.height }, lines: box.lines, connector: { from: at3(slot.connector.from), to: at3(slot.connector.to) } });
       return;
     }
     const frame = composites.find((composite) => composite.id === note.target);
@@ -129971,9 +129990,9 @@ function placeNotes(laid, origins, composites) {
     const offset = stacked.get(note.target) ?? 0;
     stacked.set(note.target, offset + box.height + STATE_METRICS.noteStackGap);
     const top = frame.rect.y + frame.rect.height - GROUP_METRICS.paddingBottom - frameBox.stripHeight;
-    placed2.push({ target: note.target, rect: { x: frame.rect.x + GROUP_METRICS.paddingSide, y: top + offset, width: box.width, height: box.height }, lines: box.lines, connector: null });
+    placed3.push({ target: note.target, rect: { x: frame.rect.x + GROUP_METRICS.paddingSide, y: top + offset, width: box.width, height: box.height }, lines: box.lines, connector: null });
   });
-  return placed2;
+  return placed3;
 }
 async function layoutWith3(diagram, direction) {
   const prepared = prepare2(diagram, direction);
@@ -130710,7 +130729,7 @@ function planState(ir, ctx) {
     origin: node3.span.line
   }));
   const kindOf2 = new Map(real.map((node3) => [node3.key, node3.kind]));
-  const nameOf9 = (key) => {
+  const nameOf10 = (key) => {
     const marker = ir.nodes.find((node3) => node3.key === key);
     return marker !== void 0 && (marker.kind === "start" || marker.kind === "end") ? `the ${marker.kind} marker` : `"${key}"`;
   };
@@ -130733,7 +130752,7 @@ function planState(ir, ctx) {
     }
     const isNested = transition.from !== transition.to && (lineageOf2(transition.to, parentKeys).includes(transition.from) || lineageOf2(transition.from, parentKeys).includes(transition.to));
     if (isNested) {
-      reporter.add(DIAGNOSTIC_CODES.mermaidDroppedMeaning, span, `Dropped a transition between ${nameOf9(transition.from)} and ${nameOf9(transition.to)}, because one is inside the other. A transition cannot join a state to one inside it.`, "Start the transition from a state inside the composite state, or from its own start marker.", "nested-transition");
+      reporter.add(DIAGNOSTIC_CODES.mermaidDroppedMeaning, span, `Dropped a transition between ${nameOf10(transition.from)} and ${nameOf10(transition.to)}, because one is inside the other. A transition cannot join a state to one inside it.`, "Start the transition from a state inside the composite state, or from its own start marker.", "nested-transition");
       continue;
     }
     const { composite, region } = transition.scope;
@@ -131409,11 +131428,11 @@ function asGroup(node3) {
     labelAt: node3.labelAt ?? { line: 1, column: 1, length: 1 }
   };
 }
-function paintComposite(node3, placed2, theme) {
-  return el("g", { "data-composite": node3.id }, [paintGroup(asGroup(node3), { ...placed2, id: toGroupId(node3.id) }, theme)]);
+function paintComposite(node3, placed3, theme) {
+  return el("g", { "data-composite": node3.id }, [paintGroup(asGroup(node3), { ...placed3, id: toGroupId(node3.id) }, theme)]);
 }
-function paintCompositeTab(node3, placed2, theme) {
-  return paintGroupTab(asGroup(node3), { ...placed2, id: toGroupId(node3.id) }, theme);
+function paintCompositeTab(node3, placed3, theme) {
+  return paintGroupTab(asGroup(node3), { ...placed3, id: toGroupId(node3.id) }, theme);
 }
 function paintDividers(dividers, theme) {
   return dividers.map(
@@ -131469,12 +131488,12 @@ function paintChip3(node3, theme, chip2, radius, isTinted) {
     paintIcon(node3.icon, centerOf(chip2), NODE_METRICS.iconSize, isTinted ? bareGlyphColor(theme, toneName) : theme.tones[toneName].ink)
   ];
 }
-function paintStateCard(node3, placed2, theme) {
-  const { x, y, width, height } = placed2.rect;
+function paintStateCard(node3, placed3, theme) {
+  const { x, y, width, height } = placed3.rect;
   const tone = theme.tones[node3.tone];
   const isTinted = node3.tone !== "neutral";
   const textLeft = cardTextLeft(node3);
-  const textHeight3 = blockHeight(placed2.labelLines.length, "label") + (placed2.descriptionLines.length > 0 ? NODE_METRICS.subGap + blockHeight(placed2.descriptionLines.length, "sub") : 0);
+  const textHeight3 = blockHeight(placed3.labelLines.length, "label") + (placed3.descriptionLines.length > 0 ? NODE_METRICS.subGap + blockHeight(placed3.descriptionLines.length, "sub") : 0);
   const top = y + (height - textHeight3) / 2;
   const parts = [
     el("rect", {
@@ -131491,27 +131510,27 @@ function paintStateCard(node3, placed2, theme) {
   ];
   const chip2 = { x: x + NODE_METRICS.chipInset, y: y + (height - NODE_METRICS.chipSize) / 2, width: NODE_METRICS.chipSize, height: NODE_METRICS.chipSize };
   parts.push(...paintChip3(node3, theme, chip2, NODE_METRICS.chipRadius, isTinted));
-  parts.push(paintTextBlock({ x: x + textLeft, top, lines: placed2.labelLines, role: "label", color: theme.ink }));
-  if (placed2.descriptionLines.length > 0) {
-    const descriptionTop = top + blockHeight(placed2.labelLines.length, "label") + NODE_METRICS.subGap;
-    parts.push(paintTextBlock({ x: x + textLeft, top: descriptionTop, lines: placed2.descriptionLines, role: "sub", color: theme.inkSecondary }));
+  parts.push(paintTextBlock({ x: x + textLeft, top, lines: placed3.labelLines, role: "label", color: theme.ink }));
+  if (placed3.descriptionLines.length > 0) {
+    const descriptionTop = top + blockHeight(placed3.labelLines.length, "label") + NODE_METRICS.subGap;
+    parts.push(paintTextBlock({ x: x + textLeft, top: descriptionTop, lines: placed3.descriptionLines, role: "sub", color: theme.inkSecondary }));
   }
   return el("g", attributesOf2(node3), parts);
 }
-function paintStart(node3, placed2, theme) {
-  const center = centerOf(placed2.rect);
-  return el("g", { "data-state-marker": "start", "data-state-id": node3.id }, [el("circle", { cx: center.x, cy: center.y, r: placed2.rect.width / 2, fill: theme.ink })]);
+function paintStart(node3, placed3, theme) {
+  const center = centerOf(placed3.rect);
+  return el("g", { "data-state-marker": "start", "data-state-id": node3.id }, [el("circle", { cx: center.x, cy: center.y, r: placed3.rect.width / 2, fill: theme.ink })]);
 }
-function paintEnd(node3, placed2, theme) {
-  const center = centerOf(placed2.rect);
-  const radius = (placed2.rect.width - STATE_METRICS.endStroke) / 2;
+function paintEnd(node3, placed3, theme) {
+  const center = centerOf(placed3.rect);
+  const radius = (placed3.rect.width - STATE_METRICS.endStroke) / 2;
   return el("g", { "data-state-marker": "end", "data-state-id": node3.id }, [
     el("circle", { cx: center.x, cy: center.y, r: radius, fill: "none", stroke: theme.ink, "stroke-width": STATE_METRICS.endStroke }),
     el("circle", { cx: center.x, cy: center.y, r: STATE_METRICS.endDot / 2, fill: theme.ink })
   ]);
 }
-function paintChoice(node3, placed2, theme) {
-  const { x, y, width, height } = placed2.rect;
+function paintChoice(node3, placed3, theme) {
+  const { x, y, width, height } = placed3.rect;
   const tone = theme.tones[node3.tone];
   const isTinted = node3.tone !== "neutral";
   const parts = [
@@ -131526,43 +131545,43 @@ function paintChoice(node3, placed2, theme) {
       "stroke-width": NODE_METRICS.borderWidth
     })
   ];
-  if (placed2.labelLines.length === 0) {
-    if (node3.icon !== null) parts.push(paintIcon(node3.icon, centerOf(placed2.rect), isColorIcon(node3.icon) ? NODE_METRICS.chipSize : NODE_METRICS.iconSize, bareGlyphColor(theme, iconTone(node3.icon) ?? node3.tone)));
+  if (placed3.labelLines.length === 0) {
+    if (node3.icon !== null) parts.push(paintIcon(node3.icon, centerOf(placed3.rect), isColorIcon(node3.icon) ? NODE_METRICS.chipSize : NODE_METRICS.iconSize, bareGlyphColor(theme, iconTone(node3.icon) ?? node3.tone)));
     return el("g", { "data-state-marker": "choice", "data-state-id": node3.id }, parts);
   }
   const chip2 = { x: x + NODE_METRICS.chipInset, y: y + (height - NODE_METRICS.chipSize) / 2, width: NODE_METRICS.chipSize, height: NODE_METRICS.chipSize };
   parts.push(...paintChip3(node3, theme, chip2, NODE_METRICS.chipSize / 2, isTinted));
-  const top = y + (height - blockHeight(placed2.labelLines.length, "label")) / 2;
-  parts.push(paintTextBlock({ x: x + choiceTextLeft(node3), top, lines: placed2.labelLines, role: "label", color: theme.ink }));
+  const top = y + (height - blockHeight(placed3.labelLines.length, "label")) / 2;
+  parts.push(paintTextBlock({ x: x + choiceTextLeft(node3), top, lines: placed3.labelLines, role: "label", color: theme.ink }));
   return el("g", attributesOf2(node3), parts);
 }
-function paintBar2(node3, placed2, theme) {
-  const { x, y, width, height } = placed2.rect;
+function paintBar2(node3, placed3, theme) {
+  const { x, y, width, height } = placed3.rect;
   return el("g", { "data-state-marker": node3.kind, "data-state-id": node3.id }, [el("rect", { x, y, width, height, rx: STATE_METRICS.barRadius, fill: theme.ink })]);
 }
-function paintHistory(node3, placed2, theme) {
-  const center = centerOf(placed2.rect);
+function paintHistory(node3, placed3, theme) {
+  const center = centerOf(placed3.rect);
   const top = center.y - TYPE_ROLES.label.lineHeight / 2;
   return el("g", { "data-state-marker": "history", "data-state-id": node3.id }, [
-    el("circle", { cx: center.x, cy: center.y, r: placed2.rect.width / 2 - 0.5, fill: theme.surface, stroke: theme.edge, "stroke-width": NODE_METRICS.borderWidth }),
+    el("circle", { cx: center.x, cy: center.y, r: placed3.rect.width / 2 - 0.5, fill: theme.surface, stroke: theme.edge, "stroke-width": NODE_METRICS.borderWidth }),
     paintTextBlock({ x: center.x, top, lines: [node3.label], role: "label", color: theme.ink, anchor: "middle" })
   ]);
 }
-function paintNodeOfKind(node3, placed2, theme) {
+function paintNodeOfKind(node3, placed3, theme) {
   switch (node3.kind) {
     case "start":
-      return paintStart(node3, placed2, theme);
+      return paintStart(node3, placed3, theme);
     case "end":
-      return paintEnd(node3, placed2, theme);
+      return paintEnd(node3, placed3, theme);
     case "choice":
-      return paintChoice(node3, placed2, theme);
+      return paintChoice(node3, placed3, theme);
     case "fork":
     case "join":
-      return paintBar2(node3, placed2, theme);
+      return paintBar2(node3, placed3, theme);
     case "history":
-      return paintHistory(node3, placed2, theme);
+      return paintHistory(node3, placed3, theme);
     default:
-      return paintStateCard(node3, placed2, theme);
+      return paintStateCard(node3, placed3, theme);
   }
 }
 var TINTED_FILL_SHARE3, attributesOf2;
@@ -131581,8 +131600,8 @@ var init_paint_nodes = __esm({
 });
 
 // ../../packages/diagrams/src/kinds/state/render/paint-transitions.ts
-function paintTransition(transition, placed2, theme, color = theme.edge) {
-  const parts = paintArrowLine(placed2.points, { color, line: "solid", heads: "end" });
+function paintTransition(transition, placed3, theme, color = theme.edge) {
+  const parts = paintArrowLine(placed3.points, { color, line: "solid", heads: "end" });
   if (parts.length === 0) return "";
   return el("g", { "data-transition": transition.id, "data-from": transition.from, "data-to": transition.to }, parts);
 }
@@ -131605,8 +131624,8 @@ function segmentPath(left, top, width, height, radius, roundsLeft, roundsRight) 
     "Z"
   ].join("");
 }
-function paintTransitionLabel(transition, placed2, theme) {
-  const label = placed2.label;
+function paintTransitionLabel(transition, placed3, theme) {
+  const label = placed3.label;
   if (label === null) return "";
   const { x, y, width, height } = label.rect;
   const segments = segmentsOf(label.runs, width);
@@ -131645,25 +131664,25 @@ function renderStateSvg(diagram, layout, theme, options3) {
   const nodeById = new Map(diagram.states.map((node3) => [node3.id, node3]));
   const transitionById = new Map(diagram.transitions.map((transition) => [transition.id, transition]));
   const byDepth = [...layout.composites].sort((a, b) => a.depth - b.depth);
-  const frames = byDepth.flatMap((placed2) => {
-    const node3 = nodeById.get(placed2.id);
-    return node3 === void 0 ? [] : [paintComposite(node3, placed2, theme)];
+  const frames = byDepth.flatMap((placed3) => {
+    const node3 = nodeById.get(placed3.id);
+    return node3 === void 0 ? [] : [paintComposite(node3, placed3, theme)];
   });
-  const tabs = byDepth.flatMap((placed2) => {
-    const node3 = nodeById.get(placed2.id);
-    return node3 === void 0 ? [] : [paintCompositeTab(node3, placed2, theme)];
+  const tabs = byDepth.flatMap((placed3) => {
+    const node3 = nodeById.get(placed3.id);
+    return node3 === void 0 ? [] : [paintCompositeTab(node3, placed3, theme)];
   });
-  const lines = layout.transitions.flatMap((placed2) => {
-    const transition = transitionById.get(placed2.id);
-    return transition === void 0 ? [] : [paintTransition(transition, placed2, theme, lineColorOf(transition, nodeById, theme))];
+  const lines = layout.transitions.flatMap((placed3) => {
+    const transition = transitionById.get(placed3.id);
+    return transition === void 0 ? [] : [paintTransition(transition, placed3, theme, lineColorOf(transition, nodeById, theme))];
   });
-  const nodes = layout.states.flatMap((placed2) => {
-    const node3 = nodeById.get(placed2.id);
-    return node3 === void 0 ? [] : [paintNodeOfKind(node3, placed2, theme)];
+  const nodes = layout.states.flatMap((placed3) => {
+    const node3 = nodeById.get(placed3.id);
+    return node3 === void 0 ? [] : [paintNodeOfKind(node3, placed3, theme)];
   });
-  const labels2 = layout.transitions.flatMap((placed2) => {
-    const transition = transitionById.get(placed2.id);
-    return transition === void 0 ? [] : [paintTransitionLabel(transition, placed2, theme)];
+  const labels2 = layout.transitions.flatMap((placed3) => {
+    const transition = transitionById.get(placed3.id);
+    return transition === void 0 ? [] : [paintTransitionLabel(transition, placed3, theme)];
   });
   return paintDocument(
     {
@@ -132018,8 +132037,8 @@ function labelRuns(points, kind, extent2, head) {
 function placePills2(routes, runs, extents, items2, forced) {
   const lines = routes.flatMap((points, flow) => points.flatMap((from, index2) => points[index2 + 1] === void 0 ? [] : [{ flow, box: { x: Math.min(from.x, points[index2 + 1].x), y: Math.min(from.y, points[index2 + 1].y), width: Math.abs(from.x - points[index2 + 1].x), height: Math.abs(from.y - points[index2 + 1].y) } }]));
   const pillAt2 = (flow, at3) => ({ x: at3.x - (extents[flow]?.[0] ?? 0) / 2, y: at3.y - (extents[flow]?.[1] ?? 0) / 2, width: extents[flow]?.[0] ?? 0, height: extents[flow]?.[1] ?? 0 });
-  const placed2 = [];
-  forced.forEach((at3, flow) => at3 !== null && placed2.push(pillAt2(flow, at3)));
+  const placed3 = [];
+  forced.forEach((at3, flow) => at3 !== null && placed3.push(pillAt2(flow, at3)));
   return routes.map((_, flow) => {
     const fixed = forced[flow];
     if (fixed !== null && fixed !== void 0) return fixed;
@@ -132030,10 +132049,10 @@ function placePills2(routes, runs, extents, items2, forced) {
     });
     const costed = spots.map(({ at: at3, rank, middle: middle2 }) => {
       const pill2 = pillAt2(flow, at3);
-      return { at: at3, cost: lines.filter((line3) => line3.flow !== flow && overlaps7(pill2, line3.box)).length * COST.line + placed2.filter((other) => overlaps7(pill2, other)).length * COST.pill + items2.filter((item) => overlaps7(pill2, item)).length * COST.item + rank * COST.otherRun + Math.abs(at3.x - middle2) * 1e-3 };
+      return { at: at3, cost: lines.filter((line3) => line3.flow !== flow && overlaps7(pill2, line3.box)).length * COST.line + placed3.filter((other) => overlaps7(pill2, other)).length * COST.pill + items2.filter((item) => overlaps7(pill2, item)).length * COST.item + rank * COST.otherRun + Math.abs(at3.x - middle2) * 1e-3 };
     });
     const chosen = costed.reduce((best, spot) => best === null || spot.cost < best.cost ? spot : best, null);
-    if (chosen !== null) placed2.push(pillAt2(flow, chosen.at));
+    if (chosen !== null) placed3.push(pillAt2(flow, chosen.at));
     return chosen === null ? null : chosen.at;
   });
 }
@@ -132564,8 +132583,8 @@ var init_parse13 = __esm({
 });
 
 // ../../packages/diagrams/src/kinds/swimlane/render/paint-flows.ts
-function paintFlow(flow, placed2, color) {
-  const parts = paintArrowLine(placed2.points, { color, line: flow.line, heads: "end" });
+function paintFlow(flow, placed3, color) {
+  const parts = paintArrowLine(placed3.points, { color, line: flow.line, heads: "end" });
   return parts.length === 0 ? "" : el("g", { "data-transition": flow.id, "data-from": flow.from, "data-to": flow.to }, parts);
 }
 function segmentPath2(left, top, width, height, roundsLeft, roundsRight) {
@@ -132574,8 +132593,8 @@ function segmentPath2(left, top, width, height, roundsLeft, roundsRight) {
   const arc = (r, x, y) => r === 0 ? "" : `A${num(r)} ${num(r)} 0 0 1 ${num(x)} ${num(y)}`;
   return [`M${num(left + rl)} ${num(top)}`, `L${num(right - rr)} ${num(top)}`, arc(rr, right, top + rr), `L${num(right)} ${num(bottom - rr)}`, arc(rr, right - rr, bottom), `L${num(left + rl)} ${num(bottom)}`, arc(rl, left, bottom - rl), `L${num(left)} ${num(top + rl)}`, arc(rl, left + rl, top), "Z"].join("");
 }
-function paintFlowLabel(flow, placed2, theme) {
-  const label = placed2.label;
+function paintFlowLabel(flow, placed3, theme) {
+  const label = placed3.label;
   if (label === null) return "";
   const { x, y, width, height } = label.rect;
   const { step, shift: shift2 } = label;
@@ -132618,21 +132637,21 @@ function railPath({ x, y, width, height }, isBand, inset2) {
 function railRule({ x, y, width, height }, isBand) {
   return isBand ? `M${num(x + width)} ${num(y)}V${num(y + height)}` : `M${num(x)} ${num(y + height)}H${num(x + width)}`;
 }
-function paintLane2(lane, placed2, index2, isBand, theme) {
-  const { x, y, width, height } = placed2.rect;
+function paintLane2(lane, placed3, index2, isBand, theme) {
+  const { x, y, width, height } = placed3.rect;
   const frame = bandColors(theme, lane.tone, index2);
   const tab = { text: theme.ink, icon: ensureContrast(theme.tones[(lane.icon === null ? null : iconTone(lane.icon)) ?? lane.tone].ink, frame.fill, ICON_CONTRAST3, theme.ink) };
-  const { rail } = placed2;
+  const { rail } = placed3;
   const icon = lane.icon === null ? 0 : RAIL.iconSize;
   const parts = [el("path", { d: railPath(rail, isBand, GROUP_METRICS.borderWidth), fill: frame.fill })];
   if (isBand) {
     const iconRoom2 = icon === 0 ? 0 : icon + RAIL.iconGap;
-    const top = rail.y + (rail.height - iconRoom2 - blockHeight(placed2.lines.length, "groupLabel")) / 2;
+    const top = rail.y + (rail.height - iconRoom2 - blockHeight(placed3.lines.length, "groupLabel")) / 2;
     const center = rail.x + rail.width / 2;
     if (lane.icon !== null) parts.push(paintIcon(lane.icon, { x: center, y: top + icon / 2 }, icon, tab.icon));
-    parts.push(paintTextBlock({ x: center, top: top + iconRoom2, lines: placed2.lines, role: "groupLabel", color: tab.text, anchor: "middle" }));
+    parts.push(paintTextBlock({ x: center, top: top + iconRoom2, lines: placed3.lines, role: "groupLabel", color: tab.text, anchor: "middle" }));
   } else {
-    const text4 = placed2.lines[0] ?? "";
+    const text4 = placed3.lines[0] ?? "";
     const iconRoom2 = icon === 0 ? 0 : icon + GROUP_METRICS.tabIconGap;
     const left = rail.x + (rail.width - iconRoom2 - measureRole(text4, "groupLabel")) / 2;
     if (lane.icon !== null) parts.push(paintIcon(lane.icon, { x: left + icon / 2, y: rail.y + rail.height / 2 }, icon, tab.icon));
@@ -132660,8 +132679,8 @@ var init_paint_lanes = __esm({
 });
 
 // ../../packages/diagrams/src/kinds/swimlane/render/index.ts
-function paintItem(item, placed2, theme) {
-  const { rect, labelLines, subLines } = placed2;
+function paintItem(item, placed3, theme) {
+  const { rect, labelLines, subLines } = placed3;
   if (item.kind === "start" || item.kind === "end") {
     const node3 = flowNodeOf(item);
     return paintNode(node3, { id: node3.id, rect, labelLines, subLines }, theme);
@@ -134634,20 +134653,20 @@ function sizeCard4(flat3) {
   const content = (icon.icon === null ? 0 : TREE_METRICS.cardChip + TREE_METRICS.cardChipGap) + Math.max(name.width, note?.width ?? 0);
   return { width: Math.max(TREE_METRICS.cardMinWidth, content + 2 * TREE_METRICS.cardPaddingX), height: Math.max(icon.icon === null ? 0 : TREE_METRICS.cardChip, textHeight3) + 2 * TREE_METRICS.cardPaddingY, name, note, icon, isMore: false };
 }
-function pack(placed2, next, gap2) {
-  if (placed2.length === 0) {
-    placed2.push(...next);
+function pack(placed3, next, gap2) {
+  if (placed3.length === 0) {
+    placed3.push(...next);
     return 0;
   }
   let shift2 = Number.NEGATIVE_INFINITY;
   next.forEach((extent2, level2) => {
-    const taken = placed2[level2];
+    const taken = placed3[level2];
     if (taken !== void 0) shift2 = Math.max(shift2, taken.right - extent2.left + gap2);
   });
   next.forEach((extent2, level2) => {
-    const taken = placed2[level2];
+    const taken = placed3[level2];
     const moved3 = { left: extent2.left + shift2, right: extent2.right + shift2 };
-    placed2[level2] = taken === void 0 ? moved3 : { left: Math.min(taken.left, moved3.left), right: Math.max(taken.right, moved3.right) };
+    placed3[level2] = taken === void 0 ? moved3 : { left: Math.min(taken.left, moved3.left), right: Math.max(taken.right, moved3.right) };
   });
   return shift2;
 }
@@ -134670,13 +134689,13 @@ function place({ diagram, flat: flat3, cards, hang: hang2 }) {
     }
     const children = kids(index2);
     if (children.length === 0) return [{ left: -half, right: half }];
-    const placed2 = [];
-    const shifts = children.map((child) => pack(placed2, contour(child), gap2));
+    const placed3 = [];
+    const shifts = children.map((child) => pack(placed3, contour(child), gap2));
     const middle2 = ((shifts[0] ?? 0) + (shifts[shifts.length - 1] ?? 0)) / 2;
     children.forEach((child, position) => {
       offsets2[child] = (shifts[position] ?? 0) - middle2;
     });
-    return [{ left: -half, right: half }, ...placed2.map((extent2) => ({ left: extent2.left - middle2, right: extent2.right - middle2 }))];
+    return [{ left: -half, right: half }, ...placed3.map((extent2) => ({ left: extent2.left - middle2, right: extent2.right - middle2 }))];
   };
   const roots = flat3.filter((entry2) => entry2.parent < 0).map((entry2) => entry2.index);
   const forest = [];
@@ -137025,32 +137044,32 @@ var init_paint_delta = __esm({
 });
 
 // ../../packages/diagrams/src/kinds/treemap/paint-item.ts
-function paintTileIcon(content, placed2, theme, look) {
+function paintTileIcon(content, placed3, theme, look) {
   const icon = content.icon;
   if (icon === null) return [];
   const center = centerOf(icon.rect);
   const isCompact = icon.hasChip && icon.rect.width < TREEMAP_METRICS.chipSize;
   if (isColorIcon(icon.ref)) return [paintIcon(icon.ref, center, icon.hasChip ? icon.rect.width : TREEMAP_METRICS.chipIconSize, theme.ink)];
-  const color = iconColor3(theme, icon.ref, placed2.tone);
+  const color = iconColor3(theme, icon.ref, placed3.tone);
   if (!icon.hasChip) return [paintIcon(icon.ref, center, TREEMAP_METRICS.chipIconSize, color)];
   return [
     el("rect", { ...icon.rect, rx: isCompact ? TREEMAP_METRICS.compactChipRadius : TREEMAP_METRICS.chipRadius, fill: look.chipFill }),
     paintIcon(icon.ref, center, isCompact ? TREEMAP_METRICS.compactIconSize : NODE_METRICS.iconSize, color)
   ];
 }
-function paintItem2(placed2, theme) {
-  if (placed2.isHidden) return "";
-  const look = tileLook(theme, placed2.tone);
-  const { x, y, width, height } = placed2.rect;
-  const content = placed2.content;
-  const parts = [el("rect", { x, y, width, height, rx: placed2.radius, fill: look.fill, stroke: look.stroke, "stroke-width": 1 })];
+function paintItem2(placed3, theme) {
+  if (placed3.isHidden) return "";
+  const look = tileLook(theme, placed3.tone);
+  const { x, y, width, height } = placed3.rect;
+  const content = placed3.content;
+  const parts = [el("rect", { x, y, width, height, rx: placed3.radius, fill: look.fill, stroke: look.stroke, "stroke-width": 1 })];
   if (content !== null) {
-    parts.push(...paintTileIcon(content, placed2, theme, look));
+    parts.push(...paintTileIcon(content, placed3, theme, look));
     if (content.label !== null) parts.push(paintTextBlock({ x: content.label.x, top: content.label.top, lines: content.label.lines, role: "label", color: theme.ink }));
     if (content.value !== null) parts.push(paintTextBlock({ x: content.value.x, top: content.value.top, lines: [content.value.text], role: "sub", color: theme.inkSecondary }));
     if (content.delta !== null) parts.push(paintDelta(content.delta, theme));
   }
-  return el("g", { "data-node": `item-${placed2.index}`, "data-type": "item", "data-level": placed2.level }, parts);
+  return el("g", { "data-node": `item-${placed3.index}`, "data-type": "item", "data-level": placed3.level }, parts);
 }
 var init_paint_item = __esm({
   "../../packages/diagrams/src/kinds/treemap/paint-item.ts"() {
@@ -137066,26 +137085,26 @@ var init_paint_item = __esm({
 });
 
 // ../../packages/diagrams/src/kinds/treemap/paint-group.ts
-function paintTab4(placed2, tab, theme) {
-  const colors = groupHeadingColors(theme, placed2.tone, placed2.group.icon === null ? null : iconTone(placed2.group.icon), placed2.level);
-  const parts = [paintCornerHeading(tab.rect, { frameRadius: placed2.radius, fill: colors.fill })];
+function paintTab4(placed3, tab, theme) {
+  const colors = groupHeadingColors(theme, placed3.tone, placed3.group.icon === null ? null : iconTone(placed3.group.icon), placed3.level);
+  const parts = [paintCornerHeading(tab.rect, { frameRadius: placed3.radius, fill: colors.fill })];
   if (tab.icon !== null) parts.push(paintIcon(tab.icon.ref, tab.icon.center, GROUP_METRICS.tabIconSize, colors.icon));
   parts.push(paintTextBlock({ x: tab.name.x, top: tab.name.top, lines: [tab.name.text], role: "groupLabel", color: colors.text }));
   if (tab.pill !== null) {
     const { x, y, width, height } = tab.pill.rect;
-    parts.push(el("rect", { x, y, width, height, rx: height / 2, fill: theme.surface, stroke: groupFrameColors(theme, placed2.tone, placed2.level).border, "stroke-width": 1 }));
+    parts.push(el("rect", { x, y, width, height, rx: height / 2, fill: theme.surface, stroke: groupFrameColors(theme, placed3.tone, placed3.level).border, "stroke-width": 1 }));
     parts.push(paintTextBlock({ x: tab.pill.text.x, top: tab.pill.text.top, lines: [tab.pill.text.text], role: "badge", color: theme.inkSecondary }));
   }
-  return el("g", { "data-group-tab": `group-${placed2.index}` }, parts);
+  return el("g", { "data-group-tab": `group-${placed3.index}` }, parts);
 }
-function paintGroup2(placed2, theme) {
-  if (placed2.isHidden) return "";
-  const colors = groupFrameColors(theme, placed2.tone, placed2.level);
-  const { x, y, width, height } = placed2.rect;
-  const parts = [el("rect", { x, y, width, height, rx: placed2.radius, fill: colors.fill, stroke: colors.border, "stroke-width": GROUP_METRICS.borderWidth })];
-  for (const child of placed2.children) parts.push(child.kind === "item" ? paintItem2(child, theme) : paintGroup2(child, theme));
-  if (placed2.tab !== null) parts.push(paintTab4(placed2, placed2.tab, theme));
-  return el("g", { "data-group": `group-${placed2.index}`, "data-level": placed2.level, "data-tone": placed2.tone }, parts);
+function paintGroup2(placed3, theme) {
+  if (placed3.isHidden) return "";
+  const colors = groupFrameColors(theme, placed3.tone, placed3.level);
+  const { x, y, width, height } = placed3.rect;
+  const parts = [el("rect", { x, y, width, height, rx: placed3.radius, fill: colors.fill, stroke: colors.border, "stroke-width": GROUP_METRICS.borderWidth })];
+  for (const child of placed3.children) parts.push(child.kind === "item" ? paintItem2(child, theme) : paintGroup2(child, theme));
+  if (placed3.tab !== null) parts.push(paintTab4(placed3, placed3.tab, theme));
+  return el("g", { "data-group": `group-${placed3.index}`, "data-level": placed3.level, "data-tone": placed3.tone }, parts);
 }
 var init_paint_group2 = __esm({
   "../../packages/diagrams/src/kinds/treemap/paint-group.ts"() {
@@ -137692,7 +137711,7 @@ function placeValueLabels(ctx, bars, lines, thresholds) {
   const hasLoss = shaped.series.some((entry2) => entry2.source.kind === "bar" && entry2.source.values.some((value) => value < 0));
   if (!ctx.diagram.showValues || bars.length === 0 || shaped.isStacked && hasLoss) return [];
   const height = TYPE_ROLES.edgeLabel.lineHeight;
-  const placed2 = (shaped.isStacked ? bars.filter((bar) => bar.round !== null) : bars).map((bar) => {
+  const placed3 = (shaped.isStacked ? bars.filter((bar) => bar.round !== null) : bars).map((bar) => {
     const value = shaped.isStacked ? shaped.totals[bar.place] ?? 0 : shaped.series[bar.series]?.source.values[bar.place] ?? 0;
     const text4 = formatShort4(value, ctx.diagram.y.unit);
     const width = measureRole(text4, "edgeLabel");
@@ -137702,9 +137721,9 @@ function placeValueLabels(ctx, bars, lines, thresholds) {
     const left = label.anchor === "middle" ? label.x - width / 2 : label.anchor === "start" ? label.x : label.x - width;
     return { bar, label, box: { x: left, y: label.top, width, height } };
   });
-  if (placed2.some((one, index2) => placed2.slice(index2 + 1).some((other) => meets(one.box, other.box, XYCHART_METRICS.keepOff)))) return [];
+  if (placed3.some((one, index2) => placed3.slice(index2 + 1).some((other) => meets(one.box, other.box, XYCHART_METRICS.keepOff)))) return [];
   const segments = [...lines.flatMap((entry2) => entry2.points.slice(1).map((point, index2) => [entry2.points[index2], point])), ...thresholds.map((threshold) => [threshold.from, threshold.to])];
-  return placed2.filter(({ bar, box }) => !bars.some((other) => other !== bar && meets(box, other.rect)) && !segments.some(([a, b]) => crosses3(a, b, box, XYCHART_METRICS.keepOff))).map(({ label }) => label);
+  return placed3.filter(({ bar, box }) => !bars.some((other) => other !== bar && meets(box, other.rect)) && !segments.some(([a, b]) => crosses3(a, b, box, XYCHART_METRICS.keepOff))).map(({ label }) => label);
 }
 var MARK_EVERY_POINT, meets, barNumbers, valueLabelReach;
 var init_layout_data = __esm({
@@ -163606,8 +163625,8 @@ function move2(scan, op) {
   const shifted3 = moved3.map((line3) => line3.trim() === "" ? line3 : line3.startsWith(from) ? `${place2.indent}${line3.slice(from.length)}` : line3);
   const lines = [...rest.lines];
   lines.splice(place2.index, 0, ...shifted3);
-  const placed2 = shifted3.map((_, index2) => place2.index + 1 + index2);
-  return { ok: true, source: lines.join("\n"), lines: placed2, message: `Moved ${op.target} ${op.into === null ? "to the top level" : `into ${op.into}`}, now on ${lineList(placed2)}.` };
+  const placed3 = shifted3.map((_, index2) => place2.index + 1 + index2);
+  return { ok: true, source: lines.join("\n"), lines: placed3, message: `Moved ${op.target} ${op.into === null ? "to the top level" : `into ${op.into}`}, now on ${lineList(placed3)}.` };
 }
 var NODE_STATEMENTS;
 var init_structure = __esm({
@@ -164107,13 +164126,13 @@ function mergeItem(old, now) {
 function captureOverrides(expected, edited, ids, existing = {}) {
   const before = scanSource(withoutBanner(expected));
   const after = scanSource(withoutBanner(edited));
-  const nameOf9 = /* @__PURE__ */ new Map();
-  for (const [name, id] of Object.entries(ids)) if (!nameOf9.has(id)) nameOf9.set(id, name);
-  const keyOf4 = (id) => id === null ? null : nameOf9.get(id) ?? id;
+  const nameOf10 = /* @__PURE__ */ new Map();
+  for (const [name, id] of Object.entries(ids)) if (!nameOf10.has(id)) nameOf10.set(id, name);
+  const keyOf4 = (id) => id === null ? null : nameOf10.get(id) ?? id;
   const endKey = (end) => {
-    if (nameOf9.has(end)) return nameOf9.get(end);
+    if (nameOf10.has(end)) return nameOf10.get(end);
     const dot2 = end.lastIndexOf(".");
-    return dot2 > 0 && nameOf9.has(end.slice(0, dot2)) ? `${nameOf9.get(end.slice(0, dot2))}${end.slice(dot2)}` : end;
+    return dot2 > 0 && nameOf10.has(end.slice(0, dot2)) ? `${nameOf10.get(end.slice(0, dot2))}${end.slice(dot2)}` : end;
   };
   const items2 = {};
   const groups = {};
@@ -166995,14 +167014,14 @@ function frameModules(plan, modules) {
   for (const module of sorted) plan.modules.set(moduleFrame(module.prefix), module);
   for (const module of sorted) {
     const own2 = moduleFrame(module.prefix);
-    const placed2 = [];
+    const placed3 = [];
     for (const [key, shape] of plan.shapes) {
-      if (shape === "node") placed2.push(key);
-      else if (shape === "container") placed2.push(containerFrame(key));
-      else if (shape === "frame") placed2.push(key);
+      if (shape === "node") placed3.push(key);
+      else if (shape === "container") placed3.push(containerFrame(key));
+      else if (shape === "frame") placed3.push(key);
     }
-    for (const other of sorted) if (other !== module && other.prefix.startsWith(module.prefix)) placed2.push(moduleFrame(other.prefix));
-    const members2 = placed2.filter((key) => {
+    for (const other of sorted) if (other !== module && other.prefix.startsWith(module.prefix)) placed3.push(moduleFrame(other.prefix));
+    const members2 = placed3.filter((key) => {
       const scope = scopeOf(plan, key);
       if (key.startsWith("module:")) return scope !== module.prefix && scope.startsWith(module.prefix) && !sorted.some((between2) => between2.prefix !== module.prefix && between2.prefix !== scope && scope.startsWith(between2.prefix) && between2.prefix.startsWith(module.prefix));
       return scope === module.prefix;
@@ -169408,15 +169427,15 @@ var init_slots = __esm({
 
 // ../../packages/diagrams/src/importers/bicep/items.ts
 function withoutReadCopies(items2) {
-  const nameOf9 = (item) => item.attributes.find((attribute2) => attribute2.name === "name")?.value ?? null;
+  const nameOf10 = (item) => item.attributes.find((attribute2) => attribute2.name === "name")?.value ?? null;
   const made = /* @__PURE__ */ new Map();
   for (const item of items2) {
-    const name = nameOf9(item);
+    const name = nameOf10(item);
     if (!item.existing && name !== null) made.set(`${item.type}\0${name}`, item.name);
   }
   const alias = /* @__PURE__ */ new Map();
   for (const item of items2) {
-    const name = nameOf9(item);
+    const name = nameOf10(item);
     const real = name === null ? void 0 : made.get(`${item.type}\0${name}`);
     if (item.existing && real !== void 0) alias.set(item.name, real);
   }
@@ -172505,28 +172524,28 @@ function writeSankey(table, title, report4) {
     report4.add(DIAGNOSTIC_CODES.importNoShape, table.headerSpan, "No row is a flow that can be drawn.", "Each row needs a source, a target, and an amount above zero.");
     return null;
   }
-  let placed2 = pageFlows(flows, WORKFLOW_LIMITS.maxImportPoints);
-  if (placed2.left.length > 0) placed2 = pageFlows(flows, MAX_FLOWS);
-  const loops = placed2.pages.length > 1 && flows.some((flow, index2) => reaches2(flows.slice(0, index2), flow.to, flow.from));
+  let placed3 = pageFlows(flows, WORKFLOW_LIMITS.maxImportPoints);
+  if (placed3.left.length > 0) placed3 = pageFlows(flows, MAX_FLOWS);
+  const loops = placed3.pages.length > 1 && flows.some((flow, index2) => reaches2(flows.slice(0, index2), flow.to, flow.from));
   if (loops) report4.add(DIAGNOSTIC_CODES.importChanged, table.headerSpan, "Some flows go back to an earlier node, which a sankey cannot draw, so they are drawn on another sankey of the parts.", "A sankey only goes forward. Draw a loop as a flow diagram to see it in one picture.");
   const unit3 = sharedUnit(table, [columns2.value]);
   const what = cleanText(table.header[columns2.value] ?? "", "amount").toLowerCase();
-  const written3 = placed2.pages.map((page, index2) => {
+  const written3 = placed3.pages.map((page, index2) => {
     const nodes = new Set(page.flatMap((flow) => [flow.from, flow.to]));
-    const name = pageTitle(title, index2, placed2.pages.length);
+    const name = pageTitle(title, index2, placed3.pages.length);
     const lines = new SourceLines();
     lines.add(`sankey ${quote(name)}${options2({ unit: unit3, desc: `${countOf2(page.length, "flow")} between ${countOf2(nodes.size, "node")}, each as thick as its ${what}, imported from a table.` })}`);
     lines.gap();
     for (const flow of page) lines.add(`${quote(flow.from)} -> ${quote(flow.to)} : ${plainNumber(flow.value)}`);
     return { title: name, source: lines.toString(), items: page.length };
   });
-  const drawn = flows.length - placed2.left.length;
-  reportPages(report4, written3.length, flows.length, "flow", "flows", placed2.left.length, placed2.left[0]?.span ?? table.headerSpan);
+  const drawn = flows.length - placed3.left.length;
+  reportPages(report4, written3.length, flows.length, "flow", "flows", placed3.left.length, placed3.left[0]?.span ?? table.headerSpan);
   const allNodes = new Set(flows.flatMap((flow) => [flow.from, flow.to]));
   return pagedDraft("sankey", written3, {
-    stats: { items: allNodes.size, links: drawn, groups: 0, dropped: dropped + placed2.left.length },
+    stats: { items: allNodes.size, links: drawn, groups: 0, dropped: dropped + placed3.left.length },
     advice: "Give the main nodes an icon with a node line, and check that what flows into each middle node also flows out.",
-    coverage: { noun: "rows", total: table.rows.length, drawn: table.rows.length - dropped - placed2.left.length, summarised: 0 }
+    coverage: { noun: "rows", total: table.rows.length, drawn: table.rows.length - dropped - placed3.left.length, summarised: 0 }
   });
 }
 var MAX_NODES, MAX_FLOWS;
@@ -175288,17 +175307,17 @@ function itemOf(resource) {
     const name = nameText(resource.properties[nameKey3] ?? null);
     attributes2.push({ name: "name", refs: [], value: name.known, readable: name.readable });
   }
-  const placed2 = (key) => key !== "location" || type === "azurerm_resource_group";
+  const placed3 = (key) => key !== "location" || type === "azurerm_resource_group";
   const role = roleOf2(type);
   for (const [path, attribute2] of DETAILS2) {
-    if (!placed2(attribute2)) continue;
+    if (!placed3(attribute2)) continue;
     const value = valueAt(resource.properties, path);
     if (value !== null) attributes2.push({ name: attribute2 === "sku" ? skuAttribute(role.role === "node" ? role.detail ?? [] : []) : attribute2, refs: [], value });
   }
   if (isObject2(resource.properties)) {
     for (const [key, value] of Object.entries(resource.properties)) {
       const text4 = textOf5(value);
-      if (key !== nameKey3 && placed2(key) && text4 !== null && !DETAILS2.some(([path]) => path.length === 1 && path[0] === key)) attributes2.push({ name: snake(key), refs: [], value: text4 });
+      if (key !== nameKey3 && placed3(key) && text4 !== null && !DETAILS2.some(([path]) => path.length === 1 && path[0] === key)) attributes2.push({ name: snake(key), refs: [], value: text4 });
     }
   }
   for (const entry2 of resource.refs) attributes2.push({ name: attributeOf(entry2.path), refs: entry2.refs, value: null });
@@ -175635,7 +175654,7 @@ function stateResources(state, offsetOf) {
   const byUrn = new Map(all.map((resource) => [resource.urn, resource]));
   const counts = /* @__PURE__ */ new Map();
   for (const resource of all) counts.set(logicalName(resource.urn), (counts.get(logicalName(resource.urn)) ?? 0) + 1);
-  const nameOf9 = (urn) => (counts.get(logicalName(urn)) ?? 0) > 1 ? urn : logicalName(urn);
+  const nameOf10 = (urn) => (counts.get(logicalName(urn)) ?? 0) > 1 ? urn : logicalName(urn);
   const safe2 = (name) => name.replace(/[^A-Za-z0-9_-]+/g, "_");
   const scopeOf2 = (resource) => {
     const chain = [];
@@ -175660,21 +175679,21 @@ function stateResources(state, offsetOf) {
         const outputs = target2?.outputs;
         const name = typeof outputs === "object" && outputs !== null && !Array.isArray(outputs) ? outputs["name"] : null;
         const path = pathTo(inputs[property] ?? null, [target2?.id ?? "", typeof name === "string" && property.endsWith("Name") ? name : ""], [property]);
-        return { path: path ?? [property], refs: [nameOf9(urn)] };
+        return { path: path ?? [property], refs: [nameOf10(urn)] };
       })
     );
     const parent = resource.parent === null ? void 0 : byUrn.get(resource.parent);
     for (const urns of Object.values(resource.propertyDependencies)) for (const urn of urns) named2.add(urn);
-    const dependsOn = resource.dependencies.filter((urn) => !named2.has(urn) && byUrn.get(urn)?.custom === true && urn !== resource.urn && urn !== resource.parent).map(nameOf9);
+    const dependsOn = resource.dependencies.filter((urn) => !named2.has(urn) && byUrn.get(urn)?.custom === true && urn !== resource.urn && urn !== resource.parent).map(nameOf10);
     const properties = mergeValues2(resource.outputs, resource.inputs);
     return {
-      name: nameOf9(resource.urn),
+      name: nameOf10(resource.urn),
       logical: logicalName(resource.urn),
       token: resource.type,
       properties,
       refs: refs.filter((entry2) => entry2.refs.length > 0),
       dependsOn,
-      parent: parent?.custom === true ? nameOf9(parent.urn) : null,
+      parent: parent?.custom === true ? nameOf10(parent.urn) : null,
       existing: false,
       start: offsetOf(resource.urn),
       scope: scopeOf2(resource)
@@ -177375,7 +177394,7 @@ function importSource(format, input2, title = null, options3 = {}, limits = HOST
   const report4 = new ImportReporter();
   const files = typeof input2 === "string" ? [{ path: "", text: input2 }] : input2;
   const characters = files.reduce((total, file2) => total + file2.text.length, 0);
-  const local = limits.maxLength < WORKFLOW_LIMITS.maxImportLocalLength ? ` The local server (npx -y @buun_group/plotwork-mcp) runs on your own machine and reads far more.` : "";
+  const local = limits.maxLength < WORKFLOW_LIMITS.maxImportLocalLength ? ` The local server (${mcpCommand()}) runs on your own machine and reads far more.` : "";
   if (characters > limits.maxText || files.length > limits.maxFiles) {
     report4.add(
       DIAGNOSTIC_CODES.importTooLarge,
@@ -178570,6 +178589,38 @@ var init_manifest = __esm({
         readsSettings: false
       },
       {
+        name: "publish",
+        operands: "<file>",
+        summary: "Save every diagram of a `.diagram` or Markdown file to Plotwork, where your organisations' Publishing settings decide, and print the link",
+        description: [
+          "Checks every diagram of the file on this machine, then stores each one through the hosted API with the key in `PLOTWORK_API_KEY`. Where it goes is the API's decision: an organisation that keeps its members' diagrams in its private library gets it there, and the link printed is its page for members; otherwise it goes to your own library at a public link. A file with a mistake publishes nothing.",
+          "A Markdown file publishes each `diagram` fence, named after the file and numbered. Publishing the same diagram again keeps its link."
+        ],
+        options: [
+          { flag: "--org", value: "<slug>", default: "where your organisations' settings send it", description: "Save it to this organisation's private library." },
+          { flag: "--personal", description: "Ask for a public link in your own library; an organisation that requires its library refuses it." },
+          { flag: "--folder", value: "<path>", default: "the top level", description: "The folder to file it in, such as `Payments/Checkout`." },
+          { flag: "--name", value: "<name>", default: "the file name", description: "The name it is listed under." },
+          { flag: "--alias", value: "<name>", description: "Point a stable link with this name at it, so one address shows the latest version. Personal only, and one diagram only." },
+          { flag: "--theme", value: "<theme>", values: PICTURE_SCHEMES, default: "the settings default, else `light`", description: "The colour scheme to draw it in." },
+          { flag: "--embed-source", description: "Write the source into the stored picture so it can be edited later; `--no-embed-source` leaves it out." },
+          CONFIG
+        ],
+        examples: [
+          { args: "publish checkout.diagram", says: "Save it where your organisations send it, and print the link." },
+          { args: "publish docs/architecture.md --org acme --folder Platform", says: "Save every diagram of a Markdown file to Acme's library, in a folder." },
+          { args: "publish flow.diagram --personal --alias checkout-flow", says: "Publish at a public link, behind a stable link." }
+        ],
+        exits: {
+          ok: "Every diagram was saved, and its link printed.",
+          problems: "A diagram has a mistake (nothing is sent), the API refused one (its code and words are printed), or the API could not be reached.",
+          usage: `${CLI_USAGE_MISTAKES} Also when \`PLOTWORK_API_KEY\` is missing or refused, \`--personal\` and \`--org\` are both given, or \`--alias\` is given for a file with several diagrams.`
+        },
+        writes: "Nothing on this machine.",
+        network: `Yes: one request to the Plotwork API for each diagram, with the key in \`${STYLE_RULES.env.access}\`, which is never printed. The source is sent, and the repository's header defaults and brand; nothing else of the file.`,
+        readsSettings: true
+      },
+      {
         name: "icons",
         operands: "<query>",
         summary: "Search the bundled icons by name",
@@ -178583,10 +178634,10 @@ var init_manifest = __esm({
       }
     ];
     CLI_ENVIRONMENT = [
-      { name: SETTINGS_FILE.env, commands: ["sync", "validate", "check", "render", "outline", "generate"], meaning: `The settings file to read when \`--config\` is not given, instead of looking for ${SETTINGS_FILE.names.map((name) => `\`${name}\``).join(" or ")}.` },
+      { name: SETTINGS_FILE.env, commands: ["sync", "validate", "check", "render", "outline", "generate", "publish"], meaning: `The settings file to read when \`--config\` is not given, instead of looking for ${SETTINGS_FILE.names.map((name) => `\`${name}\``).join(" or ")}.` },
       { name: STYLE_RULES.env.org, commands: ["check"], meaning: "The organisation whose saved style rules to check against when `--org` is not given." },
-      { name: STYLE_RULES.env.access, commands: ["check"], meaning: "An API key of that organisation, sent to read its rules. Never printed." },
-      { name: STYLE_RULES.env.apiUrl, commands: ["check"], meaning: `The API the rules are read from, instead of \`${STYLE_RULES.apiUrl}\`.` },
+      { name: STYLE_RULES.env.access, commands: ["check", "publish"], meaning: "An API key: for `check`, of the organisation whose rules are read; for `publish`, the key the diagrams are saved with. Never printed." },
+      { name: STYLE_RULES.env.apiUrl, commands: ["check", "publish"], meaning: `The API the rules are read from and diagrams are published to, instead of \`${STYLE_RULES.apiUrl}\`.` },
       { name: VENDOR_ICONS_ENV, commands: ["sync", "render", "export", "generate"], meaning: "`off` draws no vendor artwork in this run: a product icon becomes a plain shape." },
       { name: "GITHUB_REPOSITORY, GITHUB_SHA, GITHUB_REF, GITHUB_RUN_ID, GITHUB_SERVER_URL, GITHUB_EVENT_NAME", commands: ["generate"], meaning: "Read only to name the run in a `json` report, when GitHub Actions sets them." }
     ];
@@ -178893,6 +178944,129 @@ var init_import_source_command = __esm({
   }
 });
 
+// ../../packages/diagrams/src/cli/publish-command.ts
+import { basename as basename4 } from "node:path";
+function nameOf9(path, given, index2, count3) {
+  const base = given ?? basename4(path).replace(/\.[^.]+$/, "");
+  return count3 === 1 ? base : `${base} ${index2 + 1}`;
+}
+function placed2(name, answer) {
+  if (answer.private === true) {
+    const org = typeof answer.organization?.name === "string" ? answer.organization.name : String(answer.organization?.slug ?? "the organisation");
+    const why = answer.routedBy === "organisation-required" ? ` (${org} requires its members to publish to its library)` : answer.routedBy === "organisation-default" ? ` (${org} keeps its members' diagrams in its library; --personal asks for a public link)` : "";
+    return `${name}: saved to the private library of ${org}${why}: ${String(answer.viewUrl ?? "")}`;
+  }
+  const stable = typeof answer.stableLink?.url === "string" ? `
+  stable link: ${answer.stableLink.url}` : "";
+  return `${name}: published at a public link: ${String(answer.url ?? "")}${stable}`;
+}
+function sentSettings(found) {
+  if (found.status !== "found") return void 0;
+  const { defaults, brand } = found.settings;
+  if (defaults === void 0 && brand === void 0) return void 0;
+  return { ...defaults === void 0 ? {} : { defaults }, ...brand === void 0 ? {} : { brand } };
+}
+async function publishFile(path, options3, deps = {}) {
+  const env = deps.env ?? process.env;
+  const key = env[STYLE_RULES.env.access];
+  if (key === void 0 || key === "") {
+    console.error(`publish needs an API key in ${STYLE_RULES.env.access}: make one in the portal, or use a key of your organisation`);
+    return EXIT.usage;
+  }
+  if (options3.personal === true && options3.org !== void 0) {
+    console.error("publish takes --personal or --org, not both");
+    return EXIT.usage;
+  }
+  if (options3.theme !== void 0 && !PICTURE_SCHEMES.includes(options3.theme)) {
+    console.error(`publish --theme is one of ${PICTURE_SCHEMES.join(", ")}`);
+    return EXIT.usage;
+  }
+  let units;
+  try {
+    units = readSourceUnits(path);
+  } catch (error62) {
+    console.error(`cannot read ${path}: ${error62 instanceof Error ? error62.message : String(error62)}`);
+    return EXIT.usage;
+  }
+  if (units.length === 0) {
+    console.error(`${path} holds no diagram`);
+    return EXIT.usage;
+  }
+  if (options3.alias !== void 0 && units.length > 1) {
+    console.error("publish --alias names one stable link, so it takes a file with one diagram");
+    return EXIT.usage;
+  }
+  const found = settingsFor(path, { explicit: options3.config, env });
+  if (found.status === "invalid") {
+    console.error(found.message);
+    return EXIT.usage;
+  }
+  const settings = sentSettings(found);
+  const theme = options3.theme ?? (found.status === "found" ? found.settings.defaults?.theme : void 0) ?? "light";
+  let mistakes = 0;
+  for (const unit3 of units) {
+    const parsed = parseDiagram(unit3.source);
+    if (parsed.ok) continue;
+    mistakes += parsed.error.length;
+    for (const diagnostic of parsed.error) console.error(`${formatDiagnostic(diagnostic, unit3.source)}
+     at file line ${unit3.firstLine + diagnostic.line - 1}
+`);
+  }
+  if (mistakes > 0) {
+    console.error(`${mistakes} error(s) in ${path}: nothing was published`);
+    return EXIT.problems;
+  }
+  const named2 = env[STYLE_RULES.env.apiUrl];
+  const base = (named2 === void 0 || named2 === "" ? STYLE_RULES.apiUrl : named2).replace(/\/+$/, "");
+  const fetcher = deps.fetch ?? globalThis.fetch;
+  let worst = EXIT.ok;
+  for (const [index2, unit3] of units.entries()) {
+    const name = nameOf9(path, options3.name, index2, units.length);
+    const body2 = {
+      source: unit3.source,
+      theme,
+      name,
+      ...settings === void 0 ? {} : { settings },
+      ...options3.folder === void 0 ? {} : { folder: options3.folder },
+      ...options3.alias === void 0 ? {} : { alias: options3.alias },
+      ...options3.org === void 0 ? {} : { organization: options3.org },
+      ...options3.personal === true ? { personal: true } : {},
+      ...options3.embedSource === void 0 ? {} : { embedSource: options3.embedSource }
+    };
+    let status;
+    let answer;
+    try {
+      const response = await fetcher(`${base}/v1/diagrams/publish`, { method: "POST", headers: { "x-api-key": key, "content-type": "application/json", accept: "application/json" }, body: JSON.stringify(body2) });
+      status = response.status;
+      answer = await response.json().catch(() => ({})) ?? {};
+    } catch (error62) {
+      console.error(`could not reach ${base}: ${(error62 instanceof Error ? error62.message : String(error62)).replaceAll(key, "***")}`);
+      return EXIT.problems;
+    }
+    if (status !== 200 && status !== 201) {
+      const code = typeof answer.errorCode === "string" ? ` ${answer.errorCode}` : "";
+      const message2 = typeof answer.message === "string" ? `: ${answer.message}` : "";
+      console.error(`${name}: the API answered ${status}${code}${message2}`);
+      worst = status === 401 ? EXIT.usage : EXIT.problems;
+      continue;
+    }
+    console.log(placed2(name, answer));
+  }
+  return worst;
+}
+var init_publish_command = __esm({
+  "../../packages/diagrams/src/cli/publish-command.ts"() {
+    "use strict";
+    init_constants();
+    init_core();
+    init_parse18();
+    init_theme();
+    init_commands();
+    init_input();
+    init_settings_file();
+  }
+});
+
 // ../../packages/diagrams/src/cli/read-command.ts
 import { readFileSync as readFileSync9, writeFileSync as writeFileSync8 } from "node:fs";
 function isLink(target2) {
@@ -179062,6 +179236,17 @@ async function runCli(argv, who = REPOSITORY_CLI) {
       return importSourceFile(target2, positionals[2], { out: values.out, title: values.title, view: values.view, chart: values.chart, operation: values.operation, tables: values.tables, tags: values.tags, paths: values.paths, groupBy: values["group-by"], varFiles: values["var-file"], root: values.root, format: values.format === "json" ? "json" : "text" });
     case "export":
       return exportFile(target2, { format: values.format, image: values.image, out: values.out, theme: asTheme(values.theme), includeSource: values.source !== false });
+    case "publish":
+      return publishFile(target2, {
+        org: values.org,
+        folder: values.folder,
+        name: values.name,
+        alias: values.alias,
+        theme: values.theme,
+        personal: values.personal,
+        embedSource: values["embed-source"],
+        config: values.config
+      });
     case "icons":
       return searchIconsCommand(positionals.slice(1).join(" "));
     default:
@@ -179082,6 +179267,7 @@ var init_run = __esm({
     init_import_command();
     init_import_source_command();
     init_manifest();
+    init_publish_command();
     init_read_command();
     init_settings_file();
     init_targets();
@@ -179114,6 +179300,10 @@ var init_run = __esm({
       org: { type: "string" },
       capture: { type: "boolean" },
       since: { type: "string" },
+      folder: { type: "string" },
+      name: { type: "string" },
+      alias: { type: "string" },
+      personal: { type: "boolean" },
       help: { type: "boolean", short: "h" }
     };
   }
@@ -179144,7 +179334,7 @@ var init_cli = __esm({
 });
 
 // package.json
-var package_default = { version: "0.1.0-beta.6" };
+var package_default = { version: "0.1.0-beta.7" };
 
 // npm/package-config.json
 var package_config_default = {
