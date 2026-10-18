@@ -960,7 +960,7 @@ var init_mcp_release = __esm({
     "use strict";
     MCP_RELEASE = {
       packageName: "@buun_group/plotwork-mcp",
-      version: "0.1.0-beta.4"
+      version: "0.1.0-beta.5"
     };
   }
 });
@@ -115912,9 +115912,9 @@ function readAttributes(text4, startAt) {
     let colon = end;
     while (colon < text4.length && isSpace3(text4.charAt(colon))) colon += 1;
     if (end === at3 || text4.charAt(colon) !== ":") return { attributes: attributes2, leftover: text4.slice(at3).trim(), leftoverAt: at3 };
-    let valueAt2 = colon + 1;
-    while (valueAt2 < text4.length && isSpace3(text4.charAt(valueAt2))) valueAt2 += 1;
-    const read = readValue(text4, valueAt2);
+    let valueAt3 = colon + 1;
+    while (valueAt3 < text4.length && isSpace3(text4.charAt(valueAt3))) valueAt3 += 1;
+    const read = readValue(text4, valueAt3);
     attributes2.push({ key: text4.slice(at3, end).toLowerCase(), value: read.value, column: at3 + 1 });
     at3 = read.end;
   }
@@ -159906,10 +159906,10 @@ var IMPORT_FORMATS, IMPORT_VIEWS, IMPORT_CHARTS, IMPORT_GROUP_BY, NO_STATS;
 var init_types2 = __esm({
   "../../packages/diagrams/src/importers/types.ts"() {
     "use strict";
-    IMPORT_FORMATS = ["sql", "prisma", "drizzle", "openapi", "terraform", "terraform-plan", "bicep", "arm", "pulumi", "cloudformation", "compose", "kubernetes", "github-actions", "csv", "json", "tree", "git-log"];
+    IMPORT_FORMATS = ["sql", "prisma", "drizzle", "openapi", "terraform", "terraform-plan", "bicep", "arm", "pulumi", "cloudformation", "cdk", "compose", "kubernetes", "helm", "kustomize", "backstage", "github-actions", "csv", "json", "tree", "git-log"];
     IMPORT_VIEWS = ["endpoints", "map", "sequence", "git", "timeline"];
     IMPORT_CHARTS = ["auto", "xychart", "pie", "sankey", "treemap", "matrix"];
-    IMPORT_GROUP_BY = ["module", "network", "file"];
+    IMPORT_GROUP_BY = ["module", "network", "file", "owner"];
     NO_STATS = { items: 0, links: 0, groups: 0, dropped: 0 };
   }
 });
@@ -159934,9 +159934,9 @@ var init_sources = __esm({
       tables: external_exports.array(external_exports.string().min(1).max(200)).max(200).optional().describe("sql, prisma and drizzle: the tables to draw, each a name or a prefix ending in * (org_*)."),
       paths: external_exports.array(external_exports.string().min(1).max(200)).max(200).optional().describe("openapi: the path prefixes to read, such as /orders."),
       tags: external_exports.array(external_exports.string().min(1).max(200)).max(200).optional().describe("openapi: the tags to read."),
-      groupBy: external_exports.enum(IMPORT_GROUP_BY).optional().describe("terraform, bicep, arm, pulumi, cloudformation: module (the default) frames each module's resources and nests them by what they name; network nests by what they name alone; file (terraform) frames them by their .tf file."),
+      groupBy: external_exports.enum(IMPORT_GROUP_BY).optional().describe("terraform, bicep, arm, pulumi, cloudformation, cdk: module (the default) frames each module's resources and nests them by what they name; network nests by what they name alone; file (terraform) frames them by their .tf file; owner (backstage) frames a catalog by the group that owns each entity."),
       varFiles: external_exports.array(repositoryPath).max(20).optional().describe("terraform: the variables files to apply, as -var-file would; bicep: the .bicepparam file; arm: the parameters file; pulumi: the Pulumi.<stack>.yaml file."),
-      root: repositoryPath.optional().describe("terraform, bicep, pulumi, cloudformation: the root module, deployment, program, or template to draw when the files hold several, such as envs/prod; each is a part of its own when left out.")
+      root: repositoryPath.optional().describe("terraform, bicep, pulumi, cloudformation, cdk: the root module, deployment, program, template, or stack to draw when the files hold several, such as envs/prod; each is a part of its own when left out.")
     }).meta({ id: "SourceOptions", description: "The reader options of one source, as import_source takes them." });
     SourcePublishSchema = external_exports.strictObject({
       alias: external_exports.string().min(1).max(60).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "An alias is lower-case words joined by single hyphens, such as checkout-flow").optional().describe("A stable link of a personal key: one address that always shows the latest version."),
@@ -161196,6 +161196,13 @@ var init_render15 = __esm({
   }
 });
 
+// ../../packages/diagrams/src/importers/guide.ts
+var init_guide = __esm({
+  "../../packages/diagrams/src/importers/guide.ts"() {
+    "use strict";
+  }
+});
+
 // ../../packages/diagrams/src/services/examples.generated.ts
 var init_examples_generated = __esm({
   "../../packages/diagrams/src/services/examples.generated.ts"() {
@@ -161210,6 +161217,8 @@ var init_build_vocabulary = __esm({
     init_constants();
     init_core();
     init_icons();
+    init_guide();
+    init_types2();
     init_registry2();
     init_theme();
     init_examples_generated();
@@ -166279,13 +166288,13 @@ function itemsToStack(written3, modules) {
     const byAttribute = /* @__PURE__ */ new Map();
     const vars = /* @__PURE__ */ new Map();
     const values = /* @__PURE__ */ new Map();
-    const readable2 = /* @__PURE__ */ new Map();
+    const readable3 = /* @__PURE__ */ new Map();
     for (const attribute2 of item.attributes) {
       const refs = attribute2.refs.map((ref) => keyOf4.get(ref)).filter((ref) => ref !== void 0 && ref !== key);
       if (refs.length > 0) byAttribute.set(attribute2.name, [.../* @__PURE__ */ new Set([...byAttribute.get(attribute2.name) ?? [], ...refs])]);
       if ((attribute2.vars ?? []).length > 0) vars.set(attribute2.name, [.../* @__PURE__ */ new Set([...vars.get(attribute2.name) ?? [], ...attribute2.vars ?? []])]);
       if (attribute2.value !== null) values.set(attribute2.name, attribute2.value);
-      else if (attribute2.readable !== void 0 && attribute2.readable !== null) readable2.set(attribute2.name, attribute2.readable);
+      else if (attribute2.readable !== void 0 && attribute2.readable !== null) readable3.set(attribute2.name, attribute2.readable);
     }
     if (item.source !== void 0) values.set("source", item.source);
     const all = [...byAttribute];
@@ -166302,7 +166311,7 @@ function itemsToStack(written3, modules) {
       byAttribute,
       vars,
       values,
-      readable: readable2,
+      readable: readable3,
       local: item.type === "module" ? `module.${name}` : `${item.type}.${name}`,
       scope: item.scope,
       instance: item.copies?.kind === "instance",
@@ -167397,7 +167406,7 @@ function drawStack(input2) {
   const provider = providers.size === 1 ? [...providers][0] : providers.size === 0 ? input2.cloud ?? null : null;
   const owner = provider === null ? null : SHORT_NAMES2[provider] ?? CLOUD_PROVIDER_SPECS[provider].title;
   const where = owner === null ? "on more than one cloud" : `on ${owner}`;
-  const nesting2 = context.options.groupBy === "file" ? "framed by the file that declares them" : plan.modules.size > 0 ? "framed by the module that declares them and nested in the groups, networks, and subnets that hold them" : layered ? "nested in the groups that hold them, beside the network, with an arrow to the subnet each one sits in" : "nested in the groups, networks, and subnets that hold them";
+  const nesting2 = context.options.groupBy === "file" ? "framed by the file that declares them" : plan.modules.size > 0 ? `framed by the ${input2.framing ?? "module"} that declares them and nested in the groups, networks, and subnets that hold them` : layered ? "nested in the groups that hold them, beside the network, with an arrow to the subnet each one sits in" : "nested in the groups, networks, and subnets that hold them";
   const title = context.title ?? `${owner === null ? "Cloud infrastructure" : `${owner} infrastructure`}${input2.summary === void 0 ? "" : `: ${input2.summary}`}`;
   const draft = {
     title,
@@ -168233,13 +168242,13 @@ function readResources(root) {
         const from = (keep) => unique(attributes2.filter(keep).flatMap((attribute2) => byAttribute.get(attribute2.name) ?? []));
         const role = id.kind === "module" ? { role: "node", type: "service", icon: "lucide:package", product: "Module" } : roleOf2(id.type);
         const values = /* @__PURE__ */ new Map();
-        const readable2 = /* @__PURE__ */ new Map();
+        const readable3 = /* @__PURE__ */ new Map();
         for (const attribute2 of block.attributes) {
           const value = attribute2.literal ?? resolver2.value(attribute2.raw);
           if (value !== null) values.set(attribute2.name, value);
           else if (NAMED.includes(attribute2.name)) {
             const partly = resolver2.readable(attribute2.raw);
-            if (partly !== null) readable2.set(attribute2.name, partly);
+            if (partly !== null) readable3.set(attribute2.name, partly);
           }
         }
         const tags = block.attributes.find((attribute2) => attribute2.name === "tags");
@@ -168257,7 +168266,7 @@ function readResources(root) {
           byAttribute,
           vars,
           values,
-          readable: readable2,
+          readable: readable3,
           local: id.local,
           scope: scope.prefix,
           instance: copy.key !== null,
@@ -169480,9 +169489,9 @@ var init_items3 = __esm({
         if (slot.transparent) return [];
         const body2 = bodyObject(slot.declaration.value);
         const attributes2 = [];
-        const add2 = (name, refs, value = null, readable2 = null, vars = []) => {
-          if (refs.length === 0 && value === null && readable2 === null && vars.length === 0) return;
-          attributes2.push({ name, refs, value, readable: readable2, vars });
+        const add2 = (name, refs, value = null, readable3 = null, vars = []) => {
+          if (refs.length === 0 && value === null && readable3 === null && vars.length === 0) return;
+          attributes2.push({ name, refs, value, readable: readable3, vars });
         };
         for (const entry2 of body2?.entries ?? []) {
           if (entry2.key === "name") {
@@ -171387,6 +171396,210 @@ var init_yaml = __esm({
   }
 });
 
+// ../../packages/diagrams/src/importers/backstage/entities.ts
+function refOf(written3, fallbackKind, namespace) {
+  const colon = written3.indexOf(":");
+  const kind = colon === -1 ? fallbackKind : written3.slice(0, colon).toLowerCase();
+  const rest = colon === -1 ? written3 : written3.slice(colon + 1);
+  const slash = rest.indexOf("/");
+  return slash === -1 ? `${kind}:${namespace}/${rest}` : `${kind}:${rest.slice(0, slash)}/${rest.slice(slash + 1)}`;
+}
+function readEntity2(root) {
+  const kindText = text2(get(root, "kind"));
+  const name = text2(get(get(root, "metadata"), "name"));
+  if (kindText === null || name === null) return null;
+  const kind = DRAWN_KINDS.find((entry2) => entry2.toLowerCase() === kindText.toLowerCase());
+  if (kind === void 0) return QUIET_KINDS.has(kindText) ? null : { skipped: kindText, line: root.line, column: root.column };
+  const namespace = text2(get(get(root, "metadata"), "namespace")) ?? "default";
+  const spec = get(root, "spec");
+  const one = (key, fallback) => {
+    const value = text2(get(spec, key));
+    return value === null || value === "" ? null : refOf(value, fallback, namespace);
+  };
+  const many = (key, fallback) => names5(get(spec, key)).map((value) => refOf(value, fallback, namespace));
+  return {
+    kind,
+    ref: `${kind.toLowerCase()}:${namespace}/${name}`,
+    name,
+    title: text2(get(get(root, "metadata"), "title")) ?? text2(get(get(spec, "profile"), "displayName")),
+    type: text2(get(spec, "type")),
+    lifecycle: text2(get(spec, "lifecycle")),
+    owner: one("owner", "group"),
+    system: one("system", "system"),
+    domain: kind === "System" ? one("domain", "domain") : null,
+    parent: kind === "Group" ? one("parent", "group") : one("subcomponentOf", "component"),
+    providesApis: many("providesApis", "api"),
+    consumesApis: many("consumesApis", "api"),
+    dependsOn: many("dependsOn", "component"),
+    dependencyOf: many("dependencyOf", "component"),
+    memberOf: many("memberOf", "group"),
+    line: root.line,
+    column: root.column
+  };
+}
+var DRAWN_KINDS, QUIET_KINDS, nameOfRef;
+var init_entities = __esm({
+  "../../packages/diagrams/src/importers/backstage/entities.ts"() {
+    "use strict";
+    init_yaml();
+    DRAWN_KINDS = ["Domain", "System", "Component", "API", "Resource", "Group", "User"];
+    QUIET_KINDS = /* @__PURE__ */ new Set(["Location"]);
+    nameOfRef = (ref) => ref.slice(ref.lastIndexOf("/") + 1);
+  }
+});
+
+// ../../packages/diagrams/src/importers/backstage/index.ts
+function brandOf(...texts) {
+  for (const word2 of texts.flatMap((entry2) => (entry2 ?? "").split(/[^A-Za-z0-9]+/))) {
+    const icon = word2.length < 3 ? null : iconForName(word2, "service");
+    if (icon?.startsWith("simple:") === true) return icon;
+  }
+  return null;
+}
+function boxOf3(entity, byOwner) {
+  const type = (entity.type ?? "").toLowerCase();
+  const said = (words2) => cleanText([words2, entity.lifecycle === null || entity.lifecycle === "production" ? null : entity.lifecycle, byOwner || entity.owner === null ? null : `owned by ${nameOfRef(entity.owner)}`].filter((part) => part !== null).join(", "));
+  const label = entity.title ?? entity.name;
+  if (entity.kind === "API") return { type: "gateway", label, sub: said(`${API_NAMES[type] ?? entity.type ?? ""} API`.trim()), icon: API_ICONS[type] ?? "lucide:plug", idHint: entity.name };
+  if (entity.kind === "Resource") {
+    const nodeType = RESOURCE_TYPES.find(([pattern3]) => pattern3.test(type))?.[1] ?? "storage";
+    return { type: nodeType, label, sub: said(entity.type === null ? "Resource" : `Resource, ${entity.type}`), icon: brandOf(entity.title, entity.name, entity.type), idHint: entity.name };
+  }
+  if (entity.kind === "User") return { type: "person", label, sub: "User", icon: null, idHint: entity.name };
+  const kindOf2 = type === "website" ? "client" : "service";
+  const words = type === "" ? "Component" : `${type.charAt(0).toUpperCase()}${type.slice(1)}`;
+  return { type: kindOf2, label, sub: said(words), icon: type === "library" ? "lucide:package" : type === "website" ? "lucide:monitor-smartphone" : brandOf(entity.title, entity.name), idHint: entity.name };
+}
+function readBackstage(textIn, context) {
+  const read = parseYaml(textIn);
+  if (read.error !== null) {
+    context.report.add(DIAGNOSTIC_CODES.importUnreadable, spanAt4(read.error.line, read.error.column), read.error.message, read.error.hint);
+    return null;
+  }
+  const entities = [];
+  const skipped = [];
+  for (const root of read.documents.map((document2) => document2.root).filter((node3) => node3 !== null)) {
+    const entity = readEntity2(root);
+    if (entity === null) continue;
+    if ("skipped" in entity) skipped.push({ kind: entity.skipped, line: entity.line, column: entity.column });
+    else if (!entities.some((other) => other.ref === entity.ref)) entities.push(entity);
+  }
+  const firstSkipped = skipped[0];
+  if (firstSkipped !== void 0) {
+    context.report.add(DIAGNOSTIC_CODES.importSkipped, spanAt4(firstSkipped.line, firstSkipped.column), `${countOf2(skipped.length, "entity", "entities")} of a kind this reader does not draw ${skipped.length === 1 ? "was" : "were"} left out: ${[...new Set(skipped.map((entry2) => entry2.kind))].slice(0, 4).join(", ")}.`, "The reader draws Components, APIs, Resources, Systems, Domains, Groups, and Users.");
+  }
+  const byRef = new Map(entities.map((entity) => [entity.ref, entity]));
+  const byOwner = context.options.groupBy === "owner";
+  const boxes2 = entities.filter((entity) => entity.kind === "Component" || entity.kind === "API" || entity.kind === "Resource");
+  if (boxes2.length === 0) {
+    context.report.add(DIAGNOSTIC_CODES.importNoShape, START3, "No Component, API, or Resource was found.", "Send catalog-info.yaml files with apiVersion backstage.io/v1alpha1, a kind, and metadata.name.");
+    return null;
+  }
+  const groups = [];
+  const frameOf3 = /* @__PURE__ */ new Map();
+  if (byOwner) {
+    for (const group2 of entities.filter((entity) => entity.kind === "Group")) {
+      const members2 = entities.filter((entity) => entity.kind === "User" && entity.memberOf.includes(group2.ref)).map((user) => user.title ?? user.name);
+      const said = members2.length === 0 ? null : members2.length <= 2 ? members2.join(", ") : countOf2(members2.length, "member");
+      groups.push({ key: group2.ref, label: group2.title ?? group2.name, sub: cleanText(["Group", group2.type, said].filter((part) => part !== null).join(", ")), icon: "lucide:users", parent: group2.parent !== null && byRef.has(group2.parent) ? group2.parent : null, idHint: group2.name });
+    }
+    for (const entity of boxes2) if (entity.owner !== null && byRef.get(entity.owner)?.kind === "Group") frameOf3.set(entity.ref, entity.owner);
+  } else {
+    for (const domain2 of entities.filter((entity) => entity.kind === "Domain")) groups.push({ key: domain2.ref, label: domain2.title ?? domain2.name, sub: cleanText(`Domain${domain2.owner === null ? "" : `, owned by ${nameOfRef(domain2.owner)}`}`), icon: "lucide:map", idHint: domain2.name });
+    for (const system of entities.filter((entity) => entity.kind === "System")) groups.push({ key: system.ref, label: system.title ?? system.name, sub: cleanText(`System${system.owner === null ? "" : `, owned by ${nameOfRef(system.owner)}`}`), icon: "lucide:boxes", parent: system.domain !== null && byRef.has(system.domain) ? system.domain : null, idHint: system.name });
+    for (const entity of boxes2) if (entity.system !== null && byRef.get(entity.system)?.kind === "System") frameOf3.set(entity.ref, entity.system);
+  }
+  const order = { Component: 0, API: 1, Resource: 2 };
+  const ordered = [...boxes2].sort((a, b) => order[a.kind] - order[b.kind]);
+  const nodes = ordered.map((entity) => {
+    const box = boxOf3(entity, byOwner);
+    const system = byOwner && entity.system !== null ? `, in ${nameOfRef(entity.system)}` : "";
+    return { key: entity.ref, ...box, sub: box.sub === null || box.sub === void 0 ? null : cleanText(`${box.sub}${system}`), group: frameOf3.get(entity.ref) ?? null };
+  });
+  const drawn = new Set(nodes.map((node3) => node3.key));
+  const edges = [];
+  const unknown2 = /* @__PURE__ */ new Set();
+  const link2 = (from, to, label, arrow) => {
+    if (!drawn.has(to)) {
+      if (!byRef.has(to)) unknown2.add(to);
+      return;
+    }
+    edges.push({ from, to, label, ...arrow === void 0 ? {} : { arrow } });
+  };
+  for (const entity of ordered) {
+    for (const api of entity.providesApis) link2(entity.ref, api, "provides");
+    for (const api of entity.consumesApis) link2(entity.ref, api, "consumes");
+    for (const target2 of entity.dependsOn) link2(entity.ref, target2, "depends on");
+    for (const source of entity.dependencyOf) if (drawn.has(source)) link2(source, entity.ref, "depends on");
+    if (entity.kind === "Component" && entity.parent !== null) link2(entity.ref, entity.parent, "part of", "-->");
+  }
+  if (unknown2.size > 0) {
+    context.report.add(DIAGNOSTIC_CODES.importUnresolved, START3, `${countOf2(unknown2.size, "relation")} name${unknown2.size === 1 ? "s an entity" : " entities"} the files do not describe, so no arrow is drawn: ${[...unknown2].slice(0, 3).join(", ")}.`, "Send the catalog-info.yaml files that describe them, or check that each reference names its kind, such as resource:orders-db.");
+  }
+  const shown = /* @__PURE__ */ new Set([...nodes.map((node3) => node3.key), ...groups.map((group2) => group2.key)]);
+  const held = new Set([...frameOf3.values()].flatMap((frame) => [frame, ...ancestorsOf2(frame, groups)]));
+  const keptFrames = entities.filter((entity) => held.has(entity.ref));
+  const named2 = new Set(
+    byOwner ? [...ordered.flatMap((entity) => entity.system === null ? [] : [entity.system, byRef.get(entity.system)?.domain ?? ""]), ...entities.filter((entity) => entity.kind === "User" && entity.memberOf.some((ref) => held.has(ref))).map((user) => user.ref)] : [...ordered, ...keptFrames].flatMap((entity) => entity.owner === null ? [] : [entity.owner])
+  );
+  const framesKept = groups.filter((group2) => held.has(group2.key)).length;
+  const summarised = entities.filter((entity) => !shown.has(entity.ref) && named2.has(entity.ref)).length;
+  const left = entities.filter((entity) => (!shown.has(entity.ref) || groups.some((group2) => group2.key === entity.ref) && !held.has(entity.ref)) && !named2.has(entity.ref));
+  const firstLeft = left[0];
+  if (firstLeft !== void 0) {
+    context.report.add(DIAGNOSTIC_CODES.importSkipped, spanAt4(firstLeft.line, firstLeft.column), `${countOf2(left.length, "entity", "entities")} ${left.length === 1 ? "holds or owns" : "hold or own"} nothing drawn and ${left.length === 1 ? "is" : "are"} left out: ${left.slice(0, 3).map((entity) => entity.ref).join(", ")}.`, byOwner ? "A group is drawn when it owns something, with its members named on its tab." : "Set options.groupBy to owner to draw the groups and users that own the entities.");
+  }
+  const systems = entities.filter((entity) => entity.kind === "System").length;
+  return writeFlow(
+    {
+      title: context.title ?? (byOwner ? "Software catalog by owner" : "Software catalog"),
+      desc: `${countOf2(nodes.length, "entity", "entities")} of a Backstage catalog, ${byOwner ? "framed by the group that owns them" : `framed by ${countOf2(systems, "system")} and the domains that hold them`}. An arrow says a component provides or consumes an API, or depends on another entity.`,
+      direction: "down",
+      nodes,
+      groups,
+      edges,
+      noun: "entities",
+      capSpan: (key) => {
+        const entity = byRef.get(key);
+        return spanAt4(entity?.line ?? 1, entity?.column ?? 1);
+      },
+      advice: byOwner ? "Check that every entity names its owner; one with none sits outside the frames." : "Check that every component names its system; one with none sits outside the frames.",
+      coverage: { noun: "entities", total: entities.length, drawn: nodes.length + framesKept, summarised }
+    },
+    context.report
+  );
+}
+function ancestorsOf2(key, groups) {
+  const out = [];
+  let parent = groups.find((group2) => group2.key === key)?.parent ?? null;
+  for (let depth = 0; parent !== null && depth < groups.length && !out.includes(parent); depth += 1) {
+    out.push(parent);
+    parent = groups.find((group2) => group2.key === parent)?.parent ?? null;
+  }
+  return out;
+}
+var API_ICONS, RESOURCE_TYPES, API_NAMES, backstageImporter;
+var init_backstage = __esm({
+  "../../packages/diagrams/src/importers/backstage/index.ts"() {
+    "use strict";
+    init_core();
+    init_shared2();
+    init_yaml();
+    init_entities();
+    API_ICONS = { openapi: "simple:swagger", graphql: "simple:graphql", trpc: "simple:trpc", grpc: "lucide:plug-zap", asyncapi: "lucide:radio" };
+    RESOURCE_TYPES = [
+      [/database|db|postgres|mysql|sql|mongo|dynamo|table/, "database"],
+      [/cache|redis|memcache/, "cache"],
+      [/queue|topic|stream|kafka|bus|sqs|sns|pubsub/, "queue"],
+      [/secret|vault|key/, "secret"],
+      [/bucket|storage|s3|blob|file/, "storage"],
+      [/cluster|kubernetes|k8s/, "service"]
+    ];
+    API_NAMES = { openapi: "OpenAPI", graphql: "GraphQL", trpc: "tRPC", grpc: "gRPC", asyncapi: "AsyncAPI" };
+    backstageImporter = { format: "backstage", kinds: ["flow"], joins: "\n---\n", extensions: [".yaml", ".yml"], read: readBackstage };
+  }
+});
+
 // ../../packages/diagrams/src/importers/iac/type-names.ts
 function bestOf(candidates2) {
   const unique2 = [...new Set(candidates2.filter((candidate2) => candidate2 !== ""))];
@@ -171616,18 +171829,20 @@ var init_template = __esm({
     itemsOf = (node3) => node3.kind === "seq" ? node3.items : [node3];
     subNames = (template) => [...template.matchAll(/\$\{([A-Za-z0-9_:.]+)\}/g)].map((match) => match[1] ?? "");
     Template = class {
-      parameters;
-      conditions;
-      mappings;
-      resources;
-      conditionMemo = /* @__PURE__ */ new Map();
-      constructor(root) {
+      constructor(root, external = null) {
+        this.external = external;
         const section = (key) => entryOf(root, key)?.kind === "map" ? entryOf(root, key).entries : [];
         this.parameters = new Map(section("Parameters").map((entry2) => [entry2.key, entry2.value]));
         this.conditions = new Map(section("Conditions").map((entry2) => [entry2.key, entry2.value]));
         this.mappings = entryOf(root, "Mappings");
         this.resources = new Map(section("Resources").filter((entry2) => entry2.value.kind === "map").map((entry2) => [entry2.key, entry2.value]));
       }
+      external;
+      parameters;
+      conditions;
+      mappings;
+      resources;
+      conditionMemo = /* @__PURE__ */ new Map();
       /** The value of a node as far as the template's defaults give it. */
       evaluate(node3, depth = 0) {
         if (node3 === void 0 || depth > MAX_DEPTH13) return new Unknown("value");
@@ -171744,11 +171959,18 @@ var init_template = __esm({
           const argument = intrinsic.argument;
           if (intrinsic.name === "Ref") {
             const name = scalarOf(argument) ?? "";
-            return this.resources.has(name) ? [name] : [];
+            return this.resources.has(name) ? [name] : [...this.external?.parameter(name) ?? []];
           }
           if (intrinsic.name === "GetAtt") {
-            const target2 = getAttOf(argument)?.resource ?? "";
-            return this.resources.has(target2) ? [target2] : [];
+            const target2 = getAttOf(argument);
+            const outside = target2 === null ? null : this.external?.attribute(target2.resource, target2.attribute) ?? null;
+            if (outside !== null) return [...outside];
+            return this.resources.has(target2?.resource ?? "") ? [target2?.resource ?? ""] : [];
+          }
+          if (intrinsic.name === "ImportValue" && this.external !== null) {
+            const name = textOf5(this.evaluate(argument, depth + 1));
+            const outside = name === null ? null : this.external.imported(name);
+            if (outside !== null) return [...outside];
           }
           if (intrinsic.name === "Sub") {
             const template = argument.kind === "seq" ? scalarOf(argument.items[0]) : scalarOf(argument);
@@ -171882,6 +172104,451 @@ var init_cloudformation = __esm({
     init_template();
     LISTED8 = 5;
     cloudformationImporter = { format: "cloudformation", kinds: ["flow"], joins: "\n", extensions: [".yaml", ".yml", ".json", ".template"], read: readCloudFormation };
+  }
+});
+
+// ../../packages/diagrams/src/importers/cdk/assembly.ts
+function jsonOf(file2) {
+  if (!/^\s*\{/.test(file2.text)) return void 0;
+  try {
+    return JSON.parse(file2.text);
+  } catch {
+    return void 0;
+  }
+}
+function manifestStacks(json2, file2) {
+  const out = [];
+  const artifacts = isRecord3(json2["artifacts"]) ? json2["artifacts"] : {};
+  for (const [id, artifact] of Object.entries(artifacts)) {
+    if (!isRecord3(artifact) || artifact["type"] !== "aws:cloudformation:stack") continue;
+    const properties = isRecord3(artifact["properties"]) ? artifact["properties"] : {};
+    const template = typeof properties["templateFile"] === "string" ? properties["templateFile"] : `${id}.template.json`;
+    const logicalPaths = /* @__PURE__ */ new Map();
+    if (isRecord3(artifact["metadata"])) {
+      for (const [path, entries2] of Object.entries(artifact["metadata"])) {
+        if (!Array.isArray(entries2)) continue;
+        for (const entry2 of entries2) if (isRecord3(entry2) && entry2["type"] === "aws:cdk:logicalId" && typeof entry2["data"] === "string") logicalPaths.set(entry2["data"], path.replace(/^\//, ""));
+      }
+    }
+    const at3 = file2.text.indexOf(JSON.stringify(id));
+    out.push({ path: typeof artifact["displayName"] === "string" ? artifact["displayName"] : id, template: `${folderOf2(file2.path)}${template}`, logicalPaths, start: file2.start + Math.max(0, at3) });
+  }
+  return out;
+}
+function treeClasses(json2) {
+  const out = /* @__PURE__ */ new Map();
+  const walk2 = (node3, depth) => {
+    if (!isRecord3(node3) || depth > 64 || out.size > 5e4) return;
+    const info = isRecord3(node3["constructInfo"]) ? node3["constructInfo"] : {};
+    if (typeof node3["path"] === "string" && typeof info["fqn"] === "string") out.set(node3["path"], info["fqn"]);
+    if (isRecord3(node3["children"])) for (const child of Object.values(node3["children"])) walk2(child, depth + 1);
+  };
+  walk2(json2["tree"], 0);
+  return out;
+}
+function cdkPaths(root) {
+  const out = /* @__PURE__ */ new Map();
+  const resources = get(root, "Resources");
+  for (const entry2 of resources?.kind === "map" ? resources.entries : []) {
+    const path = text2(get(get(entry2.value, "Metadata"), "aws:cdk:path"));
+    if (path !== null) out.set(entry2.key, path);
+  }
+  return out;
+}
+function ownStackPath(root, file2) {
+  const paths = [...cdkPaths(root).values()];
+  const metadata = paths.find((path) => path.endsWith("/CDKMetadata/Default"));
+  if (metadata !== void 0) return metadata.slice(0, -"/CDKMetadata/Default".length);
+  const named2 = /^(.+?)\.template\.(?:json|ya?ml)$/i.exec(baseName2(file2.path))?.[1];
+  if (named2 !== void 0) return named2;
+  return paths[0]?.split("/")[0] ?? "Stack";
+}
+function readAssembly(files) {
+  const stacks = [];
+  const classes = /* @__PURE__ */ new Map();
+  const unknown2 = [];
+  const problems = [];
+  const read = [];
+  for (const file2 of files) {
+    const name = baseName2(file2.path);
+    if (name === "cdk.out" || name.endsWith(".assets.json")) continue;
+    const json2 = jsonOf(file2);
+    if (isRecord3(json2) && isRecord3(json2["artifacts"])) {
+      stacks.push(...manifestStacks(json2, file2));
+      continue;
+    }
+    if (isRecord3(json2) && isRecord3(json2["tree"])) {
+      for (const [path, fqn] of treeClasses(json2)) classes.set(path, fqn);
+      continue;
+    }
+    if (isRecord3(json2) && json2["Resources"] === void 0 && (isRecord3(json2["files"]) || isRecord3(json2["dockerImages"]))) continue;
+    const template = readFile(file2.text);
+    if (template.problem !== null || template.root === null) {
+      problems.push({ file: file2, ...template.problem ?? { line: 1, column: 1, message: "The file is empty.", hint: "Send the templates of cdk.out, with manifest.json." } });
+      continue;
+    }
+    if (get(template.root, "Resources") === void 0) unknown2.push(file2);
+    else read.push({ file: file2, root: template.root });
+  }
+  const templates = [];
+  const claimed = /* @__PURE__ */ new Set();
+  const byStack = (stack) => read.find((entry2) => entry2.file.path === stack.template) ?? read.find((entry2) => baseName2(entry2.file.path) === baseName2(stack.template) && !claimed.has(entry2.file));
+  const missing = [];
+  for (const stack of stacks) {
+    const found = byStack(stack);
+    if (found === void 0 || claimed.has(found.file)) {
+      if (found === void 0) missing.push({ stack: stack.path, file: stack.template, start: stack.start });
+      continue;
+    }
+    claimed.add(found.file);
+    templates.push({ file: found.file, root: found.root, stackPath: stack.path, topPath: stack.path, parent: null, manifestPaths: stack.logicalPaths });
+  }
+  const nestedOf = /* @__PURE__ */ new Map();
+  for (const entry2 of read) if (!claimed.has(entry2.file) && /\.nested\.template\.json$/i.test(entry2.file.path)) nestedOf.set(baseName2(entry2.file.path), entry2);
+  for (const entry2 of read) {
+    if (claimed.has(entry2.file) || nestedOf.get(baseName2(entry2.file.path)) === entry2) continue;
+    claimed.add(entry2.file);
+    const path = ownStackPath(entry2.root, entry2.file);
+    templates.push({ file: entry2.file, root: entry2.root, stackPath: path, topPath: path, parent: null, manifestPaths: /* @__PURE__ */ new Map() });
+  }
+  for (let index2 = 0; index2 < templates.length; index2 += 1) {
+    const template = templates[index2];
+    const resources = get(template.root, "Resources");
+    for (const entry2 of resources?.kind === "map" ? resources.entries : []) {
+      if (text2(get(entry2.value, "Type")) !== "AWS::CloudFormation::Stack") continue;
+      const asset = text2(get(get(entry2.value, "Metadata"), "aws:asset:path"));
+      const nested = asset === null ? void 0 : nestedOf.get(baseName2(asset));
+      if (nested === void 0 || claimed.has(nested.file)) continue;
+      claimed.add(nested.file);
+      const path = text2(get(get(entry2.value, "Metadata"), "aws:cdk:path")) ?? template.manifestPaths.get(entry2.key) ?? `${template.stackPath}/${entry2.key}`;
+      templates.push({ file: nested.file, root: nested.root, stackPath: nestedStackPath(path), topPath: template.topPath, parent: { template, logical: entry2.key }, manifestPaths: /* @__PURE__ */ new Map() });
+    }
+  }
+  for (const entry2 of nestedOf.values()) {
+    if (claimed.has(entry2.file)) continue;
+    const path = ownStackPath(entry2.root, entry2.file);
+    templates.push({ file: entry2.file, root: entry2.root, stackPath: path, topPath: path, parent: null, manifestPaths: /* @__PURE__ */ new Map() });
+  }
+  return { templates, classes, missing, unknown: unknown2, problems };
+}
+var isRecord3, baseName2, folderOf2, nestedStackPath;
+var init_assembly = __esm({
+  "../../packages/diagrams/src/importers/cdk/assembly.ts"() {
+    "use strict";
+    init_cloudformation();
+    init_yaml();
+    isRecord3 = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
+    baseName2 = (path) => path.slice(path.lastIndexOf("/") + 1);
+    folderOf2 = (path) => path.includes("/") ? path.slice(0, path.lastIndexOf("/") + 1) : "";
+    nestedStackPath = (path) => path.replace(/\.NestedStack\/[^/]*\.NestedStackResource$/, "");
+  }
+});
+
+// ../../packages/diagrams/src/importers/cdk/constructs.ts
+function readable(segment, stack) {
+  const own2 = (segment.split(/[.:]/)[0] || segment).replace(/[0-9A-F]{8}$/, "");
+  const at3 = stack.length >= 3 ? own2.indexOf(stack) : -1;
+  return (at3 > 0 ? own2.slice(0, at3) : own2) || segment;
+}
+function frameModules2(tree, classes, startOf2) {
+  const scopes = /* @__PURE__ */ new Map();
+  const used = /* @__PURE__ */ new Set();
+  const modules = [];
+  for (const path of [...tree.frames.keys()].sort((a, b) => a.split("/").length - b.split("/").length || (a < b ? -1 : 1))) {
+    const parent = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
+    const id = path.slice(path.lastIndexOf("/") + 1);
+    const base = `${scopes.get(parent) ?? ""}module.${safe2(id)}`;
+    let scope = `${base}.`;
+    for (let count3 = 2; used.has(scope); count3 += 1) scope = `${base}_${count3}.`;
+    used.add(scope);
+    scopes.set(path, scope);
+    const kind = tree.frames.get(path) ?? "Construct";
+    const fqn = classes.get(path) ?? "";
+    const own2 = /^(?:aws-cdk-lib|@aws-cdk\/[^.]+)\./.test(fqn) && !/\.(?:Stack|NestedStack|Stage)$/.test(fqn) ? fqn.split(".").pop() ?? "" : "";
+    modules.push({ scope, name: path, label: id, instance: null, source: own2, start: startOf2(path), noun: kind });
+  }
+  return { modules, scopes };
+}
+var OWN_RESOURCE, constructOf, ConstructTree, safe2;
+var init_constructs = __esm({
+  "../../packages/diagrams/src/importers/cdk/constructs.ts"() {
+    "use strict";
+    OWN_RESOURCE = /\/(?:Resource|Default)$/;
+    constructOf = (path) => path.replace(OWN_RESOURCE, "");
+    ConstructTree = class {
+      constructor(paths, roots) {
+        this.roots = roots;
+        for (const path of paths) if (OWN_RESOURCE.test(path)) this.wrapping.add(constructOf(path));
+      }
+      roots;
+      /** Construct paths that wrap a resource of their own. */
+      wrapping = /* @__PURE__ */ new Set();
+      /** Frames by path, with what each is. */
+      frames = /* @__PURE__ */ new Map();
+      /** The top stack or nested stack a path belongs to: the longest root it starts with. */
+      rootOf(path) {
+        let best = "";
+        for (const root of this.roots.keys()) if ((path === root || path.startsWith(`${root}/`)) && root.length > best.length) best = root;
+        return best;
+      }
+      /** The frames a resource's construct sits in, and its label: its own id, or, made by a level 2 construct, that construct's id and its own. */
+      place(path, framedStacks) {
+        const construct = constructOf(path);
+        const frames = [];
+        const root = this.rootOf(construct);
+        const top = [...this.roots].filter(([candidate2, kind]) => kind !== "Nested stack" && (root === candidate2 || root.startsWith(`${candidate2}/`))).sort((a, b) => a[0].length - b[0].length)[0]?.[0] ?? "";
+        const segments = construct.split("/");
+        let wrapper = null;
+        for (let depth = 1; depth < segments.length; depth += 1) {
+          const ancestor = segments.slice(0, depth).join("/");
+          const kind = this.roots.get(ancestor);
+          if (ancestor.length <= top.length) {
+            if (framedStacks && top !== "") this.addFrame(frames, ancestor, ancestor === top ? "Stack" : "Stage");
+            continue;
+          }
+          if (kind === "Nested stack") {
+            this.addFrame(frames, ancestor, kind);
+            wrapper = null;
+            continue;
+          }
+          if (wrapper !== null) continue;
+          if (this.wrapping.has(ancestor)) wrapper = depth - 1;
+          else this.addFrame(frames, ancestor, "Construct");
+        }
+        const stack = top.slice(top.lastIndexOf("/") + 1);
+        const own2 = segments.map((segment) => readable(segment, stack));
+        const last = own2[own2.length - 1] ?? construct;
+        if (wrapper === null) return { frames, label: last, maker: null };
+        const rest = own2.slice(wrapper + 1).filter((segment) => segment !== "Default");
+        const maker = own2[wrapper] ?? "";
+        return { frames, label: rest.length >= 2 ? [rest[0], rest[rest.length - 1]].join("_") : [maker, ...rest].join("_"), maker };
+      }
+      addFrame(frames, path, kind) {
+        frames.push(path);
+        if (!this.frames.has(path)) this.frames.set(path, kind);
+      }
+    };
+    safe2 = (name) => name.replace(/[^A-Za-z0-9_-]+/g, "_") || "construct";
+  }
+});
+
+// ../../packages/diagrams/src/importers/cdk/index.ts
+function attributeOf2(attribute2, logical, names8) {
+  const name = names8.get(logical) ?? logical;
+  const refs = attribute2.refs.map((ref) => names8.get(ref) ?? ref).filter((ref) => ref !== name);
+  if (attribute2.name !== "name" || attribute2.value === null) return [{ ...attribute2, refs }];
+  if (attribute2.value === logical) return [];
+  if (!/^[A-Za-z][A-Za-z0-9-]*(?:\/[A-Za-z0-9.:_-]+)+$/.test(attribute2.value)) return [{ ...attribute2, refs }];
+  const last = attribute2.value.slice(attribute2.value.lastIndexOf("/") + 1);
+  return [{ ...attribute2, refs, value: last, readable: last }];
+}
+function chosenStacks(templates, context) {
+  const wanted2 = context.options.root?.replace(/^\.\//, "").replace(/\/+$/, "");
+  if (wanted2 === void 0 || wanted2 === "") return templates;
+  const tops = [...new Set(templates.map((template) => template.topPath))];
+  const top = tops.find((path) => path === wanted2) ?? tops.find((path) => path.endsWith(`/${wanted2}`)) ?? templates.find((template) => template.file.path === wanted2 || template.file.path.endsWith(`/${wanted2}`))?.topPath;
+  if (top === void 0) {
+    context.report.add(DIAGNOSTIC_CODES.importSkipped, START3, `options.root names ${cleanText(wanted2)}, which is not a stack of the app; every stack is drawn.`, `The stacks sent are: ${tops.join(", ")}.`);
+    return templates;
+  }
+  return templates.filter((template) => template.topPath === top);
+}
+function readCdk(joined2, context) {
+  const index2 = new LineIndex(joined2);
+  const files = context.files.map((file2, position) => ({ path: file2.path, start: file2.start, text: joined2.slice(file2.start, context.files[position + 1]?.start ?? joined2.length) }));
+  const assembly = readAssembly(files);
+  for (const problem of assembly.problems) {
+    const lineStart = problem.file.text.split("\n").slice(0, problem.line - 1).join("\n").length + (problem.line > 1 ? 1 : 0);
+    const span = index2.span(problem.file.start + lineStart + problem.column - 1);
+    if (files.length === 1) {
+      context.report.add(DIAGNOSTIC_CODES.importUnreadable, span, problem.message, problem.hint);
+      return null;
+    }
+    context.report.add(DIAGNOSTIC_CODES.importSkipped, span, `${cleanText(problem.file.path)} is not drawn: ${problem.message}`, problem.hint);
+  }
+  if (assembly.unknown.length > 0) {
+    const first = assembly.unknown[0];
+    context.report.add(DIAGNOSTIC_CODES.importSkipped, index2.span(first.start), `${countOf2(assembly.unknown.length, "file")} of the folder ${assembly.unknown.length === 1 ? "is" : "are"} not part of a cloud assembly and ${assembly.unknown.length === 1 ? "is" : "are"} not drawn: ${assembly.unknown.slice(0, LISTED9).map((file2) => cleanText(file2.path, "(no name)")).join(", ")}.`, "Send the cdk.out folder that cdk synth writes: manifest.json, tree.json, and the templates.");
+  }
+  for (const missing of assembly.missing.slice(0, 1)) {
+    const names8 = assembly.missing.map((entry2) => entry2.stack);
+    context.report.add(DIAGNOSTIC_CODES.importSkipped, index2.span(missing.start), `The manifest names ${countOf2(names8.length, "stack")} whose template was not sent, so ${names8.length === 1 ? "it is" : "they are"} not drawn: ${names8.slice(0, LISTED9).map((name) => cleanText(name)).join(", ")}.`, `Send ${cleanText(missing.file)} with the other files of cdk.out.`);
+  }
+  if (assembly.templates.length === 0) {
+    context.report.add(DIAGNOSTIC_CODES.importNoShape, START3, "The files hold no CloudFormation template of a CDK app.", "Run cdk synth and send the cdk.out folder it writes, or the template it prints.");
+    return null;
+  }
+  const templates = chosenStacks(assembly.templates, context);
+  const tops = [...new Set(templates.map((template) => template.topPath))];
+  const roots = /* @__PURE__ */ new Map();
+  for (const template of templates) roots.set(template.stackPath, template.parent === null ? "Stack" : "Nested stack");
+  const reads = [];
+  const byFile = /* @__PURE__ */ new Map();
+  const allPaths = [];
+  const nestedTemplates = /* @__PURE__ */ new Map();
+  for (const template of templates) if (template.parent !== null) nestedTemplates.set(`${template.parent.template.file.path}\0${template.parent.logical}`, template);
+  const usedNames = /* @__PURE__ */ new Set();
+  const unsent = [];
+  for (const template of templates) {
+    const paths = cdkPaths(template.root);
+    const names8 = /* @__PURE__ */ new Map();
+    const frames = /* @__PURE__ */ new Set();
+    const resources = get(template.root, "Resources");
+    for (const entry2 of resources?.kind === "map" ? resources.entries : []) {
+      const type = text2(get(entry2.value, "Type"));
+      if (type === METADATA_TYPE) continue;
+      if (type === "AWS::CloudFormation::Stack" && nestedTemplates.has(`${template.file.path}\0${entry2.key}`)) {
+        frames.add(entry2.key);
+        continue;
+      }
+      const path = paths.get(entry2.key) ?? template.manifestPaths.get(entry2.key) ?? `${template.stackPath}/${withoutHash(entry2.key)}`;
+      const asset = type === "AWS::CloudFormation::Stack" ? text2(get(get(entry2.value, "Metadata"), "aws:asset:path")) : null;
+      if (asset !== null && /\.nested\.template\.json$/i.test(asset)) unsent.push({ path: nestedStackPath(path), file: asset, start: template.file.start + Math.max(0, template.file.text.indexOf(asset)) });
+      let name = constructOf(path);
+      if (usedNames.has(name)) name = path;
+      for (let count3 = 2; usedNames.has(name); count3 += 1) name = `${path}_${count3}`;
+      usedNames.add(name);
+      names8.set(entry2.key, name);
+      allPaths.push(path);
+    }
+    const read = { template, model: new Template(template.root, null), names: names8, frames };
+    reads.push(read);
+    byFile.set(template, read);
+  }
+  const firstUnsent = unsent[0];
+  if (firstUnsent !== void 0) {
+    context.report.add(DIAGNOSTIC_CODES.importUnresolved, index2.span(firstUnsent.start), `${countOf2(unsent.length, "nested stack")} ${unsent.length === 1 ? "is" : "are"} drawn as one box, because ${unsent.length === 1 ? "its template was" : "their templates were"} not sent: ${unsent.slice(0, LISTED9).map((entry2) => cleanText(entry2.path)).join(", ")}.`, `Send ${cleanText(firstUnsent.file)} with the other files of cdk.out to draw what it makes.`);
+  }
+  const exports = /* @__PURE__ */ new Map();
+  for (const read of reads) {
+    const outputs = get(read.template.root, "Outputs");
+    for (const entry2 of outputs?.kind === "map" ? outputs.entries : []) {
+      const name = textOf5(read.model.evaluate(get(get(entry2.value, "Export"), "Name")));
+      const value = get(entry2.value, "Value");
+      if (name !== null && value !== void 0) exports.set(name, { read, value });
+    }
+  }
+  let hops = 0;
+  const refsOf = (read, node3) => {
+    if (node3 === void 0 || hops >= MAX_HOPS) return [];
+    hops += 1;
+    try {
+      return read.model.refs(node3).map((ref) => read.names.get(ref) ?? ref);
+    } finally {
+      hops -= 1;
+    }
+  };
+  for (const read of reads) {
+    const parent = read.template.parent === null ? void 0 : byFile.get(read.template.parent.template);
+    const declaration = parent === void 0 || read.template.parent === null ? void 0 : get(get(parent.template.root, "Resources"), read.template.parent.logical);
+    const model = new Template(read.template.root, {
+      parameter: (name) => {
+        const passed = get(get(declaration, "Properties"), "Parameters");
+        const value = get(passed, name);
+        return parent === void 0 || value === void 0 ? null : refsOf(parent, value);
+      },
+      attribute: (resource, attribute2) => {
+        if (!read.frames.has(resource) || !attribute2.startsWith("Outputs.")) return null;
+        const nested = nestedTemplates.get(`${read.template.file.path}\0${resource}`);
+        const inner = nested === void 0 ? void 0 : byFile.get(nested);
+        return inner === void 0 ? [] : refsOf(inner, get(get(get(inner.template.root, "Outputs"), attribute2.slice("Outputs.".length)), "Value"));
+      },
+      imported: (name) => {
+        const exported = exports.get(name);
+        return exported === void 0 ? null : refsOf(exported.read, exported.value);
+      }
+    });
+    read.model = model;
+  }
+  const tree = new ConstructTree(allPaths, roots);
+  const framed = tops.length > 1;
+  const items2 = [];
+  const empty = [];
+  const placements = /* @__PURE__ */ new Map();
+  const makers = /* @__PURE__ */ new Map();
+  for (const read of reads) {
+    const offsetOf = (logical) => {
+      const at3 = read.template.file.text.search(new RegExp(`^\\s*"?${logical.replace(/[^A-Za-z0-9]/g, "")}"?\\s*:`, "m"));
+      return read.template.file.start + Math.max(0, at3);
+    };
+    const listed2 = templateItems(read.model, offsetOf);
+    empty.push(...listed2.empty.map((logical) => read.names.get(logical) ?? logical));
+    for (const item of listed2.items) {
+      const name = read.names.get(item.name);
+      if (name === void 0) continue;
+      const path = cdkPaths(read.template.root).get(item.name) ?? read.template.manifestPaths.get(item.name) ?? name;
+      const place2 = tree.place(path, framed);
+      placements.set(name, place2.frames);
+      makers.set(name, place2.maker);
+      items2.push({ ...item, name, label: place2.label, attributes: item.attributes.flatMap((attribute2) => attributeOf2(attribute2, item.name, read.names)) });
+    }
+  }
+  if (empty.length > 0) {
+    context.report.add(DIAGNOSTIC_CODES.importSkipped, START3, `${countOf2(empty.length, "resource")} ${empty.length === 1 ? "has a Condition" : "have Conditions"} that the parameters' defaults make false, so ${empty.length === 1 ? "it is" : "they are"} not drawn: ${empty.slice(0, LISTED9).join(", ")}.`, "Give the parameter its value as a default, or synthesize with that value, to draw it.");
+  }
+  if (items2.length === 0) {
+    context.report.add(DIAGNOSTIC_CODES.importNoShape, START3, "The templates declare no resource that is drawn.", "Send the cdk.out of an app whose stacks make something.");
+    return null;
+  }
+  const labelCount = /* @__PURE__ */ new Map();
+  for (const item of items2) labelCount.set(item.label, (labelCount.get(item.label) ?? 0) + 1);
+  for (const [position, item] of items2.entries()) {
+    const maker = makers.get(item.name) ?? null;
+    if ((labelCount.get(item.label) ?? 0) > 1 && maker !== null && !item.label.startsWith(`${maker}_`)) items2[position] = { ...item, label: `${maker}_${item.label}` };
+  }
+  const startOf2 = (path) => {
+    const owner = reads.find((read) => read.template.stackPath === path) ?? reads.find((read) => read.template.topPath === path.split("/")[0]);
+    const at3 = owner === void 0 ? -1 : owner.template.file.text.indexOf(`"${path}/`);
+    return owner === void 0 ? 0 : owner.template.file.start + Math.max(0, at3);
+  };
+  const { modules, scopes } = frameModules2(tree, assembly.classes, startOf2);
+  const scoped = items2.map((item) => {
+    const frames = placements.get(item.name) ?? [];
+    const innermost = frames[frames.length - 1];
+    return innermost === void 0 ? item : { ...item, scope: scopes.get(innermost) ?? "" };
+  });
+  const stack = itemsToStack(scoped, modules);
+  const byName = new Map(scoped.map((item) => [item.name, item]));
+  const stableName = (key) => {
+    const named2 = stack.stableName(key);
+    return named2.startsWith("module:") ? named2.slice("module:".length) : named2;
+  };
+  const only = tops.length === 1 ? tops[0] : void 0;
+  return drawStack({
+    resources: stack.resources,
+    modules: stack.modules,
+    providers: /* @__PURE__ */ new Map([["aws", null]]),
+    cloud: "aws",
+    variableName: (name) => name,
+    variableValue: () => null,
+    context: context.title === null && only !== void 0 ? { ...context, title: `${cleanText(only)} on AWS` } : context,
+    span: (key) => {
+      const item = byName.get(stack.stableName(key));
+      return item === void 0 ? { line: 1, column: 1, length: 1 } : index2.span(item.start);
+    },
+    tool: "the AWS CDK",
+    stableName,
+    framing: "construct"
+  });
+}
+var LISTED9, MAX_HOPS, METADATA_TYPE, withoutHash, cdkImporter;
+var init_cdk = __esm({
+  "../../packages/diagrams/src/importers/cdk/index.ts"() {
+    "use strict";
+    init_core();
+    init_template();
+    init_items2();
+    init_value();
+    init_shared2();
+    init_yaml();
+    init_terraform();
+    init_assembly();
+    init_constructs();
+    LISTED9 = 3;
+    MAX_HOPS = 8;
+    METADATA_TYPE = "AWS::CDK::Metadata";
+    withoutHash = (logical) => logical.replace(/[0-9A-F]{8}$/, "") || logical;
+    cdkImporter = { format: "cdk", kinds: ["flow"], joins: "\n", extensions: [".json", ".yaml", ".yml", ".out"], read: readCdk };
   }
 });
 
@@ -173767,6 +174434,512 @@ var init_git_log = __esm({
   }
 });
 
+// ../../packages/diagrams/src/importers/kubernetes/manifests.ts
+function valuesOf(kind, root, podSpec) {
+  const raw = kind === "ConfigMap" ? entries(get(root, "data")).map((entry2) => text2(entry2.value)) : items(get(podSpec, "containers")).flatMap((container) => items(get(container, "env")).map((variable) => text2(get(variable, "value"))));
+  return raw.filter((value) => value !== null && value.length <= MAX_VALUE_LENGTH2);
+}
+function stringMap(node3) {
+  const out = /* @__PURE__ */ new Map();
+  if (node3?.kind === "map") for (const entry2 of node3.entries) out.set(entry2.key, text2(entry2.value) ?? "");
+  return out;
+}
+function podUses(spec) {
+  const uses = [];
+  const add2 = (kind, name) => {
+    if (name !== null && name !== "" && !uses.some((use) => use.kind === kind && use.name === name)) uses.push({ kind, name });
+  };
+  for (const container of [...items(get(spec, "initContainers")), ...items(get(spec, "containers"))]) {
+    for (const source of items(get(container, "envFrom"))) {
+      add2("ConfigMap", text2(at2(source, ["configMapRef", "name"])));
+      add2("Secret", text2(at2(source, ["secretRef", "name"])));
+    }
+    for (const variable of items(get(container, "env"))) {
+      add2("ConfigMap", text2(at2(variable, ["valueFrom", "configMapKeyRef", "name"])));
+      add2("Secret", text2(at2(variable, ["valueFrom", "secretKeyRef", "name"])));
+    }
+  }
+  for (const volume of items(get(spec, "volumes"))) {
+    add2("ConfigMap", text2(at2(volume, ["configMap", "name"])));
+    add2("Secret", text2(at2(volume, ["secret", "secretName"])));
+    add2("PersistentVolumeClaim", text2(at2(volume, ["persistentVolumeClaim", "claimName"])));
+  }
+  return uses;
+}
+function ingressRoutes(spec) {
+  const routes = [];
+  const backend = (node3) => text2(at2(node3, ["service", "name"])) ?? text2(get(node3, "serviceName"));
+  const add2 = (service, label) => {
+    if (service !== null && !routes.some((route) => route.service === service)) routes.push({ service, label });
+  };
+  add2(backend(get(spec, "defaultBackend") ?? get(spec, "backend")), null);
+  for (const rule of items(get(spec, "rules"))) {
+    for (const path of items(at2(rule, ["http", "paths"]))) {
+      const route = text2(get(path, "path"));
+      add2(backend(get(path, "backend")), route === null || route === "/" ? text2(get(rule, "host")) : route);
+    }
+  }
+  return routes;
+}
+function detailOf(kind, spec) {
+  if (kind === "Service") {
+    const ports = items(get(spec, "ports")).map((port) => text2(get(port, "port"))).filter((port) => port !== null);
+    return [text2(get(spec, "type")) ?? "ClusterIP", ports.length === 0 ? "" : `port ${ports.slice(0, 3).join(", ")}`].filter((part) => part !== "").join(", ");
+  }
+  if (kind === "Ingress") return text2(get(items(get(spec, "rules"))[0], "host")) ?? names5(get(items(get(spec, "tls"))[0], "hosts"))[0] ?? null;
+  if (kind === "PersistentVolumeClaim") return text2(at2(spec, ["resources", "requests", "storage"]));
+  return null;
+}
+function readManifest(root) {
+  const kind = text2(get(root, "kind"));
+  const name = text2(at2(root, ["metadata", "name"]));
+  if (kind === null || name === null) return null;
+  const spec = get(root, "spec");
+  const templatePath = WORKLOAD_TEMPLATES[kind];
+  const template = templatePath === void 0 ? kind === "Pod" ? root : void 0 : at2(root, templatePath);
+  const podSpec = get(template, "spec");
+  const firstContainer = items(get(podSpec, "containers"))[0];
+  return {
+    kind,
+    name,
+    namespace: text2(at2(root, ["metadata", "namespace"])) ?? "default",
+    line: root.line,
+    column: root.column,
+    labels: template !== void 0 ? stringMap(at2(template, ["metadata", "labels"])) : kind === "Service" ? stringMap(get(spec, "selector")) : /* @__PURE__ */ new Map(),
+    meta: stringMap(at2(root, ["metadata", "labels"])),
+    image: text2(get(firstContainer, "image")),
+    replicas: text2(get(spec, "replicas")),
+    uses: podSpec === void 0 ? [] : podUses(podSpec),
+    routes: kind === "Ingress" ? ingressRoutes(spec) : [],
+    detail: detailOf(kind, spec),
+    values: valuesOf(kind, root, podSpec)
+  };
+}
+function manifestRoots(roots) {
+  const out = [];
+  for (const root of roots) {
+    if (text2(get(root, "kind")) === "List") out.push(...items(get(root, "items")));
+    else out.push(root);
+  }
+  return out;
+}
+var WORKLOAD_TEMPLATES, DRAWN_KINDS2, QUIET_KINDS2, MAX_VALUE_LENGTH2, at2;
+var init_manifests = __esm({
+  "../../packages/diagrams/src/importers/kubernetes/manifests.ts"() {
+    "use strict";
+    init_yaml();
+    WORKLOAD_TEMPLATES = {
+      Deployment: ["spec", "template"],
+      StatefulSet: ["spec", "template"],
+      DaemonSet: ["spec", "template"],
+      ReplicaSet: ["spec", "template"],
+      Job: ["spec", "template"],
+      CronJob: ["spec", "jobTemplate", "spec", "template"]
+    };
+    DRAWN_KINDS2 = /* @__PURE__ */ new Set([...Object.keys(WORKLOAD_TEMPLATES), "Pod", "Service", "Ingress", "ConfigMap", "Secret", "PersistentVolumeClaim"]);
+    QUIET_KINDS2 = /* @__PURE__ */ new Set([
+      "Namespace",
+      "ServiceAccount",
+      "Role",
+      "ClusterRole",
+      "RoleBinding",
+      "ClusterRoleBinding",
+      "HorizontalPodAutoscaler",
+      "PodDisruptionBudget",
+      "NetworkPolicy",
+      "LimitRange",
+      "ResourceQuota",
+      "PriorityClass",
+      "ServiceMonitor",
+      "PodMonitor",
+      "VerticalPodAutoscaler",
+      "Certificate",
+      "IngressClass",
+      "StorageClass"
+    ]);
+    MAX_VALUE_LENGTH2 = 500;
+    at2 = (node3, path) => path.reduce((current, key) => get(current, key), node3);
+  }
+});
+
+// ../../packages/diagrams/src/importers/kubernetes/index.ts
+function kindLook(kind) {
+  const look = LOOKS[kind];
+  return look === void 0 ? { type: "service", icon: null } : { type: look.type, icon: look.icon };
+}
+function namespaceType(name) {
+  const phrase2 = name.toLowerCase().replace(/[-_]+/g, " ").trim();
+  const matches3 = GROUP_TYPES.filter((type) => GROUP_TYPE_SPECS[type].phrases.includes(phrase2));
+  return matches3.length === 1 ? matches3[0] : null;
+}
+function nodeOf3(manifest, grouped, serviceDetail) {
+  const look = LOOKS[manifest.kind] ?? { type: "service", icon: null, rank: 2 };
+  const image = manifest.image === null ? null : imageLook(manifest.image);
+  const replicas = manifest.replicas !== null && manifest.replicas !== "1" ? `, ${manifest.replicas} replicas` : "";
+  const detail = (serviceDetail ?? manifest.detail) === null ? "" : `, ${serviceDetail ?? manifest.detail}`;
+  return {
+    key: keyOf3(manifest.kind, manifest.namespace, manifest.name),
+    type: image?.type ?? look.type,
+    label: manifest.name,
+    sub: `${manifest.kind}${replicas}${detail}`,
+    // A workload whose image this reader does not know may still be named after a product, such as kafka; lint's own rule finds it.
+    icon: image?.icon ?? look.icon ?? iconForName(manifest.name, image?.type ?? look.type),
+    group: grouped ? `ns:${manifest.namespace}` : null,
+    idHint: manifest.name
+  };
+}
+function namesHost2(value, host) {
+  if (host === "") return false;
+  for (let index2 = value.indexOf(host); index2 !== -1; index2 = value.indexOf(host, index2 + 1)) {
+    const before = index2 === 0 ? "" : value.charAt(index2 - 1);
+    const after = value.charAt(index2 + host.length);
+    if (!/[A-Za-z0-9.-]/.test(before) && !/[A-Za-z0-9_-]/.test(after)) return true;
+  }
+  return false;
+}
+function foldedServices(drawn) {
+  const folded = /* @__PURE__ */ new Map();
+  for (const service of drawn) {
+    if (service.kind !== "Service") continue;
+    const workloads = selected(service, drawn);
+    const only = workloads[0];
+    if (workloads.length === 1 && only !== void 0) folded.set(keyOf3("Service", service.namespace, service.name), keyOf3(only.kind, only.namespace, only.name));
+  }
+  return folded;
+}
+function edgesOf2(drawn, folded, context) {
+  const edges = [];
+  const has = (kind, namespace, name) => drawn.some((other) => other.kind === kind && other.namespace === namespace && other.name === name);
+  const unresolved = (manifest, what) => {
+    context.report.add(DIAGNOSTIC_CODES.importUnresolved, spanAt4(manifest.line, manifest.column), `${manifest.kind} ${manifest.name} names the ${what}, which is not in the text.`, "Include its manifest, or leave it out if it is created elsewhere; the arrow was not drawn.");
+  };
+  for (const manifest of drawn) {
+    const from = keyOf3(manifest.kind, manifest.namespace, manifest.name);
+    for (const route of manifest.routes) {
+      const service = keyOf3("Service", manifest.namespace, route.service);
+      if (has("Service", manifest.namespace, route.service)) edges.push({ from, to: folded.get(service) ?? service, label: route.label });
+      else unresolved(manifest, `Service ${route.service}`);
+    }
+    if (manifest.kind === "Service" && !folded.has(from)) {
+      for (const workload of selected(manifest, drawn)) edges.push({ from, to: keyOf3(workload.kind, workload.namespace, workload.name) });
+    }
+    if (manifest.image !== null) {
+      const read = drawn.filter((other) => other.kind === "ConfigMap" && other.namespace === manifest.namespace && manifest.uses.some((use) => use.kind === "ConfigMap" && use.name === other.name));
+      const values = [...manifest.values, ...read.flatMap((config2) => config2.values)];
+      for (const service of drawn) {
+        const host = service.namespace === manifest.namespace ? service.name : `${service.name}.${service.namespace}`;
+        if (service.kind !== "Service" || !values.some((value) => namesHost2(value, host))) continue;
+        const key = keyOf3("Service", service.namespace, service.name);
+        const to = folded.get(key) ?? key;
+        if (to !== from) edges.push({ from, to });
+      }
+    }
+    for (const use of manifest.uses) {
+      if (has(use.kind, manifest.namespace, use.name)) edges.push({ from, to: keyOf3(use.kind, manifest.namespace, use.name), arrow: use.kind === "PersistentVolumeClaim" ? "->" : "-->", label: use.kind === "PersistentVolumeClaim" ? "mounts" : "reads" });
+      else unresolved(manifest, `${use.kind} ${use.name}`);
+    }
+  }
+  return edges;
+}
+function readKubernetes(textIn, context) {
+  const read = parseYaml(textIn);
+  if (read.error !== null) {
+    context.report.add(DIAGNOSTIC_CODES.importUnreadable, spanAt4(read.error.line, read.error.column), read.error.message, read.error.hint);
+    return null;
+  }
+  return drawManifests(read.documents.map((document2) => document2.root).filter((root) => root !== null), context, null);
+}
+function drawManifests(documents, context, framing) {
+  const roots = manifestRoots(documents);
+  const drawn = [];
+  const unknown2 = [];
+  for (const root of roots) {
+    const manifest = readManifest(root);
+    if (manifest === null || QUIET_KINDS2.has(manifest.kind)) continue;
+    if (DRAWN_KINDS2.has(manifest.kind)) {
+      if (!drawn.some((other) => other.kind === manifest.kind && other.namespace === manifest.namespace && other.name === manifest.name)) drawn.push(manifest);
+    } else unknown2.push(manifest);
+  }
+  const firstUnknown = unknown2[0];
+  if (firstUnknown !== void 0) {
+    const kinds2 = [...new Set(unknown2.map((manifest) => manifest.kind))];
+    context.report.add(
+      DIAGNOSTIC_CODES.importSkipped,
+      spanAt4(firstUnknown.line, firstUnknown.column),
+      `${countOf2(unknown2.length, "object")} of a kind this reader does not draw ${unknown2.length === 1 ? "was" : "were"} left out: ${kinds2.slice(0, 6).join(", ")}.`,
+      "The reader draws workloads, Services, Ingresses, ConfigMaps, Secrets, and PersistentVolumeClaims. Add the others by hand if they matter."
+    );
+  }
+  if (drawn.length === 0) {
+    context.report.add(DIAGNOSTIC_CODES.importNoShape, spanAt4(1, 1), "No workload, Service, Ingress, ConfigMap, Secret, or claim was found.", "Send manifests with apiVersion, kind, and metadata.name, separated by ---.");
+    return null;
+  }
+  const ordered = [...drawn].sort((a, b) => (LOOKS[a.kind]?.rank ?? 2) - (LOOKS[b.kind]?.rank ?? 2));
+  const namespaces = [...new Set(ordered.map((manifest) => manifest.namespace))];
+  const grouped = namespaces.length > 1;
+  const groups = grouped ? namespaces.map((namespace) => ({ key: `ns:${namespace}`, label: namespace, type: namespaceType(namespace), sub: "Namespace", idHint: `ns_${namespace}` })) : [];
+  const framed = /* @__PURE__ */ new Map();
+  for (const manifest of framing === null ? [] : ordered) {
+    let parent = grouped ? `ns:${manifest.namespace}` : null;
+    for (const frame of framing?.framesOf(manifest) ?? []) {
+      const key = grouped ? `${manifest.namespace}/${frame.key}` : frame.key;
+      if (!groups.some((group2) => group2.key === key)) groups.push({ key, label: frame.label, sub: frame.sub, icon: frame.icon, parent, idHint: frame.idHint });
+      parent = key;
+    }
+    if (parent !== null) framed.set(manifest, parent);
+  }
+  const only = namespaces[0] ?? "default";
+  const folded = foldedServices(ordered);
+  const servicePorts = /* @__PURE__ */ new Map();
+  for (const manifest of ordered) {
+    const workload = folded.get(keyOf3(manifest.kind, manifest.namespace, manifest.name));
+    const ports = manifest.detail?.replace(/^ClusterIP(, )?/, "") ?? "";
+    if (workload !== void 0 && ports !== "" && !servicePorts.has(workload)) servicePorts.set(workload, ports);
+  }
+  const boxes2 = ordered.filter((manifest) => !folded.has(keyOf3(manifest.kind, manifest.namespace, manifest.name)));
+  const workloads = boxes2.filter((manifest) => manifest.image !== null).length;
+  const others = boxes2.length - workloads;
+  return writeFlow(
+    {
+      title: context.title ?? framing?.title ?? (grouped || only === "default" ? "Kubernetes workloads" : `Kubernetes namespace ${only}`),
+      desc: `${countOf2(workloads, "workload")}${others > 0 ? ` and ${countOf2(others, "object")} around ${workloads === 1 ? "it" : "them"}` : ""}${grouped ? ` in ${countOf2(namespaces.length, "namespace")}` : ""}, imported from ${framing?.source ?? "Kubernetes manifests"}. ${boxes2.some((manifest) => manifest.kind === "Ingress") ? "Traffic flows from each Ingress to the pods behind its Services" : "Solid arrows are calls to a Service"}, and dashed arrows are configuration the pods read.`,
+      direction: "down",
+      nodes: boxes2.map((manifest) => {
+        const node3 = nodeOf3(manifest, grouped, servicePorts.get(keyOf3(manifest.kind, manifest.namespace, manifest.name)) ?? null);
+        return framed.has(manifest) ? { ...node3, group: framed.get(manifest) ?? null } : node3;
+      }),
+      groups,
+      edges: edgesOf2(ordered, folded, context),
+      noun: "objects",
+      capSpan: (key) => {
+        const manifest = ordered.find((candidate2) => keyOf3(candidate2.kind, candidate2.namespace, candidate2.name) === key);
+        return spanAt4(manifest?.line ?? 1, manifest?.column ?? 1);
+      },
+      advice: "Check the arrows from each Service: they follow its selector, so a selector that matches no pod template draws none. Label the Ingress arrows with their paths if they carry none."
+    },
+    context.report
+  );
+}
+var LOOKS, keyOf3, selects, selected, kubernetesImporter;
+var init_kubernetes = __esm({
+  "../../packages/diagrams/src/importers/kubernetes/index.ts"() {
+    "use strict";
+    init_constants();
+    init_core();
+    init_shared2();
+    init_yaml();
+    init_manifests();
+    LOOKS = {
+      Ingress: { type: "gateway", icon: "lucide:globe", rank: 0 },
+      Service: { type: "gateway", icon: "lucide:network", rank: 1 },
+      Deployment: { type: "service", icon: null, rank: 2 },
+      StatefulSet: { type: "service", icon: null, rank: 2 },
+      DaemonSet: { type: "service", icon: null, rank: 2 },
+      ReplicaSet: { type: "service", icon: null, rank: 2 },
+      Pod: { type: "service", icon: null, rank: 2 },
+      Job: { type: "function", icon: "lucide:play", rank: 3 },
+      CronJob: { type: "function", icon: "lucide:calendar-clock", rank: 3 },
+      PersistentVolumeClaim: { type: "storage", icon: "lucide:hard-drive", rank: 4 },
+      ConfigMap: { type: "storage", icon: "lucide:settings-2", rank: 5 },
+      Secret: { type: "secret", icon: "lucide:key-round", rank: 5 }
+    };
+    keyOf3 = (kind, namespace, name) => `${namespace}/${kind}/${name}`;
+    selects = (selector, labels2) => selector.size > 0 && [...selector].every(([key, value]) => labels2.get(key) === value);
+    selected = (service, drawn) => drawn.filter((workload) => workload.namespace === service.namespace && workload.kind !== "Service" && workload.image !== null && selects(service.labels, workload.labels));
+    kubernetesImporter = { format: "kubernetes", kinds: ["flow"], joins: "\n---\n", extensions: [".yaml", ".yml"], read: readKubernetes };
+  }
+});
+
+// ../../packages/diagrams/src/importers/helm/chart.ts
+function isChartFile(textIn) {
+  return /^apiVersion\s*:\s*["']?v[12]["']?\s*$/m.test(textIn) && /^name\s*:/m.test(textIn) && /^version\s*:/m.test(textIn) && !/^kind\s*:/m.test(textIn);
+}
+function dependenciesOf(node3) {
+  return items(node3).flatMap((entry2) => {
+    const name = text2(get(entry2, "name"));
+    return name === null ? [] : [{ name, alias: text2(get(entry2, "alias")), version: text2(get(entry2, "version")), repository: text2(get(entry2, "repository")), condition: text2(get(entry2, "condition")) }];
+  });
+}
+function valueAt(values, path) {
+  let node3 = values ?? void 0;
+  for (const key of path.split(".")) node3 = get(node3, key);
+  return text2(node3);
+}
+function drawCharts(files, context, index2) {
+  const charts = [];
+  const byFolder = (folder, name) => files.find((file2) => folderOf3(file2.path) === folder && baseName3(file2.path) === name);
+  const parsed = (file2) => {
+    if (file2 === void 0) return null;
+    const read = parseYaml(file2.text);
+    if (read.error !== null) {
+      context.report.add(DIAGNOSTIC_CODES.importSkipped, index2.span(file2.start), `${cleanText(file2.path, "A file")} is not read: ${read.error.message}`, read.error.hint);
+      return null;
+    }
+    return read.documents[0]?.root ?? null;
+  };
+  const templates = files.filter((file2) => /(?:^|\/)templates\//.test(file2.path));
+  for (const file2 of files.filter((entry2) => baseName3(entry2.path) === "Chart.yaml" || entry2.path === "" && isChartFile(entry2.text))) {
+    const root2 = parsed(file2);
+    const name = text2(get(root2, "name"));
+    if (root2 === null || name === null) continue;
+    const folder = folderOf3(file2.path);
+    const requirements = parsed(byFolder(folder, "requirements.yaml"));
+    const lock = parsed(byFolder(folder, "Chart.lock")) ?? parsed(byFolder(folder, "requirements.lock"));
+    const locked = /* @__PURE__ */ new Map();
+    for (const entry2 of items(get(lock, "dependencies"))) {
+      const lockedName = text2(get(entry2, "name"));
+      const version2 = text2(get(entry2, "version"));
+      if (lockedName !== null && version2 !== null) locked.set(lockedName, version2);
+    }
+    charts.push({
+      name,
+      version: text2(get(root2, "version")),
+      appVersion: text2(get(root2, "appVersion")),
+      library: text2(get(root2, "type")) === "library",
+      folder,
+      start: file2.start,
+      dependencies: [...dependenciesOf(get(root2, "dependencies")), ...dependenciesOf(get(requirements, "dependencies"))],
+      values: parsed(byFolder(folder, "values.yaml")),
+      locked
+    });
+  }
+  if (charts.length === 0) {
+    context.report.add(DIAGNOSTIC_CODES.importNoShape, START3, "No Chart.yaml with a name was found.", "Send the chart folder with its Chart.yaml, or the output of helm template.");
+    return null;
+  }
+  if (templates.length > 0) {
+    context.report.add(DIAGNOSTIC_CODES.importSkipped, index2.span(templates[0]?.start ?? 0), `${countOf2(templates.length, "template")} of the chart ${templates.length === 1 ? "is" : "are"} not rendered, so the objects ${templates.length === 1 ? "it makes are" : "they make are"} not drawn.`, "Run helm template with the values to deploy, and import its output as helm to draw the objects.");
+  }
+  charts.sort((a, b) => a.folder.split("/").length - b.folder.split("/").length || (a.folder < b.folder ? -1 : 1));
+  const chartKey = (chart) => `chart:${chart.folder === "" ? chart.name : chart.folder}`;
+  const nodes = [];
+  const edges = [];
+  const repositories = new Set(charts.flatMap((chart) => chart.dependencies.map((dependency) => dependency.repository)).filter((repository) => repository !== null && repository !== "" && !repository.startsWith("file://")));
+  const framed = repositories.size > 1;
+  const groups = framed ? [...repositories].sort().map((repository) => ({ key: `repository:${repository}`, label: repositoryLabel(repository), sub: "Chart repository", icon: "simple:helm", idHint: repositoryLabel(repository).split("/").pop() ?? "repository" })) : [];
+  for (const chart of charts) {
+    const look = imageLook(chart.name);
+    nodes.push({ key: chartKey(chart), type: look?.type ?? "service", label: chart.name, sub: cleanText([[chart.library ? "Library chart" : "Chart", chart.version].filter((part) => part !== null).join(" "), chart.appVersion === null ? null : `app ${chart.appVersion}`].filter((part) => part !== null).join(", ")), icon: look?.icon ?? "simple:helm", idHint: chart.name });
+  }
+  for (const chart of charts) {
+    for (const dependency of chart.dependencies) {
+      const shown = dependency.alias ?? dependency.name;
+      const vendored = charts.find((other) => other.folder === `${chart.folder === "" ? "" : `${chart.folder}/`}charts/${dependency.name}`) ?? (dependency.repository?.startsWith("file://") === true ? charts.find((other) => other.name === dependency.name) : void 0);
+      const key = vendored === void 0 ? `dependency:${chart.name}/${shown}` : chartKey(vendored);
+      const setting = dependency.condition === null ? null : dependency.condition.split(",").map((path) => valueAt(chart.values, path.trim())).find((value) => value !== null) ?? null;
+      const off = setting === "false";
+      if (vendored === void 0) {
+        const look = imageLook(dependency.name);
+        const repository = dependency.repository !== null && repositories.has(dependency.repository) && framed ? `repository:${dependency.repository}` : null;
+        nodes.push({ key, type: look?.type ?? "service", label: shown, sub: cleanText([shown === dependency.name ? "Chart" : `Chart ${dependency.name}`, off ? "off in values" : dependency.condition !== null && setting !== "true" ? "optional" : null].filter((part) => part !== null).join(", ")), icon: look?.icon ?? iconForName(dependency.name, look?.type ?? "service") ?? "simple:helm", group: repository, idHint: shown });
+      }
+      const version2 = chart.locked.get(dependency.name) ?? dependency.version;
+      edges.push({ from: chartKey(chart), to: key, label: version2, ...off ? { arrow: "-->" } : {} });
+    }
+  }
+  const root = charts[0];
+  const dependencies = charts.reduce((total, chart) => total + chart.dependencies.length, 0);
+  return writeFlow(
+    {
+      title: context.title ?? `Helm chart ${root.name}`,
+      desc: `${countOf2(charts.length, "chart")} and the ${countOf2(dependencies, "dependency", "dependencies")} they declare, imported from a Helm chart folder. An arrow points from a chart to a chart it depends on, labelled with the version it gets; a dashed one is switched off in values.yaml.`,
+      direction: "down",
+      nodes,
+      groups,
+      edges,
+      noun: "charts",
+      capSpan: (key) => index2.span(charts.find((chart) => chartKey(chart) === key)?.start ?? 0),
+      advice: "Import the output of helm template as helm to draw the objects each chart makes."
+    },
+    context.report
+  );
+}
+var baseName3, folderOf3, repositoryLabel;
+var init_chart = __esm({
+  "../../packages/diagrams/src/importers/helm/chart.ts"() {
+    "use strict";
+    init_core();
+    init_shared2();
+    init_yaml();
+    baseName3 = (path) => path.slice(path.lastIndexOf("/") + 1);
+    folderOf3 = (path) => path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
+    repositoryLabel = (repository) => repository.replace(/^[a-z]+:\/\//i, "").replace(/\/+$/, "") || repository;
+  }
+});
+
+// ../../packages/diagrams/src/importers/helm/index.ts
+function chartOf(label) {
+  const match = /^(.+?)-(v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]*)?)$/.exec(label);
+  return match === null ? { name: label, version: null } : { name: match[1] ?? label, version: match[2] ?? null };
+}
+function chartLabel(manifest) {
+  const written3 = manifest.meta.get("helm.sh/chart") ?? manifest.meta.get("chart");
+  if (written3 !== void 0 && written3 !== "") return chartOf(written3);
+  const name = manifest.meta.get("app.kubernetes.io/name");
+  return name === void 0 || name === "" ? null : { name, version: null };
+}
+function helmFrames(manifests) {
+  const charts = /* @__PURE__ */ new Map();
+  for (const manifest of manifests) {
+    const release = releaseOf(manifest);
+    const chart = chartLabel(manifest);
+    if (release !== null && chart !== null) charts.set(release, /* @__PURE__ */ new Set([...charts.get(release) ?? [], chart.name]));
+  }
+  return (manifest) => {
+    const frames = [];
+    const release = releaseOf(manifest);
+    const chart = chartLabel(manifest);
+    const partOf2 = manifest.meta.get("app.kubernetes.io/part-of");
+    if (partOf2 !== void 0 && partOf2 !== "" && partOf2 !== release) frames.push({ key: `part-of:${partOf2}`, label: partOf2, sub: "Application", icon: "lucide:boxes", idHint: partOf2 });
+    if (release === null) return frames;
+    const several = (charts.get(release)?.size ?? 0) > 1;
+    const only = several || chart === null ? null : chart;
+    frames.push({ key: `release:${release}`, label: release, sub: cleanText(only === null ? "Release" : `Release of ${only.name}${only.version === null ? "" : ` ${only.version}`}`), icon: "simple:helm", idHint: release });
+    if (several && chart !== null) frames.push({ key: `chart:${release}/${chart.name}`, label: chart.name, sub: cleanText(`Chart${chart.version === null ? "" : ` ${chart.version}`}`), icon: "lucide:package", idHint: chart.name });
+    return frames;
+  };
+}
+function readHelm(joined2, context) {
+  const index2 = new LineIndex(joined2);
+  const files = context.files.map((file2, position) => ({ path: file2.path, start: file2.start, text: joined2.slice(file2.start, context.files[position + 1]?.start ?? joined2.length) }));
+  if (files.some((file2) => /(?:^|\/)Chart\.yaml$/.test(file2.path) || file2.path === "" && isChartFile(file2.text))) return drawCharts(files, context, index2);
+  const read = parseYaml(joined2);
+  if (read.error !== null) {
+    context.report.add(DIAGNOSTIC_CODES.importUnreadable, spanAt4(read.error.line, read.error.column), read.error.message, `${read.error.hint} Send the output of helm template, which renders the chart's templates first.`);
+    return null;
+  }
+  const documents = read.documents.map((document2) => document2.root).filter((root) => root !== null);
+  const releases = /* @__PURE__ */ new Set();
+  const labelled2 = [];
+  for (const root of manifestRoots(documents)) {
+    const manifest = readManifest(root);
+    if (manifest === null) continue;
+    labelled2.push(manifest);
+    const release = releaseOf(manifest);
+    if (release !== null) releases.add(release);
+  }
+  const [only] = releases;
+  return drawManifests(documents, context, {
+    framesOf: helmFrames(labelled2),
+    title: releases.size === 1 && only !== void 0 ? `Helm release ${cleanText(only)}` : "Helm releases",
+    source: "a Helm chart rendered with helm template"
+  });
+}
+var releaseOf, helmImporter;
+var init_helm = __esm({
+  "../../packages/diagrams/src/importers/helm/index.ts"() {
+    "use strict";
+    init_core();
+    init_kubernetes();
+    init_manifests();
+    init_shared2();
+    init_yaml();
+    init_chart();
+    releaseOf = (manifest) => manifest.meta.get("app.kubernetes.io/instance") ?? manifest.meta.get("release") ?? null;
+    helmImporter = { format: "helm", kinds: ["flow"], joins: "\n---\n", extensions: [".yaml", ".yml", ".tpl", ".txt", ".lock"], read: readHelm };
+  }
+});
+
 // ../../packages/diagrams/src/importers/github-actions/workflow.ts
 function humanize2(id) {
   const words = id.replace(/[_-]+/g, " ").trim();
@@ -173788,7 +174961,7 @@ function commandLabel(run3) {
   const space = cut.lastIndexOf(" ");
   return space > 12 ? cut.slice(0, space) : cut;
 }
-function readable(name) {
+function readable2(name) {
   let out = "";
   let at3 = 0;
   for (let open2 = name.indexOf("${{", at3); open2 !== -1; open2 = name.indexOf("${{", at3)) {
@@ -173808,7 +174981,7 @@ function readStep2(step) {
   const command = run3 === null ? null : commandLabel(run3).split(" ")[0] ?? "";
   const icon = (action === null ? null : ACTION_ICONS[action] ?? (action.startsWith("docker/") ? "simple:docker" : null)) ?? (command === null ? null : COMMAND_ICONS[command] ?? null);
   const label = name ?? (uses !== null ? actionLabel(uses) : run3 !== null ? commandLabel(run3) : "Step");
-  return { label: cleanText(readable(label), "Step"), icon, line: step.line, column: step.column };
+  return { label: cleanText(readable2(label), "Step"), icon, line: step.line, column: step.column };
 }
 function jobDetail(job) {
   const workflow = text2(get(job, "uses"));
@@ -173824,7 +174997,7 @@ function jobDetail(job) {
 function readJobs(root) {
   return entries(get(root, "jobs")).map((entry2) => ({
     id: entry2.key,
-    label: cleanText(readable(text2(get(entry2.value, "name")) ?? humanize2(entry2.key)), entry2.key),
+    label: cleanText(readable2(text2(get(entry2.value, "name")) ?? humanize2(entry2.key)), entry2.key),
     needs: names5(get(entry2.value, "needs")),
     detail: jobDetail(entry2.value),
     steps: items(get(entry2.value, "steps")).filter((step) => step.kind === "map").map(readStep2),
@@ -174213,298 +175386,232 @@ var init_json = __esm({
   }
 });
 
-// ../../packages/diagrams/src/importers/kubernetes/manifests.ts
-function valuesOf(kind, root, podSpec) {
-  const raw = kind === "ConfigMap" ? entries(get(root, "data")).map((entry2) => text2(entry2.value)) : items(get(podSpec, "containers")).flatMap((container) => items(get(container, "env")).map((variable) => text2(get(variable, "value"))));
-  return raw.filter((value) => value !== null && value.length <= MAX_VALUE_LENGTH2);
-}
-function stringMap(node3) {
-  const out = /* @__PURE__ */ new Map();
-  if (node3?.kind === "map") for (const entry2 of node3.entries) out.set(entry2.key, text2(entry2.value) ?? "");
-  return out;
-}
-function podUses(spec) {
-  const uses = [];
-  const add2 = (kind, name) => {
-    if (name !== null && name !== "" && !uses.some((use) => use.kind === kind && use.name === name)) uses.push({ kind, name });
-  };
-  for (const container of [...items(get(spec, "initContainers")), ...items(get(spec, "containers"))]) {
-    for (const source of items(get(container, "envFrom"))) {
-      add2("ConfigMap", text2(at2(source, ["configMapRef", "name"])));
-      add2("Secret", text2(at2(source, ["secretRef", "name"])));
-    }
-    for (const variable of items(get(container, "env"))) {
-      add2("ConfigMap", text2(at2(variable, ["valueFrom", "configMapKeyRef", "name"])));
-      add2("Secret", text2(at2(variable, ["valueFrom", "secretKeyRef", "name"])));
-    }
+// ../../packages/diagrams/src/importers/kustomize/folder.ts
+function resolvePath(folder, path) {
+  const parts = folder === "" ? [] : folder.split("/");
+  for (const part of path.split("/")) {
+    if (part === "" || part === ".") continue;
+    if (part === "..") {
+      if (parts.length === 0) return null;
+      parts.pop();
+    } else parts.push(part);
   }
-  for (const volume of items(get(spec, "volumes"))) {
-    add2("ConfigMap", text2(at2(volume, ["configMap", "name"])));
-    add2("Secret", text2(at2(volume, ["secret", "secretName"])));
-    add2("PersistentVolumeClaim", text2(at2(volume, ["persistentVolumeClaim", "claimName"])));
-  }
-  return uses;
+  return parts.join("/");
 }
-function ingressRoutes(spec) {
-  const routes = [];
-  const backend = (node3) => text2(at2(node3, ["service", "name"])) ?? text2(get(node3, "serviceName"));
-  const add2 = (service, label) => {
-    if (service !== null && !routes.some((route) => route.service === service)) routes.push({ service, label });
-  };
-  add2(backend(get(spec, "defaultBackend") ?? get(spec, "backend")), null);
-  for (const rule of items(get(spec, "rules"))) {
-    for (const path of items(at2(rule, ["http", "paths"]))) {
-      const route = text2(get(path, "path"));
-      add2(backend(get(path, "backend")), route === null || route === "/" ? text2(get(rule, "host")) : route);
+function kustomizationOf(root, folder, start2) {
+  const patches = [];
+  for (const entry2 of items(get(root, "patches"))) {
+    const target2 = get(entry2, "target");
+    patches.push({ path: text2(entry2) ?? text2(get(entry2, "path")), target: target2 === void 0 ? null : { kind: text2(get(target2, "kind")), name: text2(get(target2, "name")) } });
+  }
+  for (const key of ["patchesStrategicMerge", "patchesJson6902"]) {
+    for (const entry2 of items(get(root, key))) {
+      const target2 = get(entry2, "target");
+      patches.push({ path: text2(entry2) ?? text2(get(entry2, "path")), target: target2 === void 0 ? null : { kind: text2(get(target2, "kind")), name: text2(get(target2, "name")) } });
     }
   }
-  return routes;
+  const generators = [
+    ...items(get(root, "configMapGenerator")).map((entry2) => ({ name: text2(get(entry2, "name")), kind: "ConfigMap" })),
+    ...items(get(root, "secretGenerator")).map((entry2) => ({ name: text2(get(entry2, "name")), kind: "Secret" }))
+  ].filter((entry2) => entry2.name !== null);
+  const images = items(get(root, "images")).map((entry2) => {
+    const name = text2(get(entry2, "name"));
+    const tag = text2(get(entry2, "newTag")) ?? text2(get(entry2, "digest"));
+    return name === null ? null : `${baseName4(text2(get(entry2, "newName")) ?? name)}${tag === null ? "" : `:${tag}`}`;
+  }).filter((entry2) => entry2 !== null);
+  const replicas = items(get(root, "replicas")).map((entry2) => `${text2(get(entry2, "name")) ?? ""} ${text2(get(entry2, "count")) ?? "?"} replicas`);
+  const namespace = text2(get(root, "namespace"));
+  const prefix = text2(get(root, "namePrefix"));
+  const suffix = text2(get(root, "nameSuffix"));
+  const details = [namespace === null ? null : `namespace ${namespace}`, prefix === null ? null : `prefix ${prefix}`, suffix === null ? null : `suffix ${suffix}`, ...images, ...replicas].filter((entry2) => entry2 !== null && entry2 !== "");
+  return { folder, start: start2, component: text2(get(root, "kind")) === "Component", resources: [...names5(get(root, "resources")), ...names5(get(root, "bases"))], components: names5(get(root, "components")), patches, generators, details };
 }
-function detailOf(kind, spec) {
-  if (kind === "Service") {
-    const ports = items(get(spec, "ports")).map((port) => text2(get(port, "port"))).filter((port) => port !== null);
-    return [text2(get(spec, "type")) ?? "ClusterIP", ports.length === 0 ? "" : `port ${ports.slice(0, 3).join(", ")}`].filter((part) => part !== "").join(", ");
-  }
-  if (kind === "Ingress") return text2(get(items(get(spec, "rules"))[0], "host")) ?? names5(get(items(get(spec, "tls"))[0], "hosts"))[0] ?? null;
-  if (kind === "PersistentVolumeClaim") return text2(at2(spec, ["resources", "requests", "storage"]));
-  return null;
-}
-function readManifest(root) {
-  const kind = text2(get(root, "kind"));
-  const name = text2(at2(root, ["metadata", "name"]));
-  if (kind === null || name === null) return null;
-  const spec = get(root, "spec");
-  const templatePath = WORKLOAD_TEMPLATES[kind];
-  const template = templatePath === void 0 ? kind === "Pod" ? root : void 0 : at2(root, templatePath);
-  const podSpec = get(template, "spec");
-  const firstContainer = items(get(podSpec, "containers"))[0];
-  return {
-    kind,
-    name,
-    namespace: text2(at2(root, ["metadata", "namespace"])) ?? "default",
-    line: root.line,
-    column: root.column,
-    labels: template !== void 0 ? stringMap(at2(template, ["metadata", "labels"])) : kind === "Service" ? stringMap(get(spec, "selector")) : /* @__PURE__ */ new Map(),
-    image: text2(get(firstContainer, "image")),
-    replicas: text2(get(spec, "replicas")),
-    uses: podSpec === void 0 ? [] : podUses(podSpec),
-    routes: kind === "Ingress" ? ingressRoutes(spec) : [],
-    detail: detailOf(kind, spec),
-    values: valuesOf(kind, root, podSpec)
+function drawFolder(files, context, index2) {
+  const read = (file2) => {
+    const parsed = parseYaml(file2.text);
+    if (parsed.error !== null) {
+      context.report.add(DIAGNOSTIC_CODES.importSkipped, index2.span(file2.start), `${cleanText(file2.path, "A file")} is not read: ${parsed.error.message}`, parsed.error.hint);
+      return null;
+    }
+    return parsed.documents.map((document2) => document2.root).filter((root) => root !== null);
   };
-}
-function manifestRoots(roots) {
-  const out = [];
-  for (const root of roots) {
-    if (text2(get(root, "kind")) === "List") out.push(...items(get(root, "items")));
-    else out.push(root);
+  const kustomizations = [];
+  const objects = /* @__PURE__ */ new Map();
+  for (const file2 of files) {
+    const roots = read(file2);
+    if (roots === null) continue;
+    const isOwn = KUSTOMIZATION_NAMES.has(baseName4(file2.path)) || file2.path === "" && isKustomization(file2.text);
+    if (isOwn && roots[0] !== void 0) kustomizations.push(kustomizationOf(roots[0], folderOf4(file2.path), file2.start));
+    else objects.set(file2.path, objectsOf(roots));
   }
-  return out;
-}
-var WORKLOAD_TEMPLATES, DRAWN_KINDS, QUIET_KINDS, MAX_VALUE_LENGTH2, at2;
-var init_manifests = __esm({
-  "../../packages/diagrams/src/importers/kubernetes/manifests.ts"() {
-    "use strict";
-    init_yaml();
-    WORKLOAD_TEMPLATES = {
-      Deployment: ["spec", "template"],
-      StatefulSet: ["spec", "template"],
-      DaemonSet: ["spec", "template"],
-      ReplicaSet: ["spec", "template"],
-      Job: ["spec", "template"],
-      CronJob: ["spec", "jobTemplate", "spec", "template"]
-    };
-    DRAWN_KINDS = /* @__PURE__ */ new Set([...Object.keys(WORKLOAD_TEMPLATES), "Pod", "Service", "Ingress", "ConfigMap", "Secret", "PersistentVolumeClaim"]);
-    QUIET_KINDS = /* @__PURE__ */ new Set([
-      "Namespace",
-      "ServiceAccount",
-      "Role",
-      "ClusterRole",
-      "RoleBinding",
-      "ClusterRoleBinding",
-      "HorizontalPodAutoscaler",
-      "PodDisruptionBudget",
-      "NetworkPolicy",
-      "LimitRange",
-      "ResourceQuota",
-      "PriorityClass",
-      "ServiceMonitor",
-      "PodMonitor",
-      "VerticalPodAutoscaler",
-      "Certificate",
-      "IngressClass",
-      "StorageClass"
-    ]);
-    MAX_VALUE_LENGTH2 = 500;
-    at2 = (node3, path) => path.reduce((current, key) => get(current, key), node3);
+  if (kustomizations.length === 0) {
+    context.report.add(DIAGNOSTIC_CODES.importNoShape, START3, "No kustomization.yaml was found.", "Send the folder with its kustomization.yaml files, or the output of kustomize build.");
+    return null;
   }
-});
-
-// ../../packages/diagrams/src/importers/kubernetes/index.ts
-function namespaceType(name) {
-  const phrase2 = name.toLowerCase().replace(/[-_]+/g, " ").trim();
-  const matches3 = GROUP_TYPES.filter((type) => GROUP_TYPE_SPECS[type].phrases.includes(phrase2));
-  return matches3.length === 1 ? matches3[0] : null;
-}
-function nodeOf3(manifest, grouped, serviceDetail) {
-  const look = LOOKS[manifest.kind] ?? { type: "service", icon: null, rank: 2 };
-  const image = manifest.image === null ? null : imageLook(manifest.image);
-  const replicas = manifest.replicas !== null && manifest.replicas !== "1" ? `, ${manifest.replicas} replicas` : "";
-  const detail = (serviceDetail ?? manifest.detail) === null ? "" : `, ${serviceDetail ?? manifest.detail}`;
-  return {
-    key: keyOf3(manifest.kind, manifest.namespace, manifest.name),
-    type: image?.type ?? look.type,
-    label: manifest.name,
-    sub: `${manifest.kind}${replicas}${detail}`,
-    // A workload whose image this reader does not know may still be named after a product, such as kafka; lint's own rule finds it.
-    icon: image?.icon ?? look.icon ?? iconForName(manifest.name, image?.type ?? look.type),
-    group: grouped ? `ns:${manifest.namespace}` : null,
-    idHint: manifest.name
-  };
-}
-function namesHost2(value, host) {
-  if (host === "") return false;
-  for (let index2 = value.indexOf(host); index2 !== -1; index2 = value.indexOf(host, index2 + 1)) {
-    const before = index2 === 0 ? "" : value.charAt(index2 - 1);
-    const after = value.charAt(index2 + host.length);
-    if (!/[A-Za-z0-9.-]/.test(before) && !/[A-Za-z0-9_-]/.test(after)) return true;
-  }
-  return false;
-}
-function foldedServices(drawn) {
-  const folded = /* @__PURE__ */ new Map();
-  for (const service of drawn) {
-    if (service.kind !== "Service") continue;
-    const workloads = selected(service, drawn);
-    const only = workloads[0];
-    if (workloads.length === 1 && only !== void 0) folded.set(keyOf3("Service", service.namespace, service.name), keyOf3(only.kind, only.namespace, only.name));
-  }
-  return folded;
-}
-function edgesOf2(drawn, folded, context) {
+  const byFolder = new Map(kustomizations.map((entry2) => [entry2.folder, entry2]));
+  const missing = [];
+  const roleOf3 = (entry2) => entry2.component ? "Component" : entry2.resources.some((resource) => isRemote(resource) || byFolder.has(resolvePath(entry2.folder, resource) ?? "\0")) ? "Overlay" : "Base";
+  const rank = { Overlay: 0, Component: 1, Base: 2 };
+  const ordered = [...kustomizations].sort((a, b) => rank[roleOf3(a)] - rank[roleOf3(b)] || (a.folder < b.folder ? -1 : 1));
+  const firstParts = (kustomizations[0]?.folder ?? "").split("/");
+  let shared = 0;
+  while (shared < firstParts.length && kustomizations.every((entry2) => entry2.folder.split("/")[shared] === firstParts[shared] && entry2.folder.split("/").length > shared + 1)) shared += 1;
+  const common = shared === 0 ? "" : `${firstParts.slice(0, shared).join("/")}/`;
+  const groups = [];
+  const nodes = [];
   const edges = [];
-  const has = (kind, namespace, name) => drawn.some((other) => other.kind === kind && other.namespace === namespace && other.name === name);
-  const unresolved = (manifest, what) => {
-    context.report.add(DIAGNOSTIC_CODES.importUnresolved, spanAt4(manifest.line, manifest.column), `${manifest.kind} ${manifest.name} names the ${what}, which is not in the text.`, "Include its manifest, or leave it out if it is created elsewhere; the arrow was not drawn.");
+  const own2 = (entry2) => `kustomization:${entry2.folder}`;
+  const fileOf4 = (entry2, kind, name, depth = 0) => {
+    if (depth > 16) return null;
+    for (const resource of entry2.resources) {
+      const path = isRemote(resource) ? null : resolvePath(entry2.folder, resource);
+      if (path === null) continue;
+      const inner = byFolder.get(path);
+      if (inner !== void 0) {
+        const found = fileOf4(inner, kind, name, depth + 1);
+        if (found !== null) return found;
+      } else if ((objects.get(path) ?? []).some((object2) => (kind === null || object2.kind === kind) && (name === null || object2.name === name))) return path;
+    }
+    return null;
   };
-  for (const manifest of drawn) {
-    const from = keyOf3(manifest.kind, manifest.namespace, manifest.name);
-    for (const route of manifest.routes) {
-      const service = keyOf3("Service", manifest.namespace, route.service);
-      if (has("Service", manifest.namespace, route.service)) edges.push({ from, to: folded.get(service) ?? service, label: route.label });
-      else unresolved(manifest, `Service ${route.service}`);
+  for (const entry2 of ordered) {
+    const role = roleOf3(entry2);
+    const frame = `frame:${entry2.folder}`;
+    groups.push({ key: frame, label: entry2.folder.slice(common.length) || baseName4(entry2.folder) || "kustomization", sub: role, icon: "lucide:layers", idHint: entry2.folder.slice(common.length) || baseName4(entry2.folder) || "root" });
+    nodes.push({ key: own2(entry2), type: "service", label: baseName4(entry2.folder) || "kustomization", sub: cleanText(entry2.details.length === 0 ? "kustomization.yaml" : entry2.details.slice(0, 4).join(", ")), icon: "lucide:layers", group: frame, idHint: `${baseName4(entry2.folder) || "kustomization"}_kustomization` });
+    for (const resource of entry2.resources) {
+      if (isRemote(resource)) {
+        nodes.push({ key: `remote:${resource}`, type: "service", label: cleanText(resource.replace(/^https?:\/\//, "").replace(/\?.*$/, "").split("/").slice(-2).join("/")), sub: "Remote resource", icon: "lucide:globe", group: frame, idHint: "remote" });
+        edges.push({ from: own2(entry2), to: `remote:${resource}`, label: "builds on" });
+        continue;
+      }
+      const path = resolvePath(entry2.folder, resource);
+      const inner = path === null ? void 0 : byFolder.get(path);
+      if (inner !== void 0) {
+        edges.push({ from: own2(entry2), to: own2(inner), label: "builds on" });
+        continue;
+      }
+      const found = path === null ? void 0 : objects.get(path);
+      if (path === null || found === void 0) {
+        missing.push(`${entry2.folder === "" ? "" : `${entry2.folder}/`}${resource}`);
+        continue;
+      }
+      const first = found[0];
+      const look = kindLook(first?.kind ?? "");
+      nodes.push({ key: `file:${path}`, type: look.type, label: first === void 0 ? baseName4(path) : first.name, sub: cleanText(found.length <= 1 ? `${first?.kind ?? "No object"}, ${baseName4(path)}` : `${countOf2(found.length, "object")}, ${baseName4(path)}`), icon: look.icon, group: frame, idHint: baseName4(path).replace(/\.ya?ml$/, "") });
     }
-    if (manifest.kind === "Service" && !folded.has(from)) {
-      for (const workload of selected(manifest, drawn)) edges.push({ from, to: keyOf3(workload.kind, workload.namespace, workload.name) });
+    for (const component of entry2.components) {
+      const inner = byFolder.get(resolvePath(entry2.folder, component) ?? "\0");
+      if (inner !== void 0) edges.push({ from: own2(entry2), to: own2(inner), label: "includes" });
+      else missing.push(`${entry2.folder === "" ? "" : `${entry2.folder}/`}${component}`);
     }
-    if (manifest.image !== null) {
-      const read = drawn.filter((other) => other.kind === "ConfigMap" && other.namespace === manifest.namespace && manifest.uses.some((use) => use.kind === "ConfigMap" && use.name === other.name));
-      const values = [...manifest.values, ...read.flatMap((config2) => config2.values)];
-      for (const service of drawn) {
-        const host = service.namespace === manifest.namespace ? service.name : `${service.name}.${service.namespace}`;
-        if (service.kind !== "Service" || !values.some((value) => namesHost2(value, host))) continue;
-        const key = keyOf3("Service", service.namespace, service.name);
-        const to = folded.get(key) ?? key;
-        if (to !== from) edges.push({ from, to });
+    for (const generator of entry2.generators) {
+      const look = kindLook(generator.kind);
+      nodes.push({ key: `generator:${entry2.folder}/${generator.kind}/${generator.name}`, type: look.type, label: generator.name, sub: `${generator.kind} generator`, icon: look.icon, group: frame, idHint: generator.name });
+    }
+    for (const patch of entry2.patches) {
+      const path = patch.path === null ? null : resolvePath(entry2.folder, patch.path);
+      const named2 = path === null ? void 0 : objects.get(path)?.[0];
+      const kind = patch.target?.kind ?? named2?.kind ?? null;
+      const name = patch.target?.name ?? named2?.name ?? null;
+      const key = `patch:${entry2.folder}/${patch.path ?? `${kind ?? "any"}/${name ?? "any"}`}`;
+      nodes.push({ key, type: "service", label: patch.path === null ? `${kind ?? "object"} ${name ?? ""}`.trim() : baseName4(patch.path), sub: cleanText(`Patch${kind === null ? "" : ` of ${kind}${name === null ? "" : ` ${name}`}`}`), icon: "lucide:file-code", group: frame, idHint: `${baseName4(patch.path ?? "patch").replace(/\.ya?ml$/, "")}_patch` });
+      const target2 = kind === null && name === null ? null : fileOf4(entry2, kind, name) ?? [...objects].find(([, inside2]) => inside2.some((object2) => (kind === null || object2.kind === kind) && (name === null || object2.name === name)))?.[0] ?? null;
+      if (target2 !== null) edges.push({ from: key, to: `file:${target2}`, label: "patches" });
+    }
+  }
+  const drawnFiles = [...objects].filter(([path]) => nodes.some((node3) => node3.key === `file:${path}`));
+  for (const [path, manifests] of drawnFiles) {
+    for (const manifest of manifests) {
+      for (const use of manifest.uses) {
+        for (const node3 of nodes) if (node3.key.startsWith("generator:") && node3.key.endsWith(`/${use.kind}/${use.name}`)) edges.push({ from: `file:${path}`, to: node3.key, arrow: "-->", label: "reads" });
+        const holder = drawnFiles.find(([, others]) => others.some((other) => other.kind === use.kind && other.name === use.name));
+        if (holder !== void 0 && holder[0] !== path) edges.push({ from: `file:${path}`, to: `file:${holder[0]}`, arrow: "-->", label: use.kind === "PersistentVolumeClaim" ? "mounts" : "reads" });
+      }
+      for (const [other, inside2] of drawnFiles) {
+        if (other === path) continue;
+        if (manifest.kind === "Service" && inside2.some((workload) => workload.image !== null && selects(manifest.labels, workload.labels))) edges.push({ from: `file:${path}`, to: `file:${other}` });
+        if (manifest.image !== null && inside2.some((service) => service.kind === "Service" && manifest.values.some((value) => namesHost2(value, service.name)))) edges.push({ from: `file:${path}`, to: `file:${other}` });
       }
     }
-    for (const use of manifest.uses) {
-      if (has(use.kind, manifest.namespace, use.name)) edges.push({ from, to: keyOf3(use.kind, manifest.namespace, use.name), arrow: use.kind === "PersistentVolumeClaim" ? "->" : "-->", label: use.kind === "PersistentVolumeClaim" ? "mounts" : "reads" });
-      else unresolved(manifest, `${use.kind} ${use.name}`);
-    }
   }
-  return edges;
-}
-function readKubernetes(textIn, context) {
-  const read = parseYaml(textIn);
-  if (read.error !== null) {
-    context.report.add(DIAGNOSTIC_CODES.importUnreadable, spanAt4(read.error.line, read.error.column), read.error.message, read.error.hint);
-    return null;
+  if (missing.length > 0) {
+    context.report.add(DIAGNOSTIC_CODES.importUnresolved, START3, `${countOf2(missing.length, "entry", "entries")} of the kustomizations ${missing.length === 1 ? "names a file that was" : "name files that were"} not sent, so ${missing.length === 1 ? "it is" : "they are"} not drawn: ${missing.slice(0, 3).map((entry2) => cleanText(entry2)).join(", ")}.`, "Send every file of the folder, with each base and component.");
   }
-  const roots = manifestRoots(read.documents.map((document2) => document2.root).filter((root) => root !== null));
-  const drawn = [];
-  const unknown2 = [];
-  for (const root of roots) {
-    const manifest = readManifest(root);
-    if (manifest === null || QUIET_KINDS.has(manifest.kind)) continue;
-    if (DRAWN_KINDS.has(manifest.kind)) {
-      if (!drawn.some((other) => other.kind === manifest.kind && other.namespace === manifest.namespace && other.name === manifest.name)) drawn.push(manifest);
-    } else unknown2.push(manifest);
-  }
-  const firstUnknown = unknown2[0];
-  if (firstUnknown !== void 0) {
-    const kinds2 = [...new Set(unknown2.map((manifest) => manifest.kind))];
-    context.report.add(
-      DIAGNOSTIC_CODES.importSkipped,
-      spanAt4(firstUnknown.line, firstUnknown.column),
-      `${countOf2(unknown2.length, "object")} of a kind this reader does not draw ${unknown2.length === 1 ? "was" : "were"} left out: ${kinds2.slice(0, 6).join(", ")}.`,
-      "The reader draws workloads, Services, Ingresses, ConfigMaps, Secrets, and PersistentVolumeClaims. Add the others by hand if they matter."
-    );
-  }
-  if (drawn.length === 0) {
-    context.report.add(DIAGNOSTIC_CODES.importNoShape, spanAt4(1, 1), "No workload, Service, Ingress, ConfigMap, Secret, or claim was found.", "Send manifests with apiVersion, kind, and metadata.name, separated by ---.");
-    return null;
-  }
-  const ordered = [...drawn].sort((a, b) => (LOOKS[a.kind]?.rank ?? 2) - (LOOKS[b.kind]?.rank ?? 2));
-  const namespaces = [...new Set(ordered.map((manifest) => manifest.namespace))];
-  const grouped = namespaces.length > 1;
-  const groups = grouped ? namespaces.map((namespace) => ({ key: `ns:${namespace}`, label: namespace, type: namespaceType(namespace), sub: "Namespace", idHint: `ns_${namespace}` })) : [];
-  const only = namespaces[0] ?? "default";
-  const folded = foldedServices(ordered);
-  const servicePorts = /* @__PURE__ */ new Map();
-  for (const manifest of ordered) {
-    const workload = folded.get(keyOf3(manifest.kind, manifest.namespace, manifest.name));
-    const ports = manifest.detail?.replace(/^ClusterIP(, )?/, "") ?? "";
-    if (workload !== void 0 && ports !== "" && !servicePorts.has(workload)) servicePorts.set(workload, ports);
-  }
-  const boxes2 = ordered.filter((manifest) => !folded.has(keyOf3(manifest.kind, manifest.namespace, manifest.name)));
-  const workloads = boxes2.filter((manifest) => manifest.image !== null).length;
-  const others = boxes2.length - workloads;
+  const overlays = ordered.filter((entry2) => roleOf3(entry2) === "Overlay").length;
   return writeFlow(
     {
-      title: context.title ?? (grouped || only === "default" ? "Kubernetes workloads" : `Kubernetes namespace ${only}`),
-      desc: `${countOf2(workloads, "workload")}${others > 0 ? ` and ${countOf2(others, "object")} around ${workloads === 1 ? "it" : "them"}` : ""}${grouped ? ` in ${countOf2(namespaces.length, "namespace")}` : ""}, imported from Kubernetes manifests. ${boxes2.some((manifest) => manifest.kind === "Ingress") ? "Traffic flows from each Ingress to the pods behind its Services" : "Solid arrows are calls to a Service"}, and dashed arrows are configuration the pods read.`,
+      title: context.title ?? "Kustomize overlays",
+      desc: `${countOf2(kustomizations.length, "kustomization")}, ${countOf2(overlays, "overlay")} among them, imported from a Kustomize folder. Each frame is a kustomization with the files, patches, and generators it lists; an arrow shows what an overlay builds on or includes, and what a patch changes.`,
       direction: "down",
-      nodes: boxes2.map((manifest) => nodeOf3(manifest, grouped, servicePorts.get(keyOf3(manifest.kind, manifest.namespace, manifest.name)) ?? null)),
+      nodes,
       groups,
-      edges: edgesOf2(ordered, folded, context),
-      noun: "objects",
-      capSpan: (key) => {
-        const manifest = ordered.find((candidate2) => keyOf3(candidate2.kind, candidate2.namespace, candidate2.name) === key);
-        return spanAt4(manifest?.line ?? 1, manifest?.column ?? 1);
-      },
-      advice: "Check the arrows from each Service: they follow its selector, so a selector that matches no pod template draws none. Label the Ingress arrows with their paths if they carry none."
+      edges,
+      noun: "entries",
+      capSpan: () => index2.span(ordered[0]?.start ?? 0),
+      advice: "Import the output of kustomize build for an overlay as kustomize to draw the objects it makes."
     },
     context.report
   );
 }
-var LOOKS, keyOf3, selects, selected, kubernetesImporter;
-var init_kubernetes = __esm({
-  "../../packages/diagrams/src/importers/kubernetes/index.ts"() {
+var KUSTOMIZATION_NAMES, isKustomization, baseName4, folderOf4, isRemote, objectsOf;
+var init_folder = __esm({
+  "../../packages/diagrams/src/importers/kustomize/folder.ts"() {
     "use strict";
-    init_constants();
     init_core();
+    init_kubernetes();
+    init_manifests();
     init_shared2();
     init_yaml();
+    KUSTOMIZATION_NAMES = /* @__PURE__ */ new Set(["kustomization.yaml", "kustomization.yml", "Kustomization"]);
+    isKustomization = (textIn) => /^apiVersion\s*:\s*["']?kustomize\.config\.k8s\.io\//m.test(textIn);
+    baseName4 = (path) => path.slice(path.lastIndexOf("/") + 1);
+    folderOf4 = (path) => path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
+    isRemote = (entry2) => /^(?:https?:\/\/|git@|github\.com\/|gitlab\.com\/|bitbucket\.org\/|ssh:\/\/)/.test(entry2) || /\?ref=/.test(entry2);
+    objectsOf = (roots) => manifestRoots(roots).flatMap((node3) => readManifest(node3) ?? []);
+  }
+});
+
+// ../../packages/diagrams/src/importers/kustomize/index.ts
+function withoutHashes(documents) {
+  const hashed = /* @__PURE__ */ new Map();
+  for (const root of documents) {
+    const manifest = readManifest(root);
+    if (manifest !== null && (manifest.kind === "ConfigMap" || manifest.kind === "Secret") && GENERATED_HASH.test(manifest.name)) hashed.set(manifest.name, manifest.name.replace(GENERATED_HASH, ""));
+  }
+  if (hashed.size === 0) return [...documents];
+  const strip = (node3, depth) => {
+    if (depth > 64) return node3;
+    if (node3.kind === "scalar") return hashed.has(node3.value) ? { ...node3, value: hashed.get(node3.value) ?? node3.value } : node3;
+    if (node3.kind === "seq") return { ...node3, items: node3.items.map((item) => strip(item, depth + 1)) };
+    return { ...node3, entries: node3.entries.map((entry2) => ({ ...entry2, value: strip(entry2.value, depth + 1) })) };
+  };
+  return documents.map((root) => strip(root, 0));
+}
+function readKustomize(joined2, context) {
+  const index2 = new LineIndex(joined2);
+  const files = context.files.map((file2, position) => ({ path: file2.path, start: file2.start, text: joined2.slice(file2.start, context.files[position + 1]?.start ?? joined2.length) }));
+  if (files.some((file2) => KUSTOMIZATION_NAMES.has(file2.path.slice(file2.path.lastIndexOf("/") + 1)) || file2.path === "" && isKustomization(file2.text))) return drawFolder(files, context, index2);
+  const read = parseYaml(joined2);
+  if (read.error !== null) {
+    context.report.add(DIAGNOSTIC_CODES.importUnreadable, spanAt4(read.error.line, read.error.column), read.error.message, read.error.hint);
+    return null;
+  }
+  const documents = manifestRoots(read.documents.map((document2) => document2.root).filter((root) => root !== null));
+  return drawManifests(withoutHashes(documents), context, { framesOf: () => [], title: "Kustomize build", source: "the output of kustomize build" });
+}
+var GENERATED_HASH, kustomizeImporter;
+var init_kustomize = __esm({
+  "../../packages/diagrams/src/importers/kustomize/index.ts"() {
+    "use strict";
+    init_core();
+    init_kubernetes();
     init_manifests();
-    LOOKS = {
-      Ingress: { type: "gateway", icon: "lucide:globe", rank: 0 },
-      Service: { type: "gateway", icon: "lucide:network", rank: 1 },
-      Deployment: { type: "service", icon: null, rank: 2 },
-      StatefulSet: { type: "service", icon: null, rank: 2 },
-      DaemonSet: { type: "service", icon: null, rank: 2 },
-      ReplicaSet: { type: "service", icon: null, rank: 2 },
-      Pod: { type: "service", icon: null, rank: 2 },
-      Job: { type: "function", icon: "lucide:play", rank: 3 },
-      CronJob: { type: "function", icon: "lucide:calendar-clock", rank: 3 },
-      PersistentVolumeClaim: { type: "storage", icon: "lucide:hard-drive", rank: 4 },
-      ConfigMap: { type: "storage", icon: "lucide:settings-2", rank: 5 },
-      Secret: { type: "secret", icon: "lucide:key-round", rank: 5 }
-    };
-    keyOf3 = (kind, namespace, name) => `${namespace}/${kind}/${name}`;
-    selects = (selector, labels2) => selector.size > 0 && [...selector].every(([key, value]) => labels2.get(key) === value);
-    selected = (service, drawn) => drawn.filter((workload) => workload.namespace === service.namespace && workload.kind !== "Service" && workload.image !== null && selects(service.labels, workload.labels));
-    kubernetesImporter = { format: "kubernetes", kinds: ["flow"], joins: "\n---\n", extensions: [".yaml", ".yml"], read: readKubernetes };
+    init_shared2();
+    init_yaml();
+    init_folder();
+    GENERATED_HASH = /-(?=[^-]*\d)[b-df-hj-np-tv-z0-9]{10}$/;
+    kustomizeImporter = { format: "kustomize", kinds: ["flow"], joins: "\n---\n", extensions: [".yaml", ".yml", ".json", ".env", ".properties", "Kustomization"], read: readKustomize };
   }
 });
 
@@ -175276,7 +176383,7 @@ var init_prisma = __esm({
 });
 
 // ../../packages/diagrams/src/importers/pulumi/item.ts
-function valueAt(properties, path) {
+function valueAt2(properties, path) {
   let current = properties;
   for (const key of path) {
     if (!isObject2(current)) return null;
@@ -175300,7 +176407,7 @@ function nameKeyOf2(token, keys) {
 function itemOf(resource) {
   const tokenType = pulumiToTerraform(resource.token);
   if (tokenType === null) return null;
-  const type = refineByKind(tokenType, valueAt(resource.properties, ["kind"]));
+  const type = refineByKind(tokenType, valueAt2(resource.properties, ["kind"]));
   const attributes2 = [];
   const nameKey3 = nameProperty(resource.token, resource.properties);
   if (nameKey3 !== null && isObject2(resource.properties)) {
@@ -175311,7 +176418,7 @@ function itemOf(resource) {
   const role = roleOf2(type);
   for (const [path, attribute2] of DETAILS2) {
     if (!placed3(attribute2)) continue;
-    const value = valueAt(resource.properties, path);
+    const value = valueAt2(resource.properties, path);
     if (value !== null) attributes2.push({ name: attribute2 === "sku" ? skuAttribute(role.role === "node" ? role.detail ?? [] : []) : attribute2, refs: [], value });
   }
   if (isObject2(resource.properties)) {
@@ -175324,7 +176431,7 @@ function itemOf(resource) {
   if (resource.dependsOn.length > 0) attributes2.push({ name: "depends_on", refs: resource.dependsOn, value: null });
   if (resource.parent !== null) attributes2.push({ name: "parent_id", refs: [resource.parent], value: null });
   if (type === "azurerm_role_assignment") {
-    const role2 = roleName(valueAt(resource.properties, ["roleDefinitionId"]) ?? JSON.stringify(resource.properties));
+    const role2 = roleName(valueAt2(resource.properties, ["roleDefinitionId"]) ?? JSON.stringify(resource.properties));
     if (role2 !== null) attributes2.push({ name: "role_definition_name", refs: [], value: role2 });
   }
   const group2 = attributes2.find((attribute2) => attribute2.name === "resource_group_name");
@@ -175584,7 +176691,7 @@ function valueOf2(value, depth = 0) {
   if (depth > 32) return null;
   if (typeof value === "string" || typeof value === "number" || typeof value === "boolean" || value === null) return value;
   if (Array.isArray(value)) return value.map((item) => valueOf2(item, depth + 1));
-  if (isRecord3(value)) {
+  if (isRecord4(value)) {
     if (value["4dabf18193072939515e22adb298388d"] === "1b47061264138c4ac30d75fd1eb44270") return null;
     const out = {};
     for (const [key, entry2] of Object.entries(value)) out[key] = valueOf2(entry2, depth + 1);
@@ -175593,9 +176700,9 @@ function valueOf2(value, depth = 0) {
   return null;
 }
 function resourceOf2(raw) {
-  if (!isRecord3(raw) || typeof raw["urn"] !== "string" || typeof raw["type"] !== "string") return null;
+  if (!isRecord4(raw) || typeof raw["urn"] !== "string" || typeof raw["type"] !== "string") return null;
   const dependencies = {};
-  if (isRecord3(raw["propertyDependencies"])) for (const [key, value] of Object.entries(raw["propertyDependencies"])) dependencies[key] = strings(value);
+  if (isRecord4(raw["propertyDependencies"])) for (const [key, value] of Object.entries(raw["propertyDependencies"])) dependencies[key] = strings(value);
   return {
     urn: raw["urn"],
     type: raw["type"],
@@ -175627,8 +176734,8 @@ function pathTo(value, wanted2, path, depth = 0) {
   return null;
 }
 function readState(json2) {
-  if (!isRecord3(json2)) return null;
-  const deployment = isRecord3(json2["deployment"]) ? json2["deployment"] : isRecord3(json2["checkpoint"]) && isRecord3(json2["checkpoint"]["latest"]) ? json2["checkpoint"]["latest"] : null;
+  if (!isRecord4(json2)) return null;
+  const deployment = isRecord4(json2["deployment"]) ? json2["deployment"] : isRecord4(json2["checkpoint"]) && isRecord4(json2["checkpoint"]["latest"]) ? json2["checkpoint"]["latest"] : null;
   if (deployment !== null && Array.isArray(deployment["resources"])) {
     return { resources: deployment["resources"].map(resourceOf2).filter((resource) => resource !== null), deleted: 0, kind: "export" };
   }
@@ -175636,7 +176743,7 @@ function readState(json2) {
     const resources = [];
     let deleted = 0;
     for (const step of json2["steps"]) {
-      if (!isRecord3(step)) continue;
+      if (!isRecord4(step)) continue;
       const op = typeof step["op"] === "string" ? step["op"] : "";
       if (op === "delete" || op === "discard" || op === "delete-replaced" || op === "read-discard" || op === "remove-pending-replace") {
         deleted += 1;
@@ -175655,18 +176762,18 @@ function stateResources(state, offsetOf) {
   const counts = /* @__PURE__ */ new Map();
   for (const resource of all) counts.set(logicalName(resource.urn), (counts.get(logicalName(resource.urn)) ?? 0) + 1);
   const nameOf10 = (urn) => (counts.get(logicalName(urn)) ?? 0) > 1 ? urn : logicalName(urn);
-  const safe2 = (name) => name.replace(/[^A-Za-z0-9_-]+/g, "_");
+  const safe3 = (name) => name.replace(/[^A-Za-z0-9_-]+/g, "_");
   const scopeOf2 = (resource) => {
     const chain = [];
     let parent = resource.parent === null ? void 0 : byUrn.get(resource.parent);
     for (let depth = 0; parent !== void 0 && depth < 16; depth += 1) {
-      if (!parent.custom) chain.unshift(`module.${safe2(logicalName(parent.urn))}.`);
+      if (!parent.custom) chain.unshift(`module.${safe3(logicalName(parent.urn))}.`);
       parent = parent.parent === null ? void 0 : byUrn.get(parent.parent);
     }
     return chain.join("");
   };
   const modules = all.filter((resource) => !resource.custom).map((resource) => {
-    const scope = `${scopeOf2(resource)}module.${safe2(logicalName(resource.urn))}.`;
+    const scope = `${scopeOf2(resource)}module.${safe3(logicalName(resource.urn))}.`;
     return { scope, name: scope.slice(0, -1), label: logicalName(resource.urn), instance: null, source: resource.type, start: offsetOf(resource.urn), noun: "Component" };
   });
   const resources = all.filter((resource) => resource.custom).map((resource) => {
@@ -175702,15 +176809,15 @@ function stateResources(state, offsetOf) {
   return { resources, modules };
 }
 function mergeValues2(outputs, inputs) {
-  if (!isRecord3(outputs)) return inputs;
-  if (!isRecord3(inputs)) return outputs;
+  if (!isRecord4(outputs)) return inputs;
+  if (!isRecord4(inputs)) return outputs;
   return { ...outputs, ...inputs };
 }
-var isRecord3, strings, logicalName, isPlumbing;
+var isRecord4, strings, logicalName, isPlumbing;
 var init_state10 = __esm({
   "../../packages/diagrams/src/importers/pulumi/state.ts"() {
     "use strict";
-    isRecord3 = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
+    isRecord4 = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
     strings = (value) => Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
     logicalName = (urn) => urn.slice(urn.lastIndexOf("::") + 2);
     isPlumbing = (resource) => resource.type === "pulumi:pulumi:Stack" || resource.type.startsWith("pulumi:providers:");
@@ -175776,7 +176883,7 @@ function readPulumi(joinedText, context) {
     const chosenNames = context.options.varFiles ?? [];
     const picked = chosenNames.length > 0 ? stacks.filter((stack) => chosenNames.some((name) => stack.path === name || stack.path.endsWith(`/${name.replace(/^\.?\//, "")}`))) : stacks.length === 1 ? stacks : [];
     if (chosenNames.length === 0 && stacks.length === 1) context.report.add(DIAGNOSTIC_CODES.importChanged, index2.span(stacks[0]?.start ?? 0), `The values of ${cleanText(stacks[0]?.path ?? "")} are drawn: it is the only stack configuration sent.`, "Set options.varFiles to draw with another stack.");
-    if (chosenNames.length === 0 && stacks.length > 1) context.report.add(DIAGNOSTIC_CODES.importSkipped, START3, `${countOf2(stacks.length, "stack configuration")} are not applied, because each sets the same values: ${stacks.slice(0, LISTED9).map((stack) => cleanText(stack.path)).join(", ")}.`, `Set options.varFiles to the stack to draw, such as ["${stacks[0]?.path ?? ""}"]; until then, values show their defaults or their names.`);
+    if (chosenNames.length === 0 && stacks.length > 1) context.report.add(DIAGNOSTIC_CODES.importSkipped, START3, `${countOf2(stacks.length, "stack configuration")} are not applied, because each sets the same values: ${stacks.slice(0, LISTED10).map((stack) => cleanText(stack.path)).join(", ")}.`, `Set options.varFiles to the stack to draw, such as ["${stacks[0]?.path ?? ""}"]; until then, values show their defaults or their names.`);
     const config2 = /* @__PURE__ */ new Map();
     for (const stack of picked) for (const [key, value] of configOf(stack.root)) config2.set(key, value);
     const stackName = picked.length === 1 ? stackOf(picked[0]?.path ?? "") : null;
@@ -175796,7 +176903,7 @@ function readPulumi(joinedText, context) {
     else chosen = [match];
   }
   if (chosen.length === 1) return drawSource(chosen[0], context, index2);
-  context.report.add(DIAGNOSTIC_CODES.importChanged, START3, `The files hold ${chosen.length} programs and states (${chosen.slice(0, LISTED9).map((source) => source.path).join(", ")}), so each is drawn as a diagram of its own.`, `Set options.root to draw one of them, such as "${chosen[0]?.path ?? ""}".`);
+  context.report.add(DIAGNOSTIC_CODES.importChanged, START3, `The files hold ${chosen.length} programs and states (${chosen.slice(0, LISTED10).map((source) => source.path).join(", ")}), so each is drawn as a diagram of its own.`, `Set options.root to draw one of them, such as "${chosen[0]?.path ?? ""}".`);
   const drafts = [];
   for (const source of chosen) {
     const draft = drawSource(source, { ...context, title: `${context.title ?? "Cloud infrastructure"}: ${source.path}` }, index2);
@@ -175833,7 +176940,7 @@ function drawSource(source, context, index2) {
     layered: true
   });
 }
-var LISTED9, stackOf, pulumiImporter;
+var LISTED10, stackOf, pulumiImporter;
 var init_pulumi = __esm({
   "../../packages/diagrams/src/importers/pulumi/index.ts"() {
     "use strict";
@@ -175846,7 +176953,7 @@ var init_pulumi = __esm({
     init_item();
     init_program();
     init_state10();
-    LISTED9 = 5;
+    LISTED10 = 5;
     stackOf = (path) => /(?:^|[\\/])Pulumi\.([^.\\/]+)\.ya?ml$/i.exec(path)?.[1] ?? null;
     pulumiImporter = { format: "pulumi", kinds: ["flow"], joins: "\n", extensions: [".yaml", ".yml", ".json"], read: readPulumi };
   }
@@ -177255,15 +178362,19 @@ var init_registry3 = __esm({
   "../../packages/diagrams/src/importers/registry.ts"() {
     "use strict";
     init_arm();
+    init_backstage();
     init_bicep();
+    init_cdk();
     init_cloudformation();
     init_compose();
     init_csv();
     init_drizzle();
     init_git_log();
+    init_helm();
     init_github_actions();
     init_json();
     init_kubernetes();
+    init_kustomize();
     init_openapi();
     init_prisma();
     init_pulumi();
@@ -177282,8 +178393,12 @@ var init_registry3 = __esm({
       arm: armImporter,
       pulumi: pulumiImporter,
       cloudformation: cloudformationImporter,
+      cdk: cdkImporter,
       compose: composeImporter,
       kubernetes: kubernetesImporter,
+      helm: helmImporter,
+      kustomize: kustomizeImporter,
+      backstage: backstageImporter,
       "github-actions": githubActionsImporter,
       csv: csvImporter,
       json: jsonImporter,
@@ -178527,7 +179642,7 @@ var init_manifest = __esm({
           { flag: "--tables", value: "<names>", default: "every table", description: "Only these tables of a schema, by name or prefix, separated by commas, such as `users,org_*`." },
           { flag: "--tags", value: "<tags>", default: "every endpoint", description: "Only the endpoints of an OpenAPI document with these tags, separated by commas." },
           { flag: "--paths", value: "<prefixes>", default: "every endpoint", description: "Only the endpoints under these paths, separated by commas, such as `/orders`." },
-          { flag: "--group-by", value: "<frame>", values: IMPORT_GROUP_BY, default: "`module`", description: "How infrastructure resources are framed." },
+          { flag: "--group-by", value: "<frame>", values: IMPORT_GROUP_BY, default: "`module`", description: "How infrastructure resources, or a Backstage catalog (`owner`), are framed." },
           { flag: "--var-file", value: "<files>", description: "Variables files to apply, separated by commas: `.tfvars`, `.bicepparam`, ARM parameters, or `Pulumi.<stack>.yaml`." },
           { flag: "--root", value: "<folder>", default: "each root is drawn, as a part of its own", description: "The root module, deployment, or program to draw when the folder holds several, by its folder or the end of it." }
         ],
@@ -178838,6 +179953,8 @@ var init_import_command = __esm({
 var init_detect = __esm({
   "../../packages/diagrams/src/importers/detect.ts"() {
     "use strict";
+    init_chart();
+    init_folder();
   }
 });
 
@@ -179334,7 +180451,7 @@ var init_cli = __esm({
 });
 
 // package.json
-var package_default = { version: "0.1.0-beta.7" };
+var package_default = { version: "0.1.0-beta.8" };
 
 // npm/package-config.json
 var package_config_default = {
