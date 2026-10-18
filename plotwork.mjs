@@ -1025,7 +1025,7 @@ var init_mcp_release = __esm({
     "use strict";
     MCP_RELEASE = {
       packageName: "@buun_group/plotwork-mcp",
-      version: "0.1.0-beta.8"
+      version: "0.1.0-beta.9"
     };
   }
 });
@@ -4193,7 +4193,7 @@ function bareGlyphColor(theme, tone) {
 function getTheme(name) {
   return name === "dark" ? DARK_THEME : LIGHT_THEME;
 }
-var THEME_NAMES, PICTURE_SCHEMES, GRAPHIC_CONTRAST, SCHEME_INPUTS, LIGHT_THEME, DARK_THEME, BARE_GLYPH_CONTRAST;
+var THEME_NAMES, PICTURE_SCHEMES, PICTURE_FILE_SCHEMES, GRAPHIC_CONTRAST, SCHEME_INPUTS, LIGHT_THEME, DARK_THEME, BARE_GLYPH_CONTRAST;
 var init_themes = __esm({
   "../../packages/diagrams/src/theme/themes.ts"() {
     "use strict";
@@ -4202,6 +4202,7 @@ var init_themes = __esm({
     init_palette();
     THEME_NAMES = ["light", "dark"];
     PICTURE_SCHEMES = [...THEME_NAMES, "auto"];
+    PICTURE_FILE_SCHEMES = ["light-and-dark", "auto"];
     GRAPHIC_CONTRAST = 3;
     SCHEME_INPUTS = {
       light: { name: "light", surfaces: LIGHT_SURFACES, tones: LIGHT_TONES, tint: 0.12, pushToward: "#000000" },
@@ -159530,6 +159531,7 @@ var init_sources2 = __esm({
       options: SourceOptionsSchema.optional(),
       overrides: repositoryPath.refine((path) => path.endsWith(".json"), { message: "An overrides file is a .json file" }).optional().describe("The overrides file, applied after every import. Left out: the out path with .overrides.json in place of .diagram, or <file>.<fence id>.overrides.json beside a Markdown file."),
       pictures: external_exports.boolean().optional().describe("For a .diagram out: also write its light and dark SVG beside it. On when left out."),
+      schemes: external_exports.enum(PICTURE_FILE_SCHEMES).optional().describe("The pictures this source writes: light-and-dark writes <name>.svg and <name>.dark.svg; auto writes one <name>.svg that follows the reader's light or dark setting. defaults.schemes, then light-and-dark, when left out."),
       publish: SourcePublishSchema.optional()
     }).meta({ id: "Source", description: "One diagram generated from files of the repository and kept in step with them." });
   }
@@ -159555,6 +159557,7 @@ var init_schema4 = __esm({
       numbered: external_exports.enum(SWITCH_VALUES).optional().describe("numbered= on every header that takes it: on numbers every line in the order written."),
       theme: external_exports.enum(PICTURE_SCHEMES).optional().describe("The color scheme the command line and the GitHub Action draw a single picture in."),
       embedSource: external_exports.boolean().optional().describe("Write the source into every SVG the command line, the GitHub Action, and the drawing tools save."),
+      schemes: external_exports.enum(PICTURE_FILE_SCHEMES).optional().describe("The pictures generate and sync write: light-and-dark (the default) writes <name>.svg and <name>.dark.svg; auto writes one <name>.svg that holds both and follows the reader's light or dark setting, so GitHub shows it right in either theme."),
       kinds: external_exports.partialRecord(external_exports.enum(DIAGRAM_KINDS), external_exports.record(optionKey, optionValue)).optional().describe('Header options for one kind, such as { "mindmap": { "layout": "radial" } }. A value the kind refuses is left out with warning S200.')
     }).meta({ id: "SettingsDefaults", description: "Header options a diagram gets when its header does not set them." });
     SettingsBrandSchema = external_exports.strictObject({
@@ -159698,12 +159701,11 @@ function attr(text4) {
 function buildBlock(content) {
   const isListLine = (line3) => line3.startsWith("- ") || line3.startsWith("  ");
   const outline2 = content.outline.flatMap((line3) => isListLine(line3) ? [line3] : ["", `**${line3}**`, ""]);
+  const image = `<img alt="${attr(content.alt)}" src="${attr(content.lightSrc)}">`;
+  const picture2 = content.darkSrc === null ? [image] : ["<picture>", `  <source media="(prefers-color-scheme: dark)" srcset="${attr(content.darkSrc)}">`, `  ${image}`, "</picture>"];
   return [
     `${BLOCK_START} id="${content.id}" hash="${content.hash}" -->`,
-    "<picture>",
-    `  <source media="(prefers-color-scheme: dark)" srcset="${attr(content.darkSrc)}">`,
-    `  <img alt="${attr(content.alt)}" src="${attr(content.lightSrc)}">`,
-    "</picture>",
+    ...picture2,
     "",
     "<details>",
     "<summary>Text description</summary>",
@@ -159726,191 +159728,20 @@ var init_diagram_block = __esm({
   }
 });
 
-// ../../packages/diagrams/src/markdown/locate-block.ts
-function locateBlock(lines, fence) {
-  const isWrapped = (lines[fence.openLine - 2] ?? "").trim() === SOURCE_SUMMARY;
-  let anchor2 = fence.closeLine;
-  if (isWrapped) {
-    const close2 = nextNonBlank(lines, fence.closeLine + 1);
-    if ((lines[close2] ?? "").trim() === DETAILS_CLOSE) anchor2 = close2;
-  }
-  const start2 = nextNonBlank(lines, anchor2 + 1);
-  if (!(lines[start2] ?? "").startsWith(BLOCK_START)) return { isWrapped, anchor: anchor2, block: null };
-  const end = lines.findIndex((line3, index2) => index2 > start2 && line3.trim() === BLOCK_END);
-  return { isWrapped, anchor: anchor2, block: end === -1 ? null : { start: start2, end } };
+// ../../packages/diagrams/src/markdown/dark-pictures.ts
+function isDrawnDarkPicture(svg) {
+  const root = /^<svg\b[^>]*>/.exec(svg.trimStart())?.[0];
+  return root !== void 0 && root.includes(' data-theme="dark"');
 }
-var SOURCE_SUMMARY, DETAILS_OPEN, DETAILS_CLOSE, nextNonBlank;
-var init_locate_block = __esm({
-  "../../packages/diagrams/src/markdown/locate-block.ts"() {
+function retiredDarkPictures(written3) {
+  const paths = new Set(written3);
+  return written3.filter((path) => path.endsWith(".svg") && !path.endsWith(".dark.svg")).map(darkPictureOf).filter((path) => !paths.has(path));
+}
+var darkPictureOf;
+var init_dark_pictures = __esm({
+  "../../packages/diagrams/src/markdown/dark-pictures.ts"() {
     "use strict";
-    init_diagram_block();
-    SOURCE_SUMMARY = "<summary>Diagram source</summary>";
-    DETAILS_OPEN = "<details>";
-    DETAILS_CLOSE = "</details>";
-    nextNonBlank = (lines, from) => {
-      let index2 = from;
-      while (index2 < lines.length && (lines[index2] ?? "").trim() === "") index2 += 1;
-      return index2;
-    };
-  }
-});
-
-// ../../packages/diagrams/src/markdown/sync-markdown.ts
-import { createHash } from "node:crypto";
-function hashBlock(source, pair2) {
-  return createHash("sha256").update(`${BLOCK_FORMAT_VERSION}
-${source}
-${pair2.light}
-${pair2.dark}`).digest("hex").slice(0, 12);
-}
-function slugify2(text4) {
-  const slug = text4.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-  return slug === "" ? "diagram" : slug;
-}
-function readTitle2(source) {
-  const header = source.split("\n").find((line3) => line3.trim() !== "" && !line3.trim().startsWith("#"));
-  if (header === void 0) return null;
-  return /^\s*\w+\s+"((?:[^"\\]|\\.)*)"/.exec(header)?.[1] ?? null;
-}
-function assignIds2(titles, stem, prefix) {
-  const used = /* @__PURE__ */ new Map();
-  return titles.map((title, index2) => {
-    const base = slugify2(`${prefix}${title ?? `${stem}-${index2 + 1}`}`);
-    const count3 = (used.get(base) ?? 0) + 1;
-    used.set(base, count3);
-    return count3 === 1 ? base : `${base}-${count3}`;
-  });
-}
-async function syncMarkdown(markdown, stem, hooks) {
-  const fences = extractFences(markdown);
-  const lines = markdown.split("\n");
-  const ids = assignIds2(
-    fences.map((fence) => readTitle2(fence.source)),
-    stem,
-    hooks.idPrefix === void 0 ? "" : `${hooks.idPrefix}-`
-  );
-  const assets = [];
-  const failures = [];
-  const edits = [];
-  const stale = [];
-  let unchangedCount = 0;
-  for (const [index2, fence] of fences.entries()) {
-    const id = ids[index2] ?? `diagram-${index2 + 1}`;
-    const place2 = locateBlock(lines, fence);
-    const needsWrap = !place2.isWrapped && fence.indent === 0;
-    const outcome = await hooks.render(fence.source, id);
-    if ("diagnostics" in outcome) {
-      failures.push({ fenceLine: fence.openLine + 1, diagnostics: outcome.diagnostics });
-      continue;
-    }
-    const { pair: pair2 } = outcome;
-    const hash2 = hashBlock(fence.source, pair2);
-    const isFresh = place2.block !== null && readBlockHash(lines[place2.block.start] ?? "") === hash2;
-    if (isFresh && !needsWrap) {
-      unchangedCount += 1;
-      continue;
-    }
-    stale.push({ fenceLine: fence.openLine + 1, reason: place2.block === null ? "missing" : isFresh ? "unwrapped" : "changed" });
-    const lightSrc = `${hooks.assetDir}/${id}.svg`;
-    const darkSrc = `${hooks.assetDir}/${id}.dark.svg`;
-    assets.push({ path: lightSrc, content: pair2.light }, { path: darkSrc, content: pair2.dark });
-    const block = buildBlock({ id, hash: hash2, alt: pair2.summary, outline: pair2.outline, lightSrc, darkSrc }).split("\n");
-    if (needsWrap) {
-      const source = lines.slice(fence.openLine, fence.closeLine + 1);
-      edits.push({
-        start: fence.openLine,
-        end: place2.block?.end ?? fence.closeLine,
-        replacement: [DETAILS_OPEN, SOURCE_SUMMARY, "", ...source, "", DETAILS_CLOSE, "", ...block]
-      });
-    } else if (place2.block !== null) {
-      edits.push({ start: place2.block.start, end: place2.block.end, replacement: block });
-    } else {
-      edits.push({ start: place2.anchor + 1, end: place2.anchor, replacement: ["", ...block] });
-    }
-  }
-  const output2 = [...lines];
-  for (const edit of [...edits].sort((a, b) => b.start - a.start)) {
-    output2.splice(edit.start, edit.end - edit.start + 1, ...edit.replacement);
-  }
-  return { markdown: output2.join("\n"), assets, failures, unchangedCount, stale };
-}
-var BLOCK_FORMAT_VERSION;
-var init_sync_markdown = __esm({
-  "../../packages/diagrams/src/markdown/sync-markdown.ts"() {
-    "use strict";
-    init_diagram_block();
-    init_extract_fences();
-    init_locate_block();
-    BLOCK_FORMAT_VERSION = "3";
-  }
-});
-
-// ../../packages/diagrams/src/markdown/index.ts
-var init_markdown = __esm({
-  "../../packages/diagrams/src/markdown/index.ts"() {
-    "use strict";
-    init_diagram_block();
-    init_extract_fences();
-    init_sync_markdown();
-  }
-});
-
-// ../../packages/diagrams/src/outline/index.ts
-function summarizeDiagram(diagram) {
-  return moduleOf(diagram).summarize(diagram);
-}
-function outlineDiagram(diagram) {
-  return moduleOf(diagram).outline(diagram);
-}
-var init_outline18 = __esm({
-  "../../packages/diagrams/src/outline/index.ts"() {
-    "use strict";
-    init_registry2();
-  }
-});
-
-// ../../packages/diagrams/src/parse/icon-alias-notes.ts
-function iconValues(tokens) {
-  const values = [];
-  for (let index2 = 0; index2 + 2 < tokens.length; index2 += 1) {
-    const key = tokens[index2];
-    if (key?.kind !== "word" || key.text !== "icon" && key.text !== "stack" || tokens[index2 + 1]?.kind !== "equals") continue;
-    let at3 = index2 + 2;
-    for (let value = tokens[at3]; isValue(value); value = tokens[at3]) {
-      values.push(value);
-      if (key.text !== "stack" || tokens[at3 + 1]?.kind !== "comma") break;
-      at3 += 2;
-    }
-  }
-  return values;
-}
-function iconAliasNotes(source) {
-  const notes = [];
-  for (const line3 of lex(source).lines) {
-    for (const value of iconValues(line3.tokens)) {
-      const target2 = iconAliasTarget(value.text);
-      if (target2 === null) continue;
-      notes.push({
-        code: ICON_ALIAS_NOTE,
-        severity: "info",
-        message: `"${value.text}" is not a bundled icon name, so ${target2} was drawn`,
-        line: value.line,
-        column: value.column,
-        length: value.length,
-        hint: `Write ${target2} to say so in the source.`
-      });
-    }
-  }
-  return notes;
-}
-var ICON_ALIAS_NOTE, isValue;
-var init_icon_alias_notes = __esm({
-  "../../packages/diagrams/src/parse/icon-alias-notes.ts"() {
-    "use strict";
-    init_icons();
-    init_lexer();
-    ICON_ALIAS_NOTE = "I122";
-    isValue = (token) => token?.kind === "word" || token?.kind === "string";
+    darkPictureOf = (path) => path.replace(/\.svg$/, ".dark.svg");
   }
 });
 
@@ -160029,6 +159860,197 @@ var init_merge_schemes = __esm({
     CSS_PROPERTIES = /* @__PURE__ */ new Set(["fill", "stroke", "fill-opacity", "stroke-opacity", "stop-color", "stop-opacity", "flood-color", "flood-opacity", "opacity", "color"]);
     TAG = /<([a-zA-Z][\w:-]*)((?:\s+[\w:-]+="[^"]*")*)\s*(\/?)>/g;
     ATTRIBUTE = /([\w:-]+)="([^"]*)"/g;
+  }
+});
+
+// ../../packages/diagrams/src/markdown/locate-block.ts
+function locateBlock(lines, fence) {
+  const isWrapped = (lines[fence.openLine - 2] ?? "").trim() === SOURCE_SUMMARY;
+  let anchor2 = fence.closeLine;
+  if (isWrapped) {
+    const close2 = nextNonBlank(lines, fence.closeLine + 1);
+    if ((lines[close2] ?? "").trim() === DETAILS_CLOSE) anchor2 = close2;
+  }
+  const start2 = nextNonBlank(lines, anchor2 + 1);
+  if (!(lines[start2] ?? "").startsWith(BLOCK_START)) return { isWrapped, anchor: anchor2, block: null };
+  const end = lines.findIndex((line3, index2) => index2 > start2 && line3.trim() === BLOCK_END);
+  return { isWrapped, anchor: anchor2, block: end === -1 ? null : { start: start2, end } };
+}
+var SOURCE_SUMMARY, DETAILS_OPEN, DETAILS_CLOSE, nextNonBlank;
+var init_locate_block = __esm({
+  "../../packages/diagrams/src/markdown/locate-block.ts"() {
+    "use strict";
+    init_diagram_block();
+    SOURCE_SUMMARY = "<summary>Diagram source</summary>";
+    DETAILS_OPEN = "<details>";
+    DETAILS_CLOSE = "</details>";
+    nextNonBlank = (lines, from) => {
+      let index2 = from;
+      while (index2 < lines.length && (lines[index2] ?? "").trim() === "") index2 += 1;
+      return index2;
+    };
+  }
+});
+
+// ../../packages/diagrams/src/markdown/sync-markdown.ts
+import { createHash } from "node:crypto";
+function hashBlock(source, pair2, schemes = "light-and-dark") {
+  return createHash("sha256").update(`${BLOCK_FORMAT_VERSION}
+${source}
+${pair2.light}
+${pair2.dark}${schemes === "auto" ? "\nauto" : ""}`).digest("hex").slice(0, 12);
+}
+function slugify2(text4) {
+  const slug = text4.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return slug === "" ? "diagram" : slug;
+}
+function readTitle2(source) {
+  const header = source.split("\n").find((line3) => line3.trim() !== "" && !line3.trim().startsWith("#"));
+  if (header === void 0) return null;
+  return /^\s*\w+\s+"((?:[^"\\]|\\.)*)"/.exec(header)?.[1] ?? null;
+}
+function assignIds2(titles, stem, prefix) {
+  const used = /* @__PURE__ */ new Map();
+  return titles.map((title, index2) => {
+    const base = slugify2(`${prefix}${title ?? `${stem}-${index2 + 1}`}`);
+    const count3 = (used.get(base) ?? 0) + 1;
+    used.set(base, count3);
+    return count3 === 1 ? base : `${base}-${count3}`;
+  });
+}
+async function syncMarkdown(markdown, stem, hooks) {
+  const fences = extractFences(markdown);
+  const lines = markdown.split("\n");
+  const ids = assignIds2(
+    fences.map((fence) => readTitle2(fence.source)),
+    stem,
+    hooks.idPrefix === void 0 ? "" : `${hooks.idPrefix}-`
+  );
+  const assets = [];
+  const failures = [];
+  const edits = [];
+  const stale = [];
+  let unchangedCount = 0;
+  for (const [index2, fence] of fences.entries()) {
+    const id = ids[index2] ?? `diagram-${index2 + 1}`;
+    const place2 = locateBlock(lines, fence);
+    const needsWrap = !place2.isWrapped && fence.indent === 0;
+    const outcome = await hooks.render(fence.source, id);
+    if ("diagnostics" in outcome) {
+      failures.push({ fenceLine: fence.openLine + 1, diagnostics: outcome.diagnostics });
+      continue;
+    }
+    const { pair: pair2 } = outcome;
+    const merged = hooks.schemes === "auto" ? mergeSchemes(pair2.light, pair2.dark, id) : null;
+    const hash2 = hashBlock(fence.source, pair2, merged === null ? "light-and-dark" : "auto");
+    const isFresh = place2.block !== null && readBlockHash(lines[place2.block.start] ?? "") === hash2;
+    if (isFresh && !needsWrap) {
+      unchangedCount += 1;
+      continue;
+    }
+    stale.push({ fenceLine: fence.openLine + 1, reason: place2.block === null ? "missing" : isFresh ? "unwrapped" : "changed" });
+    const lightSrc = `${hooks.assetDir}/${id}.svg`;
+    const darkSrc = merged === null ? `${hooks.assetDir}/${id}.dark.svg` : null;
+    assets.push({ path: lightSrc, content: merged ?? pair2.light }, ...darkSrc === null ? [] : [{ path: darkSrc, content: pair2.dark }]);
+    const block = buildBlock({ id, hash: hash2, alt: pair2.summary, outline: pair2.outline, lightSrc, darkSrc }).split("\n");
+    if (needsWrap) {
+      const source = lines.slice(fence.openLine, fence.closeLine + 1);
+      edits.push({
+        start: fence.openLine,
+        end: place2.block?.end ?? fence.closeLine,
+        replacement: [DETAILS_OPEN, SOURCE_SUMMARY, "", ...source, "", DETAILS_CLOSE, "", ...block]
+      });
+    } else if (place2.block !== null) {
+      edits.push({ start: place2.block.start, end: place2.block.end, replacement: block });
+    } else {
+      edits.push({ start: place2.anchor + 1, end: place2.anchor, replacement: ["", ...block] });
+    }
+  }
+  const output2 = [...lines];
+  for (const edit of [...edits].sort((a, b) => b.start - a.start)) {
+    output2.splice(edit.start, edit.end - edit.start + 1, ...edit.replacement);
+  }
+  return { markdown: output2.join("\n"), assets, failures, unchangedCount, stale };
+}
+var BLOCK_FORMAT_VERSION;
+var init_sync_markdown = __esm({
+  "../../packages/diagrams/src/markdown/sync-markdown.ts"() {
+    "use strict";
+    init_merge_schemes();
+    init_diagram_block();
+    init_extract_fences();
+    init_locate_block();
+    BLOCK_FORMAT_VERSION = "3";
+  }
+});
+
+// ../../packages/diagrams/src/markdown/index.ts
+var init_markdown = __esm({
+  "../../packages/diagrams/src/markdown/index.ts"() {
+    "use strict";
+    init_diagram_block();
+    init_extract_fences();
+    init_dark_pictures();
+    init_sync_markdown();
+  }
+});
+
+// ../../packages/diagrams/src/outline/index.ts
+function summarizeDiagram(diagram) {
+  return moduleOf(diagram).summarize(diagram);
+}
+function outlineDiagram(diagram) {
+  return moduleOf(diagram).outline(diagram);
+}
+var init_outline18 = __esm({
+  "../../packages/diagrams/src/outline/index.ts"() {
+    "use strict";
+    init_registry2();
+  }
+});
+
+// ../../packages/diagrams/src/parse/icon-alias-notes.ts
+function iconValues(tokens) {
+  const values = [];
+  for (let index2 = 0; index2 + 2 < tokens.length; index2 += 1) {
+    const key = tokens[index2];
+    if (key?.kind !== "word" || key.text !== "icon" && key.text !== "stack" || tokens[index2 + 1]?.kind !== "equals") continue;
+    let at3 = index2 + 2;
+    for (let value = tokens[at3]; isValue(value); value = tokens[at3]) {
+      values.push(value);
+      if (key.text !== "stack" || tokens[at3 + 1]?.kind !== "comma") break;
+      at3 += 2;
+    }
+  }
+  return values;
+}
+function iconAliasNotes(source) {
+  const notes = [];
+  for (const line3 of lex(source).lines) {
+    for (const value of iconValues(line3.tokens)) {
+      const target2 = iconAliasTarget(value.text);
+      if (target2 === null) continue;
+      notes.push({
+        code: ICON_ALIAS_NOTE,
+        severity: "info",
+        message: `"${value.text}" is not a bundled icon name, so ${target2} was drawn`,
+        line: value.line,
+        column: value.column,
+        length: value.length,
+        hint: `Write ${target2} to say so in the source.`
+      });
+    }
+  }
+  return notes;
+}
+var ICON_ALIAS_NOTE, isValue;
+var init_icon_alias_notes = __esm({
+  "../../packages/diagrams/src/parse/icon-alias-notes.ts"() {
+    "use strict";
+    init_icons();
+    init_lexer();
+    ICON_ALIAS_NOTE = "I122";
+    isValue = (token) => token?.kind === "word" || token?.kind === "string";
   }
 });
 
@@ -162205,6 +162227,7 @@ async function runSync(document2, settings, ops, cache, limit) {
   const result = await syncMarkdown(document2, settings.stem, {
     render,
     assetDir: settings.assetDir,
+    ...settings.defaults?.schemes === void 0 ? {} : { schemes: settings.defaults.schemes },
     ...settings.prefix === void 0 ? {} : { idPrefix: settings.prefix }
   });
   return { result, calls };
@@ -162408,6 +162431,7 @@ var init_services = __esm({
     init_render_pair();
     init_source_metadata();
     init_picture_facts();
+    init_dark_pictures();
     init_render_diagram_svg();
     init_search_icon_names();
     init_sync_document();
@@ -162519,7 +162543,7 @@ var init_view_link_input = __esm({
 });
 
 // ../../packages/diagrams/src/cli/commands.ts
-import { mkdirSync, readFileSync as readFileSync2, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync as readFileSync2, rmSync, writeFileSync } from "node:fs";
 import { basename, dirname, join as join2 } from "node:path";
 function unitsOf(path, defaults) {
   return readSourceUnits(path).map((unit3) => {
@@ -162632,7 +162656,8 @@ async function syncFile(path, check2, assetDir = DEFAULT_ASSET_DIR, idPrefix, ho
   const result = await syncMarkdown(markdown, basename(path).replace(/\.[^.]+$/, ""), {
     render: (source, id) => renderPair(applyDefaults(source, defaults).source, id),
     assetDir,
-    ...idPrefix === void 0 ? {} : { idPrefix }
+    ...idPrefix === void 0 ? {} : { idPrefix },
+    ...defaults?.schemes === void 0 ? {} : { schemes: defaults.schemes }
   });
   const stale = result.assets.length > 0 || result.markdown !== markdown;
   if (check2) {
@@ -162646,8 +162671,12 @@ async function syncFile(path, check2, assetDir = DEFAULT_ASSET_DIR, idPrefix, ho
     mkdirSync(dirname(target2), { recursive: true });
     writeFileSync(target2, asset.content);
   }
+  for (const retired of retiredDarkPictures(result.assets.map((asset) => asset.path))) {
+    const target2 = join2(dirname(path), retired);
+    if (existsSync(target2) && isDrawnDarkPicture(readFileSync2(target2, "utf8"))) rmSync(target2);
+  }
   if (result.markdown !== markdown) writeFileSync(path, result.markdown);
-  console.log(`synced ${path}: ${result.assets.length / 2} updated, ${result.unchangedCount} unchanged`);
+  console.log(`synced ${path}: ${result.stale.length} updated, ${result.unchangedCount} unchanged`);
   return result.failures.length > 0 ? EXIT.problems : EXIT.ok;
 }
 function searchIconsCommand(query) {
@@ -162684,22 +162713,22 @@ var init_commands = __esm({
 });
 
 // ../../packages/diagrams/src/cli/settings-file.ts
-import { existsSync, readFileSync as readFileSync3, statSync } from "node:fs";
+import { existsSync as existsSync2, readFileSync as readFileSync3, statSync } from "node:fs";
 import { dirname as dirname2, join as join3, relative as relative2, resolve as resolve2 } from "node:path";
 function discoverSettingsFile(start2) {
   let folder = resolve2(start2);
   for (; ; ) {
     for (const name of SETTINGS_FILE.names) {
       const candidate2 = join3(folder, name);
-      if (existsSync(candidate2) && statSync(candidate2).isFile()) return candidate2;
+      if (existsSync2(candidate2) && statSync(candidate2).isFile()) return candidate2;
     }
     const parent = dirname2(folder);
-    if (existsSync(join3(folder, ".git")) || parent === folder) return null;
+    if (existsSync2(join3(folder, ".git")) || parent === folder) return null;
     folder = parent;
   }
 }
 function readSettingsFile(path) {
-  if (!existsSync(path)) return { status: "invalid", path, message: `no settings file at ${path}` };
+  if (!existsSync2(path)) return { status: "invalid", path, message: `no settings file at ${path}` };
   const text4 = readFileSync3(path, "utf8");
   const read = readSettings2(text4);
   if (read.ok) return { status: "found", settings: read.value, path };
@@ -162709,7 +162738,7 @@ function readSettingsFile(path) {
 }
 function settingsFor(near3, lookup = {}, cache = /* @__PURE__ */ new Map()) {
   const named2 = lookup.explicit ?? (lookup.env ?? process.env)[SETTINGS_FILE.env];
-  const path = named2 !== void 0 && named2 !== "" ? resolve2(named2) : discoverSettingsFile(existsSync(near3) && statSync(near3).isDirectory() ? near3 : dirname2(near3));
+  const path = named2 !== void 0 && named2 !== "" ? resolve2(named2) : discoverSettingsFile(existsSync2(near3) && statSync(near3).isDirectory() ? near3 : dirname2(near3));
   if (path === null) return { status: "none" };
   const known3 = cache.get(path);
   if (known3 !== void 0) return known3;
@@ -162727,7 +162756,7 @@ var init_settings_file = __esm({
 });
 
 // ../../packages/diagrams/src/cli/targets.ts
-import { existsSync as existsSync2, globSync, statSync as statSync2 } from "node:fs";
+import { existsSync as existsSync3, globSync, statSync as statSync2 } from "node:fs";
 import { join as join4, relative as relative3, resolve as resolve3 } from "node:path";
 function hasGlob(word2) {
   return /[*?[\]{}]/.test(word2);
@@ -162738,7 +162767,7 @@ function isSkipped(path) {
 function namedBy(word2, cwd, extensions) {
   const exclude = (name) => SKIPPED.has(String(name));
   if (hasGlob(word2)) return globSync(word2, { cwd, exclude }).filter((path) => !isSkipped(path) && statSync2(resolve3(cwd, path)).isFile());
-  if (!existsSync2(resolve3(cwd, word2))) return [];
+  if (!existsSync3(resolve3(cwd, word2))) return [];
   if (!statSync2(resolve3(cwd, word2)).isDirectory()) return [word2];
   return extensions.flatMap((extension) => globSync(join4(word2, "**", `*.${extension}`), { cwd, exclude })).filter((path) => !isSkipped(path));
 }
@@ -179820,7 +179849,7 @@ var init_import_source = __esm({
 });
 
 // ../../packages/diagrams/src/generate/files.ts
-import { existsSync as existsSync3, globSync as globSync2, readFileSync as readFileSync4, readdirSync, statSync as statSync3 } from "node:fs";
+import { existsSync as existsSync4, globSync as globSync2, readFileSync as readFileSync4, readdirSync, statSync as statSync3 } from "node:fs";
 import { join as join6, normalize, relative as relative5, resolve as resolve6, sep as sep2 } from "node:path";
 function inside(root, path) {
   const rel = toPosix(relative5(root, resolve6(root, path)));
@@ -179842,7 +179871,7 @@ function named(root, pattern3) {
     return globSync2(pattern3, { cwd: root, exclude }).map((path) => toPosix(normalize(path))).filter((path) => !isSkipped2(path) && statSync3(resolve6(root, path), { throwIfNoEntry: false })?.isFile() === true);
   }
   const at3 = inside(root, pattern3);
-  if (at3 === null || !existsSync3(resolve6(root, at3))) return [];
+  if (at3 === null || !existsSync4(resolve6(root, at3))) return [];
   if (statSync3(resolve6(root, at3)).isDirectory()) {
     const out = [];
     walk(root, at3, 0, out);
@@ -179868,7 +179897,7 @@ function readSourceFiles(root, paths) {
 }
 function readIfThere(root, path) {
   const absolute = join6(root, path);
-  return existsSync3(absolute) && statSync3(absolute).isFile() ? readFileSync4(absolute, "utf8") : null;
+  return existsSync4(absolute) && statSync3(absolute).isFile() ? readFileSync4(absolute, "utf8") : null;
 }
 var SKIPPED4, MAX_DEPTH18, toPosix, hasGlob2, isSkipped2;
 var init_files = __esm({
@@ -179883,7 +179912,7 @@ var init_files = __esm({
 });
 
 // ../../packages/diagrams/src/generate/plan.ts
-import { mkdirSync as mkdirSync3, readdirSync as readdirSync2, rmSync, writeFileSync as writeFileSync3 } from "node:fs";
+import { mkdirSync as mkdirSync3, readdirSync as readdirSync2, rmSync as rmSync2, writeFileSync as writeFileSync3 } from "node:fs";
 import { basename as basename2, dirname as dirname4, posix, resolve as resolve7 } from "node:path";
 function partOut(out, index2) {
   return index2 === 0 ? out : out.replace(/\.diagram$/, `.${index2 + 1}.diagram`);
@@ -179967,6 +179996,28 @@ function leftoverParts(root, entry2, made) {
   }
   return files;
 }
+function retiredFiles(root, files) {
+  return retiredDarkPictures(files.filter((file2) => file2.content !== null).map((file2) => file2.path)).flatMap((path) => {
+    const before = readIfThere(root, path);
+    return before !== null && isDrawnDarkPicture(before) ? [{ path, content: null, before }] : [];
+  });
+}
+async function pictureFiles(root, out, source, schemes, embedSource) {
+  const [lightPath, darkPath] = picturePaths(out);
+  if (schemes === "auto") {
+    const drawn = await renderDiagramSource({ source, theme: "auto", embedSource });
+    if (!drawn.ok) return { files: [], diagnostics: placed(out, drawn.error) };
+    if (/^<svg\b[^>]* data-theme="auto"/.test(drawn.value.svg)) return { files: [{ path: lightPath, content: drawn.value.svg, before: readIfThere(root, lightPath) }], diagnostics: [] };
+  }
+  const files = [];
+  const diagnostics = [];
+  for (const [theme, path] of [["light", lightPath], ["dark", darkPath]]) {
+    const drawn = await renderDiagramSource({ source, theme, embedSource });
+    if (drawn.ok) files.push({ path, content: drawn.value.svg, before: readIfThere(root, path) });
+    else diagnostics.push(...placed(out, drawn.error));
+  }
+  return { files, diagnostics };
+}
 async function diagramFiles(root, entry2, settings, texts) {
   const files = [];
   const diagnostics = [];
@@ -179977,14 +180028,11 @@ async function diagramFiles(root, entry2, settings, texts) {
     const errors = drawErrors(text4, settings, out);
     diagnostics.push(...errors);
     if (errors.length > 0 || entry2.pictures === false) continue;
-    const source = applyDefaults(text4, settings.defaults).source;
-    for (const [theme, path] of [["light", picturePaths(out)[0]], ["dark", picturePaths(out)[1]]]) {
-      const drawn = await renderDiagramSource({ source, theme, embedSource });
-      if (drawn.ok) files.push({ path, content: drawn.value.svg, before: readIfThere(root, path) });
-      else diagnostics.push(...placed(out, drawn.error));
-    }
+    const pictures = await pictureFiles(root, out, applyDefaults(text4, settings.defaults).source, schemesOf2(entry2, settings), embedSource);
+    files.push(...pictures.files);
+    diagnostics.push(...pictures.diagnostics);
   }
-  files.push(...leftoverParts(root, entry2, texts.length));
+  files.push(...retiredFiles(root, files), ...leftoverParts(root, entry2, texts.length));
   return { files, diagnostics };
 }
 async function fenceFiles(root, entry2, settings, text4) {
@@ -180002,10 +180050,11 @@ async function fenceFiles(root, entry2, settings, text4) {
   const errors = drawErrors(text4, settings, target2.file, fence.openLine + 1);
   if (errors.length > 0) return { files: [], diagnostics: errors, before: fence.source };
   const replaced = replaceFenceBody(markdown, fence, text4);
-  const synced = await syncDocument({ markdown: replaced, documentPath: target2.file, mode: "sync", convertMermaid: false, files: "inline", settings }, DEFAULT_SYNC_OPS, UNCAPPED_SYNC_LIMITS);
+  const own2 = { ...settings, defaults: { ...settings.defaults, schemes: schemesOf2(entry2, settings) } };
+  const synced = await syncDocument({ markdown: replaced, documentPath: target2.file, mode: "sync", convertMermaid: false, files: "inline", settings: own2 }, DEFAULT_SYNC_OPS, UNCAPPED_SYNC_LIMITS);
   const diagnostics = synced.report.filter((entry3) => entry3.status === "failed").flatMap((entry3) => entry3.diagnostics.map((diagnostic) => ({ code: diagnostic.code, severity: diagnostic.severity, message: diagnostic.message, hint: diagnostic.hint, line: diagnostic.line, column: diagnostic.column, length: diagnostic.length, file: target2.file })));
   const files = [{ path: target2.file, content: synced.markdown, before: markdown }, ...synced.files.map((file2) => ({ path: file2.path, content: file2.content ?? "", before: readIfThere(root, file2.path) }))];
-  return { files, diagnostics, before: fence.source };
+  return { files: [...files, ...retiredFiles(root, files)], diagnostics, before: fence.source };
 }
 async function planOne(request, entry2) {
   const name = sourceName(entry2);
@@ -180087,7 +180136,7 @@ function writePlan(root, plan) {
     for (const file2 of diagram.files) {
       if (file2.content === file2.before) continue;
       const absolute = resolve7(root, file2.path);
-      if (file2.content === null) rmSync(absolute, { force: true });
+      if (file2.content === null) rmSync2(absolute, { force: true });
       else {
         mkdirSync3(dirname4(absolute), { recursive: true });
         writeFileSync3(absolute, file2.content);
@@ -180097,7 +180146,7 @@ function writePlan(root, plan) {
   }
   return written3;
 }
-var placed, picturePaths, ownBanner;
+var placed, picturePaths, ownBanner, schemesOf2;
 var init_plan10 = __esm({
   "../../packages/diagrams/src/generate/plan.ts"() {
     "use strict";
@@ -180106,6 +180155,7 @@ var init_plan10 = __esm({
     init_import_source();
     init_parse_diagram();
     init_read_rules();
+    init_dark_pictures();
     init_services();
     init_apply_defaults();
     init_apply_overrides();
@@ -180123,6 +180173,7 @@ var init_plan10 = __esm({
     };
     ownBanner = (entry2) => `${bannerLines({ name: sourceName(entry2), format: entry2.format, from: patternsOf(entry2), overrides: "" })[0] ?? ""}
 `;
+    schemesOf2 = (entry2, settings) => entry2.schemes ?? settings.defaults?.schemes ?? "light-and-dark";
   }
 });
 
@@ -180281,7 +180332,7 @@ var init_changed = __esm({
 });
 
 // ../../packages/diagrams/src/generate/owners.ts
-import { existsSync as existsSync4, readFileSync as readFileSync5, statSync as statSync4 } from "node:fs";
+import { existsSync as existsSync5, readFileSync as readFileSync5, statSync as statSync4 } from "node:fs";
 import { join as join7 } from "node:path";
 function globSource(glob) {
   let out = "";
@@ -180342,7 +180393,7 @@ function ownersOfAll(codeOwners, paths) {
 function readCodeOwners(repositoryRoot) {
   for (const file2 of CODEOWNERS_PATHS) {
     const absolute = join7(repositoryRoot, file2);
-    if (!existsSync4(absolute)) continue;
+    if (!existsSync5(absolute)) continue;
     const stat = statSync4(absolute);
     if (!stat.isFile()) continue;
     if (stat.size > CODEOWNERS_MAX_BYTES) return { file: file2, rules: [] };
@@ -180517,7 +180568,7 @@ var init_generate2 = __esm({
 
 // ../../packages/diagrams/src/cli/generate-command.ts
 import { spawnSync } from "node:child_process";
-import { existsSync as existsSync5, mkdirSync as mkdirSync5, readFileSync as readFileSync6, writeFileSync as writeFileSync5 } from "node:fs";
+import { existsSync as existsSync6, mkdirSync as mkdirSync5, readFileSync as readFileSync6, writeFileSync as writeFileSync5 } from "node:fs";
 import { basename as basename3, dirname as dirname6, relative as relative7, resolve as resolve10 } from "node:path";
 function settingsRoot(path) {
   const folder = dirname6(path);
@@ -180533,7 +180584,7 @@ function textOf8(root, plan, file2, settings) {
   if (resolve10(root, file2) === settings.path) return settings.text;
   for (const diagram of plan.diagrams) for (const made of diagram.files) if (made.path === file2 && made.content !== null) return made.content;
   const absolute = resolve10(root, file2);
-  return existsSync5(absolute) ? readFileSync6(absolute, "utf8") : "";
+  return existsSync6(absolute) ? readFileSync6(absolute, "utf8") : "";
 }
 function printProblem(problem, root, cwd, format, text4) {
   const file2 = repositoryPath2(resolve10(root, problem.file), cwd);
@@ -180597,7 +180648,7 @@ function machineReport(options3, plan, at3) {
 async function generateCommand(options3, deps = {}) {
   const cwd = deps.cwd ?? process.cwd();
   const path = settingsPath(options3, deps);
-  if (path === null || !existsSync5(path)) {
+  if (path === null || !existsSync6(path)) {
     console.error(path === null ? `no settings: add ${SETTINGS_FILE.names[0]} with a sources section, or pass --config <file>` : `no settings file at ${path}`);
     return EXIT.usage;
   }
@@ -180659,7 +180710,10 @@ async function generateCommand(options3, deps = {}) {
   if (!machine) {
     for (const diagram of plan.diagrams) {
       const own2 = written3.filter((file2) => diagram.files.some((made) => made.path === file2));
-      console.log(diagram.failed ? `not written: ${diagram.out} has errors` : own2.length === 0 ? `up to date: ${diagram.out}` : `wrote ${own2.join(", ")}: ${diagram.diff?.summary ?? ""}`);
+      const removed = own2.filter((file2) => diagram.files.some((made) => made.path === file2 && made.content === null));
+      const kept2 = own2.filter((file2) => !removed.includes(file2));
+      const done = [...kept2.length === 0 ? [] : [`wrote ${kept2.join(", ")}`], ...removed.length === 0 ? [] : [`removed ${removed.join(", ")}`]].join("; ");
+      console.log(diagram.failed ? `not written: ${diagram.out} has errors` : own2.length === 0 ? `up to date: ${diagram.out}` : `${done}: ${diagram.diff?.summary ?? ""}`);
     }
   }
   return errors > 0 ? EXIT.problems : EXIT.ok;
@@ -181722,7 +181776,7 @@ var init_files2 = __esm({
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // package.json
-var package_default = { version: "0.1.0-beta.11" };
+var package_default = { version: "0.1.0-beta.12" };
 
 // npm/package-config.json
 var package_config_default = {

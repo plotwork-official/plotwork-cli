@@ -14,6 +14,7 @@ Check, draw, and sync Plotwork diagrams in your repository. A diagram is a few l
 | Where is every option? | `plotwork <command> --help` prints one command's options, defaults, examples, and exit codes. The [command reference](https://docs.plotwork.dev/cli/commands) has the same, one page for each command. |
 | How do I keep pictures in step in CI? | `npx @buun_group/plotwork sync --check --format github "docs/**/*.md"`, or the Plotwork sync action. See [Keep diagrams in sync in CI](https://docs.plotwork.dev/diagrams-in-ci). |
 | Can a diagram come from my Terraform, Bicep, Pulumi, CloudFormation, CDK, Helm, Kustomize, Backstage, Structurizr, AsyncAPI, OpenAPI, or SQL files, or my pipelines? | Yes. Name the files in the `sources` of `plotwork.config.json` and run `npx @buun_group/plotwork generate`; `generate --check` fails when the files moved and the diagram did not. See [Diagrams as code](https://docs.plotwork.dev/diagrams-as-code). |
+| Will the pictures look right in GitHub's dark mode? | Set `"defaults": { "schemes": "auto" }` in `plotwork.config.json`: `sync` and `generate` then write one SVG per diagram that follows the reader's light or dark setting, instead of a light and a dark file, and remove the old `.dark.svg` files they drew. See [Diagrams as code](https://docs.plotwork.dev/diagrams-as-code). |
 | Which licence? | MIT. Code and data from other people keep their own licences, listed in `THIRD-PARTY-NOTICES.md`. |
 
 ## Commands
