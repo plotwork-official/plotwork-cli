@@ -7,7 +7,7 @@ Check, draw, and sync Plotwork diagrams in your repository. A diagram is a few l
 | Question | Answer |
 |---|---|
 | Does it need an account or a key? | No. |
-| Does it use the network? | No. It reads and writes only the files you name. The one request it can make is for a hosted picture link you give to `read`. |
+| Does it use the network? | No. It reads and writes only the files you name, and reads its own icon art from `icons/` beside the program: an icon outside the few hundred most diagrams draw is read from there when a diagram uses it. The one request it can make is for a hosted picture link you give to `read`. |
 | Does it count anything? | No. It keeps no usage counts and sends none, whatever `PLOTWORK_USAGE` is set to. |
 | How do I run it? | `npx @buun_group/plotwork <command>`. |
 | Which Node version? | Node 22 or newer. |
