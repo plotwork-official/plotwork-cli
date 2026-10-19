@@ -312,6 +312,10 @@ var init_metrics = __esm({
       blockBranchHeader: 30,
       blockBottomPadding: 10,
       blockRadius: 10,
+      /** Room from the frame's left edge to its operator ("alt", "else"), and the least room after its condition to the right edge. */
+      blockHeaderInset: 12,
+      /** Room between the operator and its condition. */
+      blockKeywordGap: 8,
       lifelineDash: "4 5",
       lifelineOvershoot: 22
     };
@@ -1009,6 +1013,20 @@ var init_view_links = __esm({
        */
       maxCommandLength: 8e3
     };
+  }
+});
+
+// ../../packages/diagrams/src/constants/action-release.ts
+var ACTION_REPOSITORY, ACTION_RELEASE, PINNED_ACTION_LINE;
+var init_action_release = __esm({
+  "../../packages/diagrams/src/constants/action-release.ts"() {
+    "use strict";
+    ACTION_REPOSITORY = "plotwork-official/plotwork-action";
+    ACTION_RELEASE = {
+      version: "1.0.0-beta.12",
+      sha: "53d6170aee30dc3d9728de11524a68f6bc490596"
+    };
+    PINNED_ACTION_LINE = `uses: ${ACTION_REPOSITORY}@${ACTION_RELEASE.sha} # v${ACTION_RELEASE.version}`;
   }
 });
 
@@ -3916,7 +3934,7 @@ var init_label_vocabulary = __esm({
       patches: { icon: "lucide:replace", role: null }
     };
     LABEL_VERB_PHRASES = {
-      reads: ["reads", "read", "reading", "reads from", "read from", "queries", "query", "querying", "looks up", "look up", "selects", "select from", "loads from", "fetches from"],
+      reads: ["reads", "read", "reading", "reads from", "read from", "queries", "query", "querying", "looks up", "look up", "selects", "select from", "loads from", "fetches from", "read by", "queried by", "looked up by", "loaded from", "fetched from"],
       writes: [
         "writes",
         "write",
@@ -3940,10 +3958,22 @@ var init_label_vocabulary = __esm({
         "uploads",
         "upload",
         "uploads to",
-        "upload to"
+        "upload to",
+        "written to",
+        "written by",
+        "written into",
+        "inserted into",
+        "updated by",
+        "saved to",
+        "saved in",
+        "persisted to",
+        "persisted in",
+        "deleted from",
+        "uploaded to",
+        "uploaded by"
       ],
-      stores: ["stores", "store", "stores in", "store in", "caches", "caches in", "reads and writes", "reads writes", "read write", "read and write"],
-      mounts: ["mounts", "mount"],
+      stores: ["stores", "store", "stores in", "store in", "caches", "caches in", "reads and writes", "reads writes", "read write", "read and write", "stored in", "stored by", "cached in", "cached by"],
+      mounts: ["mounts", "mount", "mounted by", "mounted at", "mounted in", "mounted on"],
       sends: [
         "sends",
         "send",
@@ -3962,15 +3992,27 @@ var init_label_vocabulary = __esm({
         "pushes to",
         "notifies",
         "notify",
-        "fires"
+        "fires",
+        "sent to",
+        "sent by",
+        "published to",
+        "published by",
+        "emitted to",
+        "emitted by",
+        "produced to",
+        "enqueued to",
+        "enqueued in",
+        "enqueued on",
+        "pushed to",
+        "notified by"
       ],
-      receives: ["receives", "receive", "consumes", "consume", "consumes from", "subscribes", "subscribes to", "subscribe to", "listens to", "listens on", "polls", "dequeues"],
-      calls: ["calls", "call", "invokes", "invoke", "requests", "request", "fetches", "fetch", "queries api", "http", "https", "grpc", "rest", "graphql"],
-      routes: ["routes", "routes to", "route to", "forwards", "forwards to", "forward to", "proxies", "proxies to", "redirects to", "load balances"],
-      "depends-on": ["depends on", "depend on", "requires", "needs"],
-      provides: ["provides", "exposes", "serves"],
-      triggers: ["triggers", "trigger", "starts", "kicks off", "schedules", "wakes"],
-      deploys: ["deploys", "deploy", "deploys to", "deploy to", "releases to", "ships to", "promotes to", "rolls out", "rolls out to"],
+      receives: ["receives", "receive", "consumes", "consume", "consumes from", "subscribes", "subscribes to", "subscribe to", "listens to", "listens on", "polls", "dequeues", "received by", "received from", "consumed by", "consumed from", "subscribed to", "polled by", "polled from", "dequeued by"],
+      calls: ["calls", "call", "invokes", "invoke", "requests", "request", "fetches", "fetch", "queries api", "http", "https", "grpc", "rest", "graphql", "called by", "invoked by", "requested by", "requested from", "fetched by"],
+      routes: ["routes", "routes to", "route to", "forwards", "forwards to", "forward to", "proxies", "proxies to", "redirects to", "load balances", "routed to", "routed by", "routed through", "forwarded to", "forwarded by", "proxied to", "proxied by", "proxied through", "redirected to", "load balanced by"],
+      "depends-on": ["depends on", "depend on", "requires", "needs", "required by", "needed by", "depended on by"],
+      provides: ["provides", "exposes", "serves", "provided by", "exposed by", "served by", "served from"],
+      triggers: ["triggers", "trigger", "starts", "kicks off", "schedules", "wakes", "triggered by", "started by", "kicked off by", "scheduled by", "woken by"],
+      deploys: ["deploys", "deploy", "deploys to", "deploy to", "releases to", "ships to", "promotes to", "rolls out", "rolls out to", "deployed to", "deployed by", "deployed on", "released to", "shipped to", "promoted to", "rolled out to", "rolled out by"],
       grants: [
         "authenticates",
         "authenticate",
@@ -3998,7 +4040,16 @@ var init_label_vocabulary = __esm({
         "logs out",
         "log out",
         "signs out",
-        "sign out"
+        "sign out",
+        "authenticated by",
+        "authenticated with",
+        "authenticated against",
+        "authorized by",
+        "authorised by",
+        "granted by",
+        "granted to",
+        "assumed by",
+        "issued by"
       ],
       secret: ["reads secret", "reads secrets", "read secret", "read secrets", "read credentials", "fetches secret", "fetches secrets", "reads credentials", "gets secret", "gets secrets"],
       reports: [
@@ -4021,9 +4072,12 @@ var init_label_vocabulary = __esm({
         "exports metrics",
         "exports traces",
         "emits metrics",
-        "emits logs"
+        "emits logs",
+        "reported to",
+        "reported by",
+        "logged to"
       ],
-      pulls: ["pulls image", "pulls images", "pulls images from", "pulls image from"]
+      pulls: ["pulls image", "pulls images", "pulls images from", "pulls image from", "pulled from"]
     };
     LABEL_VERB_MAX_WORDS = 5;
     NOT_VERB_PHRASES = [
@@ -4106,6 +4160,7 @@ var init_constants = __esm({
     init_editing();
     init_diagram_links();
     init_view_links();
+    init_action_release();
     init_mcp_release();
     init_layout_limits();
     init_lint_limits();
@@ -4228,7 +4283,7 @@ function hueDistance(a, b) {
 }
 function fitToScheme(color, scheme) {
   const input2 = SCHEME_INPUTS[scheme];
-  return ensureContrast(color, input2.surfaces.surface, GRAPHIC_CONTRAST2, input2.pushToward);
+  return ensureContrast(color, input2.surfaces.surface, GRAPHIC_CONTRAST, input2.pushToward);
 }
 function checkBrand(input2) {
   const issues = [];
@@ -4293,7 +4348,7 @@ function brandTheme(scheme, brand) {
   const input2 = SCHEME_INPUTS[scheme];
   const wash = NEUTRAL_WASH[scheme];
   const surfaces = input2.surfaces;
-  const edge = ensureContrast(mix(brand.primary, surfaces.edge, wash.edge), surfaces.surface, GRAPHIC_CONTRAST2, input2.pushToward);
+  const edge = ensureContrast(mix(brand.primary, surfaces.edge, wash.edge), surfaces.surface, GRAPHIC_CONTRAST, input2.pushToward);
   return buildTheme({
     ...input2,
     tones: brandTones(scheme, brand),
@@ -4317,7 +4372,7 @@ function themeFor(scheme, brand) {
   CACHE.set(key, theme);
   return theme;
 }
-var BRAND_ROLES, HUE_STEP, TONE_OF_ROLE, STATUS_HUES, STATUS_HUE_DISTANCE, STATUS_SATURATION, DISTINCT_CONTRAST, GRAPHIC_CONTRAST2, NEUTRAL_WASH, CACHE, CACHE_LIMIT;
+var BRAND_ROLES, HUE_STEP, TONE_OF_ROLE, STATUS_HUES, STATUS_HUE_DISTANCE, STATUS_SATURATION, DISTINCT_CONTRAST, NEUTRAL_WASH, CACHE, CACHE_LIMIT;
 var init_brand = __esm({
   "../../packages/diagrams/src/theme/brand.ts"() {
     "use strict";
@@ -4333,7 +4388,6 @@ var init_brand = __esm({
     STATUS_HUE_DISTANCE = 16;
     STATUS_SATURATION = 0.45;
     DISTINCT_CONTRAST = 1.15;
-    GRAPHIC_CONTRAST2 = 3;
     NEUTRAL_WASH = {
       light: { group: 0.035, border: 0.1, edge: 0.3 },
       dark: { group: 0.05, border: 0.12, edge: 0.3 }
@@ -124709,12 +124763,15 @@ function declareId(cursor, ctx, kind, line3) {
   ctx.declared.set(token.text, { kind, line: line3 });
   return token;
 }
-function readLabel(cursor, ctx, line3, what) {
-  const token = cursor.next();
-  if (token?.kind === "string") return token.text;
-  ctx.report.push(
-    errorAt(DIAGNOSTIC_CODES.syntax, `Expected a quoted ${what}`, token ?? cursor.endPosition(line3), 'Labels are always in double quotes, for example "Auth server".')
-  );
+function readLabel(cursor, ctx, line3, what, form) {
+  const token = cursor.peek();
+  if (token?.kind === "string") {
+    cursor.next();
+    return token.text;
+  }
+  if (!(token?.kind === "word" && cursor.peek(1)?.kind === "equals") && !(token?.kind === "lbrace")) cursor.next();
+  const hint2 = `Labels are always in double quotes, for example "Auth server".${form === void 0 ? "" : ` The statement is: ${form}`}`;
+  ctx.report.push(errorAt(DIAGNOSTIC_CODES.syntax, `Expected a quoted ${what}`, token ?? cursor.endPosition(line3), hint2));
   return null;
 }
 function resolveTone(option, fallback, ctx) {
@@ -128918,30 +128975,29 @@ function paintNote(note, theme) {
   ]);
 }
 function paintHeader2(keyword, label, x, bandTop, bandHeight, theme) {
-  const chipWidth2 = measureRole(keyword, "groupLabel") + CHIP_PADDING * 2;
-  const chipY = bandTop + (bandHeight - CHIP_HEIGHT) / 2;
-  const textTop4 = chipY + (CHIP_HEIGHT - TYPE_ROLES.groupLabel.lineHeight) / 2;
-  return [
-    el("rect", { x, y: chipY, width: chipWidth2, height: CHIP_HEIGHT, rx: CHIP_RADIUS, fill: theme.surfaceGroup, stroke: theme.borderGroup, "stroke-width": 1 }),
-    paintTextBlock({ x: x + CHIP_PADDING, top: textTop4, lines: [keyword], role: "groupLabel", color: theme.ink }),
-    paintTextBlock({ x: x + chipWidth2 + HEADER_TEXT_GAP, top: textTop4, lines: [label], role: "edgeLabel", color: theme.inkSecondary })
-  ];
+  const textTop4 = bandTop + (bandHeight - TYPE_ROLES.groupLabel.lineHeight) / 2;
+  const parts = [paintTextBlock({ x, top: textTop4, lines: [keyword], role: "groupLabel", color: theme.inkSecondary })];
+  if (label !== "") {
+    const labelX = x + measureRole(keyword, "groupLabel") + SEQUENCE_METRICS.blockKeywordGap;
+    parts.push(paintTextBlock({ x: labelX, top: textTop4, lines: [label], role: "edgeLabel", color: theme.inkSecondary }));
+  }
+  return parts;
 }
 function paintBlock(block, theme) {
   const { x, y, width, height } = block.rect;
   const parts = [
     el("rect", { x, y, width, height, rx: SEQUENCE_METRICS.blockRadius, fill: "none", stroke: theme.borderGroup, "stroke-width": 1 }),
-    ...paintHeader2(block.blockType, block.label, x + HEADER_LEFT, y, SEQUENCE_METRICS.blockHeader, theme)
+    ...paintHeader2(block.blockType, block.label, x + SEQUENCE_METRICS.blockHeaderInset, y, SEQUENCE_METRICS.blockHeader, theme)
   ];
   for (const divider of block.dividers) {
     parts.push(
       el("line", { x1: x, y1: divider.y, x2: x + width, y2: divider.y, stroke: theme.borderGroup, "stroke-width": 1, "stroke-dasharray": "5 4" }),
-      ...paintHeader2(divider.keyword, divider.label, x + HEADER_LEFT, divider.y, SEQUENCE_METRICS.blockBranchHeader, theme)
+      ...paintHeader2(divider.keyword, divider.label, x + SEQUENCE_METRICS.blockHeaderInset, divider.y, SEQUENCE_METRICS.blockBranchHeader, theme)
     );
   }
   return el("g", { "data-block": block.blockType }, parts);
 }
-var NOTE_FILL_TINT, NOTE_BORDER_TINT, CHIP_HEIGHT, CHIP_PADDING, CHIP_RADIUS, HEADER_TEXT_GAP, HEADER_LEFT;
+var NOTE_FILL_TINT, NOTE_BORDER_TINT;
 var init_paint_parts = __esm({
   "../../packages/diagrams/src/render/sequence/paint-parts.ts"() {
     "use strict";
@@ -128950,11 +129006,6 @@ var init_paint_parts = __esm({
     init_svg2();
     NOTE_FILL_TINT = 0.12;
     NOTE_BORDER_TINT = 0.5;
-    CHIP_HEIGHT = 20;
-    CHIP_PADDING = 8;
-    CHIP_RADIUS = 6;
-    HEADER_TEXT_GAP = 10;
-    HEADER_LEFT = 12;
   }
 });
 
@@ -130259,7 +130310,7 @@ function parseNodeStatement(cursor, state, line3, group2) {
     state.report.push(errorAt(DIAGNOSTIC_CODES.unknownNodeType, `Unknown node type "${typeToken.text}"`, typeToken, didYouMean(typeToken.text, FLOW_NODE_TYPES)));
   }
   const labelToken2 = cursor.peek();
-  const label = readLabel(cursor, state, line3, "label");
+  const label = readLabel(cursor, state, line3, "label", 'node <id> <type> "Label" icon=<set:name>.');
   const options3 = readOptions(cursor, NODE_OPTIONS, state.report, { lists: ["stack"] });
   rejectTrailing(cursor, state, 'A node is: node id type "Label" sub="..." icon=lucide:name tone=blue stack=simple:angular,simple:typescript change=update');
   if (id === null || type === void 0 || label === null) return;
@@ -130300,7 +130351,7 @@ function parseGroupStatement(cursor, state, line3, parent) {
   cursor.next();
   const id = declareId(cursor, state, "group", line3);
   const labelToken2 = cursor.peek();
-  const label = readLabel(cursor, state, line3, "label");
+  const label = readLabel(cursor, state, line3, "label", 'group <id> "Label" type=<group type> {, then its nodes, then } on its own line.');
   const options3 = readOptions(cursor, GROUP_OPTIONS, state.report, { lists: ["stack"], moved: MOVED_GROUP_OPTIONS });
   const brace = cursor.next();
   if (brace?.kind !== "lbrace") {
@@ -130494,7 +130545,7 @@ function dispatchStatement(line3, state, scopes) {
         DIAGNOSTIC_CODES.unknownStatement,
         `Unknown statement "${first.text}"`,
         first,
-        `${didYouMean(first.text, STATEMENT_KEYWORDS2)} Edges look like: from -> to : "label"`
+        first.text === "flow" ? 'The header is one line, the first: put the title and every header option on it together, such as flow "Checkout" direction=right.' : first.text === "title" ? `There is no title statement: the title is the quoted text after the kind on the first line, such as flow "Checkout".` : line3.tokens[1]?.kind === "equals" ? `An option such as ${first.text}= goes at the end of the line of the node or edge it sets, not on a line of its own: node cdn service "CloudFront" ${first.text}=...` : FLOW_NODE_TYPES.includes(first.text) ? `A box is declared with node and its type comes after the id: node <id> ${first.text} "Label". Edges look like: from -> to : "label"` : `${didYouMean(first.text, STATEMENT_KEYWORDS2)} Edges look like: from -> to : "label"`
       )
     );
   } else {
@@ -143638,17 +143689,17 @@ var init_paint_hole = __esm({
 // ../../packages/diagrams/src/kinds/pie/look.ts
 function sliceLook(theme, tone) {
   const outline2 = theme.tones[tone].outline;
-  const segment = tone === "neutral" ? ensureContrast(mix(outline2, theme.surface, NEUTRAL_SHARE), theme.surface, GRAPHIC_CONTRAST3, theme.ink) : outline2;
+  const segment = tone === "neutral" ? ensureContrast(mix(outline2, theme.surface, NEUTRAL_SHARE), theme.surface, GRAPHIC_CONTRAST2, theme.ink) : outline2;
   return { segment, leader: mix(segment, theme.surface, LEADER_SHARE), icon: bareGlyphColor(theme, tone) };
 }
-var LEADER_SHARE, NEUTRAL_SHARE, GRAPHIC_CONTRAST3;
+var LEADER_SHARE, NEUTRAL_SHARE, GRAPHIC_CONTRAST2;
 var init_look4 = __esm({
   "../../packages/diagrams/src/kinds/pie/look.ts"() {
     "use strict";
     init_theme();
     LEADER_SHARE = 0.92;
     NEUTRAL_SHARE = 0.62;
-    GRAPHIC_CONTRAST3 = 3;
+    GRAPHIC_CONTRAST2 = 3;
   }
 });
 
@@ -147949,8 +148000,26 @@ function labelGap(message2) {
     y2: Math.max(message2.labelY, badge === void 0 ? Number.NEGATIVE_INFINITY : badge.y + badge.height) + LABEL_CLEARANCE2
   };
 }
-function buildLifelines(actors, messages, top, bottom) {
-  const gaps = messages.map(labelGap);
+function headerGap(x, bandTop, bandHeight, keyword, label) {
+  const left = x + SEQUENCE_METRICS.blockHeaderInset;
+  const condition = label === "" ? 0 : SEQUENCE_METRICS.blockKeywordGap + measureRole(label, "edgeLabel");
+  const top = bandTop + (bandHeight - TYPE_ROLES.groupLabel.lineHeight) / 2;
+  return {
+    x1: left - LABEL_CLEARANCE2,
+    x2: left + measureRole(keyword, "groupLabel") + condition + LABEL_CLEARANCE2,
+    y1: top - LABEL_CLEARANCE2 / 2,
+    y2: top + TYPE_ROLES.groupLabel.lineHeight + LABEL_CLEARANCE2 / 2
+  };
+}
+function blockGaps(block) {
+  const { x, y } = block.rect;
+  return [
+    headerGap(x, y, SEQUENCE_METRICS.blockHeader, block.blockType, block.label),
+    ...block.dividers.map((divider) => headerGap(x, divider.y, SEQUENCE_METRICS.blockBranchHeader, divider.keyword, divider.label))
+  ];
+}
+function buildLifelines(actors, messages, blocks2, top, bottom) {
+  const gaps = [...messages.map(labelGap), ...blocks2.flatMap(blockGaps)];
   return actors.map((actor) => {
     const crossing = gaps.filter((gap2) => gap2.x1 < actor.centerX && actor.centerX < gap2.x2).sort((a, b) => a.y1 - b.y1);
     const segments = [];
@@ -148043,6 +148112,10 @@ function placeNote(item, ctx, y) {
   ctx.notes.push({ rect: { x, y, width, height }, lines });
   return { y: y + height + SEQUENCE_METRICS.noteGap, extent: { minX: x, maxX: x + width } };
 }
+function blockHeaderWidth(keyword, label) {
+  const condition = label === "" ? 0 : SEQUENCE_METRICS.blockKeywordGap + measureRole(label, "edgeLabel");
+  return SEQUENCE_METRICS.blockHeaderInset * 2 + measureRole(keyword, "groupLabel") + condition;
+}
 function placeBlock2(item, ctx, y) {
   const first = item.branches[0];
   const dividers = [];
@@ -148060,9 +148133,9 @@ function placeBlock2(item, ctx, y) {
   cursor += SEQUENCE_METRICS.blockBottomPadding;
   const reach2 = extent2 ?? { minX: ctx.centers[0] ?? 0, maxX: ctx.centers[ctx.centers.length - 1] ?? 0 };
   const label = first?.label ?? "";
-  const tabWidth2 = measureRole(`${item.blockType} ${label}`, "groupLabel") + TAB_PADDING;
+  const headerWidth = Math.max(blockHeaderWidth(item.blockType, label), ...dividers.map((divider) => blockHeaderWidth(divider.keyword, divider.label)));
   const x = reach2.minX - SEQUENCE_METRICS.blockPadding;
-  const width = Math.max(reach2.maxX - reach2.minX + SEQUENCE_METRICS.blockPadding * 2, tabWidth2);
+  const width = Math.max(reach2.maxX - reach2.minX + SEQUENCE_METRICS.blockPadding * 2, headerWidth);
   ctx.blocks.push({ blockType: item.blockType, rect: { x, y, width, height: cursor - y }, label, dividers });
   return { y: cursor + SEQUENCE_METRICS.noteGap, extent: { minX: x, maxX: x + width } };
 }
@@ -148076,7 +148149,7 @@ function placeItems3(items2, ctx, startY) {
   }
   return { y, extent: extent2 };
 }
-var HOP_LABEL_MARGIN, NOTE_OVERHANG, TAB_PADDING, leadOf2;
+var HOP_LABEL_MARGIN, NOTE_OVERHANG, leadOf2;
 var init_rows2 = __esm({
   "../../packages/diagrams/src/layout/sequence/rows.ts"() {
     "use strict";
@@ -148086,7 +148159,6 @@ var init_rows2 = __esm({
     init_columns();
     HOP_LABEL_MARGIN = 4;
     NOTE_OVERHANG = 16;
-    TAB_PADDING = 28;
     leadOf2 = (step) => stepBadgeWidth(step) + STEP_METRICS.labelGap;
   }
 });
@@ -148126,7 +148198,7 @@ function layoutSequence(diagram) {
   return {
     size: { width: Math.ceil(right + CANVAS_METRICS.padding), height: Math.ceil(lifelineBottom + CANVAS_METRICS.padding) },
     actors,
-    lifelines: buildLifelines(actors, messages, lifelineTop, lifelineBottom),
+    lifelines: buildLifelines(actors, messages, blocks2, lifelineTop, lifelineBottom),
     blocks: blocks2,
     notes,
     messages
@@ -148246,7 +148318,7 @@ function parseActorStatement2(cursor, state, line3) {
   if (type === void 0) {
     state.report.push(errorAt(DIAGNOSTIC_CODES.unknownNodeType, `Unknown actor type "${typeToken.text}"`, typeToken, didYouMean(typeToken.text, ACTOR_TYPES)));
   }
-  const label = readLabel(cursor, state, line3, "label");
+  const label = readLabel(cursor, state, line3, "label", 'actor <id> <type> "Label", such as actor db database "Users DB".');
   const options3 = readOptions(cursor, ACTOR_OPTIONS, state.report);
   rejectTrailing(cursor, state, 'An actor is: actor id type "Label" sub="..." icon=lucide:name tone=blue');
   if (id === null || type === void 0 || label === null) return;
@@ -148388,7 +148460,7 @@ function dispatchStatement4(line3, state) {
         DIAGNOSTIC_CODES.unknownStatement,
         `Unknown statement "${first.text}"`,
         first,
-        `${didYouMean(first.text, STATEMENT_KEYWORDS5)} Messages look like: from -> to : "label"`
+        first.text === "sequence" ? 'The header is one line, the first: put the title and every header option on it together, such as sequence "Checkout" direction=right.' : first.text === "title" ? `There is no title statement: the title is the quoted text after the kind on the first line, such as sequence "Checkout".` : line3.tokens[1]?.kind === "equals" ? `An option such as ${first.text}= goes at the end of the line of the actor or message it sets, not on a line of its own: actor api service "API" ${first.text}=...` : FLOW_NODE_TYPES.includes(first.text) ? `A participant is declared with actor and its type comes after the id: actor <id> ${first.text} "Label". Messages look like: from -> to : "label"` : `${didYouMean(first.text, STATEMENT_KEYWORDS5)} Messages look like: from -> to : "label"`
       )
     );
   }
@@ -158415,16 +158487,16 @@ var init_parse19 = __esm({
 
 // ../../packages/diagrams/src/kinds/xychart/look.ts
 function seriesLook(theme, tone) {
-  const outline2 = ensureContrast(theme.tones[tone].outline, theme.surfaceGroup, GRAPHIC_CONTRAST4, theme.ink);
-  const mark = tone === "neutral" ? ensureContrast(mix(outline2, theme.surfaceGroup, 0.62), theme.surfaceGroup, GRAPHIC_CONTRAST4, theme.ink) : outline2;
+  const outline2 = ensureContrast(theme.tones[tone].outline, theme.surfaceGroup, GRAPHIC_CONTRAST3, theme.ink);
+  const mark = tone === "neutral" ? ensureContrast(mix(outline2, theme.surfaceGroup, 0.62), theme.surfaceGroup, GRAPHIC_CONTRAST3, theme.ink) : outline2;
   return { mark, rim: mix(mark, theme.ink, 0.86), leader: mix(mark, theme.surfaceGroup, 0.55), washOpacity: 0.16 };
 }
-var GRAPHIC_CONTRAST4, chartLook;
+var GRAPHIC_CONTRAST3, chartLook;
 var init_look9 = __esm({
   "../../packages/diagrams/src/kinds/xychart/look.ts"() {
     "use strict";
     init_theme();
-    GRAPHIC_CONTRAST4 = 3;
+    GRAPHIC_CONTRAST3 = 3;
     chartLook = (theme) => ({
       plate: theme.surfaceGroup,
       grid: mix(theme.border, theme.surfaceGroup, 0.55),
@@ -158907,18 +158979,18 @@ function lexLine(text4, line3, diagnostics) {
       tokens.push({ kind: "word", text: word2, line: line3, column, length: word2.length });
       index2 += word2.length;
     } else {
-      diagnostics.push(
-        errorAt(
-          DIAGNOSTIC_CODES.syntax,
-          `Unexpected character "${char}"`,
-          { line: line3, column, length: 1 },
-          'Labels go in double quotes; ids use letters, digits, "_" and "-".'
-        )
-      );
+      diagnostics.push(errorAt(DIAGNOSTIC_CODES.syntax, `Unexpected character "${char}"`, { line: line3, column, length: 1 }, unexpectedCharacterHint(char, tokens[tokens.length - 1], text4[index2 + 1])));
       index2 += 1;
     }
   }
   return tokens;
+}
+function unexpectedCharacterHint(char, previous, following) {
+  if (char === "\\" && following === '"') return 'The source has \\" where a plain " belongs: a label is written "Label" in the source. In JSON, escape that quote once, as \\", never as \\\\\\".';
+  if (char === "\\" && following === "u" || char === "-" && following === "\\") return "The source has a JSON escape written out, such as \\u003e: write the character it stands for instead (\\u003e is >, \\u003c is <, \\u0026 is &), so an arrow is -> and not -\\u003e.";
+  if (char === "\\" && following === "n") return "The source has a written \\n where a line should end: each statement goes on its own line. In JSON, write a line break inside the string as \\n, not \\\\n.";
+  if (previous?.kind === "arrow" || char === ">" || char === "<") return ARROW_HINT;
+  return 'Labels go in double quotes; ids use letters, digits, "_" and "-".';
 }
 function lex(source) {
   const diagnostics = [];
@@ -158930,7 +159002,7 @@ function lex(source) {
   });
   return { lines, diagnostics };
 }
-var STRING_ESCAPES, isWordStart, isWordPart;
+var STRING_ESCAPES, isWordStart, isWordPart, ARROW_HINT;
 var init_lexer = __esm({
   "../../packages/diagrams/src/parse/lexer.ts"() {
     "use strict";
@@ -158939,6 +159011,7 @@ var init_lexer = __esm({
     STRING_ESCAPES = { '"': '"', "\\": "\\", n: "\n", t: "	" };
     isWordStart = (char) => /[A-Za-z0-9_]/.test(char);
     isWordPart = (char) => /[A-Za-z0-9_]/.test(char);
+    ARROW_HINT = "An arrow is one of ->, -->, ..>, <->, <-->, or --, written from the sender to the receiver (a -> b). Mermaid's ->> and -->> are -> and --> here, and a reply is b --> a, never a <-- b.";
   }
 });
 
@@ -158960,7 +159033,7 @@ function parseDiagram(source) {
         DIAGNOSTIC_CODES.missingHeader,
         `The first line must name the diagram kind, found "${text4}"`,
         header,
-        `${didYouMean(text4, implementedKinds())} Start with: ${headerHint()}`
+        text4 === "title" ? 'There is no title statement: the title is the quoted text after the kind on the first line, such as flow "Checkout" or sequence "Sign in".' : `${didYouMean(text4, implementedKinds())} Start with: ${headerHint()}`
       )
     );
     return err(report4);
@@ -181776,7 +181849,7 @@ var init_files2 = __esm({
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // package.json
-var package_default = { version: "0.1.0-beta.12" };
+var package_default = { version: "0.1.0-beta.13" };
 
 // npm/package-config.json
 var package_config_default = {
