@@ -1023,8 +1023,8 @@ var init_action_release = __esm({
     "use strict";
     ACTION_REPOSITORY = "plotwork-official/plotwork-action";
     ACTION_RELEASE = {
-      version: "1.0.0-beta.12",
-      sha: "53d6170aee30dc3d9728de11524a68f6bc490596"
+      version: "1.0.0-beta.14",
+      sha: "dcec4036897b73bd3ea724b3991f4fd0ac880757"
     };
     PINNED_ACTION_LINE = `uses: ${ACTION_REPOSITORY}@${ACTION_RELEASE.sha} # v${ACTION_RELEASE.version}`;
   }
@@ -1043,7 +1043,7 @@ var init_mcp_release = __esm({
     "use strict";
     MCP_RELEASE = {
       packageName: "@buun_group/plotwork-mcp",
-      version: "0.1.0-beta.9"
+      version: "0.1.0-beta.10"
     };
   }
 });
@@ -161065,7 +161065,7 @@ async function readCapped(response, maxBytes) {
   }
   return new TextDecoder().decode(bytes);
 }
-async function fetchDiagramLink(text4, fetchLink = (url2, init) => fetch(url2, init)) {
+async function fetchDiagramLink(text4, fetchLink = (url2, init) => fetch(url2, { ...init, signal: init.signal })) {
   const refusal2 = refusalOfLink(text4);
   if (refusal2 !== null) return REFUSED(refusal2);
   const seconds = READ_LIMITS.timeoutMs / 1e3;
@@ -181849,7 +181849,7 @@ var init_files2 = __esm({
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // package.json
-var package_default = { version: "0.1.0-beta.13" };
+var package_default = { version: "0.1.0" };
 
 // npm/package-config.json
 var package_config_default = {
