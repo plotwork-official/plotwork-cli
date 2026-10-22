@@ -1,6 +1,6 @@
 # Plotwork command line
 
-Check, draw, and sync Plotwork diagrams in your repository. A diagram is a few lines of text in a `diagram` fence of a Markdown file; `plotwork sync` draws it as a light and a dark SVG and writes the picture under the fence, so it shows on GitHub. It runs on your machine and in CI.
+Check, draw, and sync Plotwork diagrams in your repository. A diagram is a few lines of text in a `diagram` fence of a Markdown file; `plotwork sync` draws it as one SVG that follows the reader's light or dark setting and writes the picture under the fence, so it shows on GitHub. It runs on your machine and in CI.
 
 ## TL;DR
 
@@ -14,7 +14,7 @@ Check, draw, and sync Plotwork diagrams in your repository. A diagram is a few l
 | Where is every option? | `plotwork <command> --help` prints one command's options, defaults, examples, and exit codes. The [command reference](https://docs.plotwork.dev/cli/commands) has the same, one page for each command. |
 | How do I keep pictures in step in CI? | `npx @buun_group/plotwork sync --check --format github "docs/**/*.md"`, or the Plotwork sync action. See [Keep diagrams in sync in CI](https://docs.plotwork.dev/diagrams-in-ci). |
 | Can a diagram come from my Terraform, Bicep, Pulumi, CloudFormation, CDK, Helm, Kustomize, Backstage, Structurizr, AsyncAPI, OpenAPI, or SQL files, or my pipelines? | Yes. Name the files in the `sources` of `plotwork.config.json` and run `npx @buun_group/plotwork generate`; `generate --check` fails when the files moved and the diagram did not. See [Diagrams as code](https://docs.plotwork.dev/diagrams-as-code). |
-| Will the pictures look right in GitHub's dark mode? | Set `"defaults": { "schemes": "auto" }` in `plotwork.config.json`: `sync` and `generate` then write one SVG per diagram that follows the reader's light or dark setting, instead of a light and a dark file, and remove the old `.dark.svg` files they drew. See [Diagrams as code](https://docs.plotwork.dev/diagrams-as-code). |
+| Will the pictures look right in GitHub's dark mode? | Yes. `sync` and `generate` write one SVG per diagram that follows the reader's light or dark setting, and remove the old `.dark.svg` files they drew. `"defaults": { "schemes": "light-and-dark" }` in `plotwork.config.json` writes a light and a dark file instead, which GitHub picks between by its own theme setting. See [Diagrams as code](https://docs.plotwork.dev/diagrams-as-code). |
 | What do the pictures look like? | An arrow labelled with a verb, active or passive ("reads", "consumed by", "stored in"), draws that relationship's icon, and a sequence frame names its operator (`alt`, `loop`, `par`) in plain bold text in its corner. An `icon=` that names no icon is warning `W208` (`validate --strict` fails on it) and the item draws its default icon, so a missing brand never stops a picture. |
 | Which licence? | MIT. Code and data from other people keep their own licences, listed in `THIRD-PARTY-NOTICES.md`. |
 
