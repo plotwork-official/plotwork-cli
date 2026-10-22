@@ -47,346 +47,6 @@ var __toESM = (mod, isNodeMode, target2) => (target2 = mod != null ? __create(__
   mod
 ));
 
-// ../../packages/diagrams/src/theme/color.ts
-function parseHex(hex3) {
-  const match = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex3);
-  if (match === null) throw new Error(`Not a #rrggbb color: ${hex3}`);
-  return [parseInt(match[1] ?? "0", 16), parseInt(match[2] ?? "0", 16), parseInt(match[3] ?? "0", 16)];
-}
-function toHex(rgb) {
-  return `#${rgb.map((channel) => Math.round(Math.min(255, Math.max(0, channel))).toString(16).padStart(2, "0")).join("")}`;
-}
-function mix(top, base, amount) {
-  const a = parseHex(top);
-  const b = parseHex(base);
-  return toHex([
-    a[0] * amount + b[0] * (1 - amount),
-    a[1] * amount + b[1] * (1 - amount),
-    a[2] * amount + b[2] * (1 - amount)
-  ]);
-}
-function linearChannel(channel) {
-  const scaled = channel / 255;
-  return scaled <= 0.04045 ? scaled / 12.92 : ((scaled + 0.055) / 1.055) ** 2.4;
-}
-function luminance(hex3) {
-  const [red, green, blue] = parseHex(hex3);
-  return 0.2126 * linearChannel(red) + 0.7152 * linearChannel(green) + 0.0722 * linearChannel(blue);
-}
-function contrastRatio(a, b) {
-  const [light, dark] = [luminance(a), luminance(b)].sort((x, y) => y - x);
-  return (light + 0.05) / (dark + 0.05);
-}
-function toHsl(hex3) {
-  const [red, green, blue] = parseHex(hex3).map((channel) => channel / 255);
-  const max = Math.max(red, green, blue);
-  const min = Math.min(red, green, blue);
-  const lightness = (max + min) / 2;
-  if (max === min) return [0, 0, lightness];
-  const delta = max - min;
-  const saturation = lightness > 0.5 ? delta / (2 - max - min) : delta / (max + min);
-  const hue = max === red ? ((green - blue) / delta + (green < blue ? 6 : 0)) * 60 : max === green ? ((blue - red) / delta + 2) * 60 : ((red - green) / delta + 4) * 60;
-  return [hue, saturation, lightness];
-}
-function fromHsl([hue, saturation, lightness]) {
-  const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
-  const sector = (hue % 360 + 360) % 360 / 60;
-  const second = chroma * (1 - Math.abs(sector % 2 - 1));
-  const [red, green, blue] = sector < 1 ? [chroma, second, 0] : sector < 2 ? [second, chroma, 0] : sector < 3 ? [0, chroma, second] : sector < 4 ? [0, second, chroma] : sector < 5 ? [second, 0, chroma] : [chroma, 0, second];
-  const lift = lightness - chroma / 2;
-  return toHex([(red + lift) * 255, (green + lift) * 255, (blue + lift) * 255]);
-}
-function rotateHue(hex3, degrees) {
-  const [hue, saturation, lightness] = toHsl(hex3);
-  return fromHsl([hue + degrees, saturation, lightness]);
-}
-function ensureContrast(color, against, minRatio, target2) {
-  let current = color;
-  for (let step = 1; step <= 20 && contrastRatio(current, against) < minRatio; step += 1) {
-    current = mix(target2, color, step / 20);
-  }
-  return current;
-}
-var init_color = __esm({
-  "../../packages/diagrams/src/theme/color.ts"() {
-    "use strict";
-  }
-});
-
-// ../../packages/diagrams/src/theme/metrics.ts
-var FONT_STACKS, TYPE_ROLES, NODE_METRICS, EDGE_METRICS, STEP_METRICS, MOTION_METRICS, GROUP_TAB_HEIGHT, GROUP_TAB_GAP, GROUP_METRICS, SCHEMA_METRICS, SEQUENCE_METRICS, CANVAS_METRICS;
-var init_metrics = __esm({
-  "../../packages/diagrams/src/theme/metrics.ts"() {
-    "use strict";
-    FONT_STACKS = {
-      sans: "Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
-      mono: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
-    };
-    TYPE_ROLES = {
-      label: { role: "sans", size: 13, weight: 600, lineHeight: 18 },
-      sub: { role: "sans", size: 12, weight: 400, lineHeight: 16 },
-      edgeLabel: { role: "sans", size: 12, weight: 500, lineHeight: 16 },
-      groupLabel: { role: "sans", size: 12, weight: 600, lineHeight: 16 },
-      title: { role: "sans", size: 14, weight: 600, lineHeight: 20 },
-      tableName: { role: "sans", size: 13, weight: 600, lineHeight: 18 },
-      columnName: { role: "mono", size: 12, weight: 400, lineHeight: 18 },
-      columnType: { role: "sans", size: 12, weight: 400, lineHeight: 18 },
-      badge: { role: "sans", size: 12, weight: 600, lineHeight: 16 }
-    };
-    NODE_METRICS = {
-      minWidth: 120,
-      /** Text wraps to fit this width. */
-      maxWidth: 264,
-      /** A node grows past `maxWidth` for one unbreakable word, but never past this; beyond it text is shortened. */
-      hardMaxWidth: 400,
-      minHeight: 56,
-      /** Space between the card edge and text on both sides when there is no icon, and between text and the right edge always. */
-      paddingX: 16,
-      paddingY: 16,
-      radius: 12,
-      chipSize: 28,
-      /** Space between the card edge and the icon chip; equals the chip's vertical inset in a minimum-height card. */
-      chipInset: 14,
-      chipRadius: 8,
-      iconSize: 16,
-      chipGap: 10,
-      subGap: 2,
-      /** A technology mark from `stack=`: a small chip in a row under the text, so it never covers the node's icon or text. */
-      stackMarkSize: 22,
-      stackIconSize: 14,
-      stackMarkRadius: 6,
-      /** Space between marks, and between the text and the row of marks. */
-      stackGap: 6,
-      stackTop: 8,
-      borderWidth: 1,
-      /** A node with `change=`: its outline in the change's tone, this wide, and a round badge on its top edge with the change's sign. */
-      changeBorderWidth: 2,
-      changeBadgeRadius: 8,
-      /** From the card's right edge to the badge's centre; the badge sits in the top padding, so it never covers text. */
-      changeBadgeInset: 18,
-      /** Half the length of each stroke of the sign in the badge. */
-      changeSignHalf: 4,
-      changeSignWidth: 1.75,
-      maxLabelLines: 3,
-      /** Pills, used for terminal nodes such as "Done" or "Access denied". */
-      pillPaddingX: 22,
-      pillHeight: 36,
-      pillMinWidth: 96,
-      /** Space between a pill's icon and its text. */
-      pillIconGap: 8,
-      pillRadius: 999
-    };
-    EDGE_METRICS = {
-      strokeWidth: 1.5,
-      cornerRadius: 10,
-      arrowLength: 7,
-      arrowHalfWidth: 4.5,
-      /** Straight line kept between the last bend and the chevron's rear, so the head never sits on a curve. */
-      arrowLead: 5,
-      /** Least straight run an edge keeps before its arrowhead: the corner radius, the head, and room to breathe. */
-      endRun: 32,
-      dashPattern: "5 4",
-      /** A dotted line: round-capped dashes about a stroke wide, so each reads as a dot. */
-      dotPattern: "0.1 5",
-      labelPaddingX: 12,
-      labelHeight: 24,
-      /** Icon beside an edge label, such as the tick on a "yes" branch, and the space between it and the text. */
-      labelIconSize: 14,
-      labelIconGap: 6,
-      labelRadius: 11,
-      /** Where an edge crosses another at right angles, its horizontal run hops over the other in a half circle of this radius, bumping upward. */
-      hopRadius: 5,
-      /**
-       * A hop close to a bend of its own line is still drawn: the bend tightens, but never below this radius, which is the arch's own, so a
-       * bend never reads sharper than the hop beside it. A crossing nearer a bend than this radius, the arch, and a pixel of line leaves
-       * no room, and the lines cross plainly.
-       */
-      hopBendRadius: 5
-    };
-    STEP_METRICS = {
-      height: 20,
-      /** A one-digit badge is a disc this wide. */
-      minWidth: 20,
-      /** Space between the digits and the badge's rounded ends, the same on both sides. */
-      paddingX: 6,
-      /** Space between a message's badge and the label that follows it. */
-      labelGap: 6,
-      /** Space between a flow label pill's border and the badge nested in its left end; the pill is `EDGE_METRICS.labelHeight` high. */
-      pillInset: 2,
-      /** Space between a badge nested in a label pill and the text or icon that follows it. */
-      pillGap: 8,
-      /** From a label's baseline up to the middle of its capitals, so a badge and the label it leads share one centre line. */
-      textRise: 4.4
-    };
-    MOTION_METRICS = {
-      solid: { pattern: "6 10", distance: 16, seconds: 1.4 },
-      dashed: { pattern: EDGE_METRICS.dashPattern, distance: 18, seconds: 1.6 },
-      dotted: { pattern: EDGE_METRICS.dotPattern, distance: 15.3, seconds: 1.4 }
-    };
-    GROUP_TAB_HEIGHT = 28;
-    GROUP_TAB_GAP = 12;
-    GROUP_METRICS = {
-      radius: 16,
-      tabHeight: GROUP_TAB_HEIGHT,
-      tabGap: GROUP_TAB_GAP,
-      paddingTop: GROUP_TAB_HEIGHT + GROUP_TAB_GAP,
-      paddingSide: 20,
-      paddingBottom: 20,
-      borderWidth: 1,
-      /** Space between the tab's left and right edges and its content: the same on both sides. */
-      tabPaddingX: 12,
-      tabIconSize: 16,
-      /** Space between the tab's icon and its name. */
-      tabIconGap: 8,
-      /** Radius of the tab's bottom-right corner; its top-left corner follows `radius`, so the tab hugs the frame. */
-      tabRadius: 8,
-      /** An overlay's frame is lighter than a group's: less room between its edge and what it frames. */
-      overlayPaddingSide: 14,
-      overlayPaddingBottom: 14,
-      /** Space between an overlay's tab and the members below it. */
-      overlayTabGap: 8,
-      /** Extra tab height for a second line under the name, and for a row of marks under that. */
-      tabSubHeight: 18,
-      tabMarksHeight: 30,
-      /** The widest a tab grows, as wide as the widest node card. A longer name is cut with an ellipsis and warning W203. */
-      tabHardMaxWidth: NODE_METRICS.hardMaxWidth,
-      dashPattern: "6 5",
-      /** A dotted frame: round-capped dashes about a stroke wide, so each reads as a dot. */
-      dotPattern: "0.1 5"
-    };
-    SCHEMA_METRICS = {
-      minWidth: 220,
-      radius: 12,
-      headerHeight: 48,
-      /** Space between the header divider and the first column row. */
-      bodyPaddingTop: 10,
-      rowHeight: 28,
-      paddingX: 16,
-      paddingBottom: 10,
-      badgeWidth: 28,
-      badgeHeight: 18,
-      badgeRadius: 5,
-      badgeGap: 8,
-      typeGap: 28,
-      borderWidth: 1,
-      markerLength: 11,
-      markerSpread: 5,
-      /** Straight run a relation keeps on each side of a table before it may bend; the cardinality marker sits on it. */
-      stubLength: 26,
-      nodeSpacing: 36,
-      /** Extra space between layers beyond the two stubs. */
-      layerSpacing: 24
-    };
-    SEQUENCE_METRICS = {
-      /** Minimum space between two neighbouring actor cards. */
-      actorGap: 28,
-      /** Space between the actor cards and the first row. */
-      headerGap: 24,
-      /** Height of a message row, with the arrow line `messageLineOffset` px below the row top. */
-      messageHeight: 46,
-      messageLineOffset: 32,
-      /** How far above its arrow a numbered message's label baseline sits; a plain message's is 9, and the badge needs a little more. */
-      numberedLabelRise: 11,
-      /** A message that crosses another actor's lifeline hops over it in a half circle of this radius, bumping upward. */
-      hopRadius: 5,
-      /** A lifeline closer than this to either end of a message is not hopped: the arrowhead or the start of the line is already there. */
-      hopEndClearance: 18,
-      /** A self-message loops out to the right by this much and drops by `selfLoopHeight`. */
-      selfLoopWidth: 36,
-      selfLoopHeight: 24,
-      /** Room between the end of a self-message's label and the next lifeline. */
-      selfLabelClearance: 24,
-      /** Horizontal room a message label needs beyond its text. */
-      labelPadding: 40,
-      noteMaxWidth: 248,
-      /** A note widens past `noteMaxWidth` for one unbreakable word, up to this. */
-      noteHardMaxWidth: 360,
-      noteMinWidth: 96,
-      notePadding: 12,
-      noteAccentWidth: 3,
-      noteRadius: 8,
-      noteGap: 14,
-      /** Frame (alt, opt, loop, par) geometry. */
-      blockPadding: 16,
-      blockHeader: 30,
-      blockBranchHeader: 30,
-      blockBottomPadding: 10,
-      blockRadius: 10,
-      /** Room from the frame's left edge to its operator ("alt", "else"), and the least room after its condition to the right edge. */
-      blockHeaderInset: 12,
-      /** Room between the operator and its condition. */
-      blockKeywordGap: 8,
-      lifelineDash: "4 5",
-      lifelineOvershoot: 22
-    };
-    CANVAS_METRICS = {
-      padding: 24,
-      titleGap: 20,
-      nodeSpacing: 28,
-      layerSpacing: 64,
-      edgeNodeSpacing: 20,
-      /** Space between two parallel edges, and between the stubs of two edges that leave one side of a node. */
-      edgeSpacing: 14,
-      /** Width in px that fits a Markdown column without scaling text below readable size. */
-      targetWidth: 880
-    };
-  }
-});
-
-// ../../packages/diagrams/src/theme/group-colors.ts
-function groupFrameColors(theme, tone, depth = 0) {
-  const level2 = Math.min(Math.max(depth, 0), GROUP_DEPTH_LIMIT);
-  const hue = tone === "neutral" ? theme.ink : theme.tones[tone].accent;
-  const fillShare = (tone === "neutral" ? 0 : GROUP_FILL_TINT) + level2 * GROUP_DEPTH_FILL_STEP * (tone === "neutral" ? 0.5 : 1);
-  const borderShare = (tone === "neutral" ? 0 : GROUP_BORDER_TINT) + level2 * GROUP_DEPTH_BORDER_STEP * (tone === "neutral" ? 0.5 : 1);
-  return {
-    fill: fillShare === 0 ? theme.surfaceGroup : mix(hue, theme.surfaceGroup, fillShare),
-    border: borderShare === 0 ? theme.borderGroup : mix(hue, theme.borderGroup, borderShare)
-  };
-}
-function groupTabColors(theme, tone, iconTone2, depth = 0) {
-  const fill = theme.tones[tone].chipFill;
-  return {
-    fill,
-    border: groupFrameColors(theme, tone, depth).border,
-    text: theme.ink,
-    icon: ensureContrast(theme.tones[iconTone2 ?? tone].ink, fill, TAB_ICON_CONTRAST, theme.ink)
-  };
-}
-function groupHeadingColors(theme, tone, iconTone2, depth = 0) {
-  const fill = groupFrameColors(theme, tone, depth).fill;
-  return { fill, text: theme.ink, icon: ensureContrast(theme.tones[iconTone2 ?? tone].ink, fill, TAB_ICON_CONTRAST, theme.ink) };
-}
-var GROUP_FILL_TINT, GROUP_BORDER_TINT, GROUP_DEPTH_FILL_STEP, GROUP_DEPTH_BORDER_STEP, GROUP_DEPTH_LIMIT, TAB_ICON_CONTRAST;
-var init_group_colors = __esm({
-  "../../packages/diagrams/src/theme/group-colors.ts"() {
-    "use strict";
-    init_color();
-    GROUP_FILL_TINT = 0.07;
-    GROUP_BORDER_TINT = 0.55;
-    GROUP_DEPTH_FILL_STEP = 0.045;
-    GROUP_DEPTH_BORDER_STEP = 0.08;
-    GROUP_DEPTH_LIMIT = 4;
-    TAB_ICON_CONTRAST = 4.5;
-  }
-});
-
-// ../../packages/diagrams/src/theme/vendor-tile.ts
-var VENDOR_TILE;
-var init_vendor_tile = __esm({
-  "../../packages/diagrams/src/theme/vendor-tile.ts"() {
-    "use strict";
-    VENDOR_TILE = {
-      fill: "#ffffff",
-      border: "#cfcec6",
-      /** Share of the tile's side left empty around the artwork on each side. */
-      inset: 0.12,
-      /** Corner radius as a share of the tile's side. */
-      radius: 0.22
-    };
-  }
-});
-
 // ../../packages/diagrams/src/constants/arrows.ts
 var ARROW_TOKENS, ARROW_SPECS;
 var init_arrows = __esm({
@@ -761,6 +421,17 @@ var init_line_options = __esm({
   }
 });
 
+// ../../packages/diagrams/src/constants/color-themes.ts
+var COLOR_THEMES, DEFAULT_COLOR_THEME, COLOR_THEME_OPTION;
+var init_color_themes = __esm({
+  "../../packages/diagrams/src/constants/color-themes.ts"() {
+    "use strict";
+    COLOR_THEMES = ["plotwork", "slate", "ocean", "forest", "sunset", "mono", "contrast"];
+    DEFAULT_COLOR_THEME = "plotwork";
+    COLOR_THEME_OPTION = "theme";
+  }
+});
+
 // ../../packages/diagrams/src/constants/auto-icons.ts
 var ICON_MODES, DEFAULT_ICON_MODE, ICON_MODE_SPEC, PLAIN_WORD_NAMES, ROLE_ICONS, BRAND_SUFFIXES, ROLE_ICON_MAX_WORDS;
 var init_auto_icons = __esm({
@@ -985,11 +656,26 @@ var init_diagram_links = __esm({
   }
 });
 
+// ../../packages/diagrams/src/constants/action-release.ts
+var ACTION_REPOSITORY, ACTION_RELEASE, PINNED_ACTION_LINE;
+var init_action_release = __esm({
+  "../../packages/diagrams/src/constants/action-release.ts"() {
+    "use strict";
+    ACTION_REPOSITORY = "plotwork-official/plotwork-action";
+    ACTION_RELEASE = {
+      version: "1.1.0",
+      sha: "86ae8278fa771a422d9df60185182f14b8be4db9"
+    };
+    PINNED_ACTION_LINE = `uses: ${ACTION_REPOSITORY}@${ACTION_RELEASE.sha} # v${ACTION_RELEASE.version}`;
+  }
+});
+
 // ../../packages/diagrams/src/constants/view-links.ts
 var VIEW_LINKS;
 var init_view_links = __esm({
   "../../packages/diagrams/src/constants/view-links.ts"() {
     "use strict";
+    init_action_release();
     VIEW_LINKS = {
       /** The path of the viewer page in the portal. */
       path: "/view",
@@ -1013,20 +699,6 @@ var init_view_links = __esm({
        */
       maxCommandLength: 8e3
     };
-  }
-});
-
-// ../../packages/diagrams/src/constants/action-release.ts
-var ACTION_REPOSITORY, ACTION_RELEASE, PINNED_ACTION_LINE;
-var init_action_release = __esm({
-  "../../packages/diagrams/src/constants/action-release.ts"() {
-    "use strict";
-    ACTION_REPOSITORY = "plotwork-official/plotwork-action";
-    ACTION_RELEASE = {
-      version: "1.1.0",
-      sha: "86ae8278fa771a422d9df60185182f14b8be4db9"
-    };
-    PINNED_ACTION_LINE = `uses: ${ACTION_REPOSITORY}@${ACTION_RELEASE.sha} # v${ACTION_RELEASE.version}`;
   }
 });
 
@@ -4372,6 +4044,7 @@ var init_constants = __esm({
     init_node_stack();
     init_line_options();
     init_line_roles();
+    init_color_themes();
     init_auto_icons();
     init_schema();
     init_sequence();
@@ -4401,6 +4074,346 @@ var init_constants = __esm({
     init_label_vocabulary();
     init_status_icons();
     init_tones();
+  }
+});
+
+// ../../packages/diagrams/src/theme/color.ts
+function parseHex(hex3) {
+  const match = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex3);
+  if (match === null) throw new Error(`Not a #rrggbb color: ${hex3}`);
+  return [parseInt(match[1] ?? "0", 16), parseInt(match[2] ?? "0", 16), parseInt(match[3] ?? "0", 16)];
+}
+function toHex(rgb) {
+  return `#${rgb.map((channel) => Math.round(Math.min(255, Math.max(0, channel))).toString(16).padStart(2, "0")).join("")}`;
+}
+function mix(top, base, amount) {
+  const a = parseHex(top);
+  const b = parseHex(base);
+  return toHex([
+    a[0] * amount + b[0] * (1 - amount),
+    a[1] * amount + b[1] * (1 - amount),
+    a[2] * amount + b[2] * (1 - amount)
+  ]);
+}
+function linearChannel(channel) {
+  const scaled = channel / 255;
+  return scaled <= 0.04045 ? scaled / 12.92 : ((scaled + 0.055) / 1.055) ** 2.4;
+}
+function luminance(hex3) {
+  const [red, green, blue] = parseHex(hex3);
+  return 0.2126 * linearChannel(red) + 0.7152 * linearChannel(green) + 0.0722 * linearChannel(blue);
+}
+function contrastRatio(a, b) {
+  const [light, dark] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (light + 0.05) / (dark + 0.05);
+}
+function toHsl(hex3) {
+  const [red, green, blue] = parseHex(hex3).map((channel) => channel / 255);
+  const max = Math.max(red, green, blue);
+  const min = Math.min(red, green, blue);
+  const lightness = (max + min) / 2;
+  if (max === min) return [0, 0, lightness];
+  const delta = max - min;
+  const saturation = lightness > 0.5 ? delta / (2 - max - min) : delta / (max + min);
+  const hue = max === red ? ((green - blue) / delta + (green < blue ? 6 : 0)) * 60 : max === green ? ((blue - red) / delta + 2) * 60 : ((red - green) / delta + 4) * 60;
+  return [hue, saturation, lightness];
+}
+function fromHsl([hue, saturation, lightness]) {
+  const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+  const sector = (hue % 360 + 360) % 360 / 60;
+  const second = chroma * (1 - Math.abs(sector % 2 - 1));
+  const [red, green, blue] = sector < 1 ? [chroma, second, 0] : sector < 2 ? [second, chroma, 0] : sector < 3 ? [0, chroma, second] : sector < 4 ? [0, second, chroma] : sector < 5 ? [second, 0, chroma] : [chroma, 0, second];
+  const lift = lightness - chroma / 2;
+  return toHex([(red + lift) * 255, (green + lift) * 255, (blue + lift) * 255]);
+}
+function rotateHue(hex3, degrees) {
+  const [hue, saturation, lightness] = toHsl(hex3);
+  return fromHsl([hue + degrees, saturation, lightness]);
+}
+function ensureContrast(color, against, minRatio, target2) {
+  let current = color;
+  for (let step = 1; step <= 20 && contrastRatio(current, against) < minRatio; step += 1) {
+    current = mix(target2, color, step / 20);
+  }
+  return current;
+}
+var init_color = __esm({
+  "../../packages/diagrams/src/theme/color.ts"() {
+    "use strict";
+  }
+});
+
+// ../../packages/diagrams/src/theme/metrics.ts
+var FONT_STACKS, TYPE_ROLES, NODE_METRICS, EDGE_METRICS, STEP_METRICS, MOTION_METRICS, GROUP_TAB_HEIGHT, GROUP_TAB_GAP, GROUP_METRICS, SCHEMA_METRICS, SEQUENCE_METRICS, CANVAS_METRICS;
+var init_metrics = __esm({
+  "../../packages/diagrams/src/theme/metrics.ts"() {
+    "use strict";
+    FONT_STACKS = {
+      sans: "Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+      mono: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+    };
+    TYPE_ROLES = {
+      label: { role: "sans", size: 13, weight: 600, lineHeight: 18 },
+      sub: { role: "sans", size: 12, weight: 400, lineHeight: 16 },
+      edgeLabel: { role: "sans", size: 12, weight: 500, lineHeight: 16 },
+      groupLabel: { role: "sans", size: 12, weight: 600, lineHeight: 16 },
+      title: { role: "sans", size: 14, weight: 600, lineHeight: 20 },
+      tableName: { role: "sans", size: 13, weight: 600, lineHeight: 18 },
+      columnName: { role: "mono", size: 12, weight: 400, lineHeight: 18 },
+      columnType: { role: "sans", size: 12, weight: 400, lineHeight: 18 },
+      badge: { role: "sans", size: 12, weight: 600, lineHeight: 16 }
+    };
+    NODE_METRICS = {
+      minWidth: 120,
+      /** Text wraps to fit this width. */
+      maxWidth: 264,
+      /** A node grows past `maxWidth` for one unbreakable word, but never past this; beyond it text is shortened. */
+      hardMaxWidth: 400,
+      minHeight: 56,
+      /** Space between the card edge and text on both sides when there is no icon, and between text and the right edge always. */
+      paddingX: 16,
+      paddingY: 16,
+      radius: 12,
+      chipSize: 28,
+      /** Space between the card edge and the icon chip; equals the chip's vertical inset in a minimum-height card. */
+      chipInset: 14,
+      chipRadius: 8,
+      iconSize: 16,
+      chipGap: 10,
+      subGap: 2,
+      /** A technology mark from `stack=`: a small chip in a row under the text, so it never covers the node's icon or text. */
+      stackMarkSize: 22,
+      stackIconSize: 14,
+      stackMarkRadius: 6,
+      /** Space between marks, and between the text and the row of marks. */
+      stackGap: 6,
+      stackTop: 8,
+      borderWidth: 1,
+      /** A node with `change=`: its outline in the change's tone, this wide, and a round badge on its top edge with the change's sign. */
+      changeBorderWidth: 2,
+      changeBadgeRadius: 8,
+      /** From the card's right edge to the badge's centre; the badge sits in the top padding, so it never covers text. */
+      changeBadgeInset: 18,
+      /** Half the length of each stroke of the sign in the badge. */
+      changeSignHalf: 4,
+      changeSignWidth: 1.75,
+      maxLabelLines: 3,
+      /** Pills, used for terminal nodes such as "Done" or "Access denied". */
+      pillPaddingX: 22,
+      pillHeight: 36,
+      pillMinWidth: 96,
+      /** Space between a pill's icon and its text. */
+      pillIconGap: 8,
+      pillRadius: 999
+    };
+    EDGE_METRICS = {
+      strokeWidth: 1.5,
+      cornerRadius: 10,
+      arrowLength: 7,
+      arrowHalfWidth: 4.5,
+      /** Straight line kept between the last bend and the chevron's rear, so the head never sits on a curve. */
+      arrowLead: 5,
+      /** Least straight run an edge keeps before its arrowhead: the corner radius, the head, and room to breathe. */
+      endRun: 32,
+      dashPattern: "5 4",
+      /** A dotted line: round-capped dashes about a stroke wide, so each reads as a dot. */
+      dotPattern: "0.1 5",
+      labelPaddingX: 12,
+      labelHeight: 24,
+      /** Icon beside an edge label, such as the tick on a "yes" branch, and the space between it and the text. */
+      labelIconSize: 14,
+      labelIconGap: 6,
+      labelRadius: 11,
+      /** Where an edge crosses another at right angles, its horizontal run hops over the other in a half circle of this radius, bumping upward. */
+      hopRadius: 5,
+      /**
+       * A hop close to a bend of its own line is still drawn: the bend tightens, but never below this radius, which is the arch's own, so a
+       * bend never reads sharper than the hop beside it. A crossing nearer a bend than this radius, the arch, and a pixel of line leaves
+       * no room, and the lines cross plainly.
+       */
+      hopBendRadius: 5
+    };
+    STEP_METRICS = {
+      height: 20,
+      /** A one-digit badge is a disc this wide. */
+      minWidth: 20,
+      /** Space between the digits and the badge's rounded ends, the same on both sides. */
+      paddingX: 6,
+      /** Space between a message's badge and the label that follows it. */
+      labelGap: 6,
+      /** Space between a flow label pill's border and the badge nested in its left end; the pill is `EDGE_METRICS.labelHeight` high. */
+      pillInset: 2,
+      /** Space between a badge nested in a label pill and the text or icon that follows it. */
+      pillGap: 8,
+      /** From a label's baseline up to the middle of its capitals, so a badge and the label it leads share one centre line. */
+      textRise: 4.4
+    };
+    MOTION_METRICS = {
+      solid: { pattern: "6 10", distance: 16, seconds: 1.4 },
+      dashed: { pattern: EDGE_METRICS.dashPattern, distance: 18, seconds: 1.6 },
+      dotted: { pattern: EDGE_METRICS.dotPattern, distance: 15.3, seconds: 1.4 }
+    };
+    GROUP_TAB_HEIGHT = 28;
+    GROUP_TAB_GAP = 12;
+    GROUP_METRICS = {
+      radius: 16,
+      tabHeight: GROUP_TAB_HEIGHT,
+      tabGap: GROUP_TAB_GAP,
+      paddingTop: GROUP_TAB_HEIGHT + GROUP_TAB_GAP,
+      paddingSide: 20,
+      paddingBottom: 20,
+      borderWidth: 1,
+      /** Space between the tab's left and right edges and its content: the same on both sides. */
+      tabPaddingX: 12,
+      tabIconSize: 16,
+      /** Space between the tab's icon and its name. */
+      tabIconGap: 8,
+      /** Radius of the tab's bottom-right corner; its top-left corner follows `radius`, so the tab hugs the frame. */
+      tabRadius: 8,
+      /** An overlay's frame is lighter than a group's: less room between its edge and what it frames. */
+      overlayPaddingSide: 14,
+      overlayPaddingBottom: 14,
+      /** Space between an overlay's tab and the members below it. */
+      overlayTabGap: 8,
+      /** Extra tab height for a second line under the name, and for a row of marks under that. */
+      tabSubHeight: 18,
+      tabMarksHeight: 30,
+      /** The widest a tab grows, as wide as the widest node card. A longer name is cut with an ellipsis and warning W203. */
+      tabHardMaxWidth: NODE_METRICS.hardMaxWidth,
+      dashPattern: "6 5",
+      /** A dotted frame: round-capped dashes about a stroke wide, so each reads as a dot. */
+      dotPattern: "0.1 5"
+    };
+    SCHEMA_METRICS = {
+      minWidth: 220,
+      radius: 12,
+      headerHeight: 48,
+      /** Space between the header divider and the first column row. */
+      bodyPaddingTop: 10,
+      rowHeight: 28,
+      paddingX: 16,
+      paddingBottom: 10,
+      badgeWidth: 28,
+      badgeHeight: 18,
+      badgeRadius: 5,
+      badgeGap: 8,
+      typeGap: 28,
+      borderWidth: 1,
+      markerLength: 11,
+      markerSpread: 5,
+      /** Straight run a relation keeps on each side of a table before it may bend; the cardinality marker sits on it. */
+      stubLength: 26,
+      nodeSpacing: 36,
+      /** Extra space between layers beyond the two stubs. */
+      layerSpacing: 24
+    };
+    SEQUENCE_METRICS = {
+      /** Minimum space between two neighbouring actor cards. */
+      actorGap: 28,
+      /** Space between the actor cards and the first row. */
+      headerGap: 24,
+      /** Height of a message row, with the arrow line `messageLineOffset` px below the row top. */
+      messageHeight: 46,
+      messageLineOffset: 32,
+      /** How far above its arrow a numbered message's label baseline sits; a plain message's is 9, and the badge needs a little more. */
+      numberedLabelRise: 11,
+      /** A message that crosses another actor's lifeline hops over it in a half circle of this radius, bumping upward. */
+      hopRadius: 5,
+      /** A lifeline closer than this to either end of a message is not hopped: the arrowhead or the start of the line is already there. */
+      hopEndClearance: 18,
+      /** A self-message loops out to the right by this much and drops by `selfLoopHeight`. */
+      selfLoopWidth: 36,
+      selfLoopHeight: 24,
+      /** Room between the end of a self-message's label and the next lifeline. */
+      selfLabelClearance: 24,
+      /** Horizontal room a message label needs beyond its text. */
+      labelPadding: 40,
+      noteMaxWidth: 248,
+      /** A note widens past `noteMaxWidth` for one unbreakable word, up to this. */
+      noteHardMaxWidth: 360,
+      noteMinWidth: 96,
+      notePadding: 12,
+      noteAccentWidth: 3,
+      noteRadius: 8,
+      noteGap: 14,
+      /** Frame (alt, opt, loop, par) geometry. */
+      blockPadding: 16,
+      blockHeader: 30,
+      blockBranchHeader: 30,
+      blockBottomPadding: 10,
+      blockRadius: 10,
+      /** Room from the frame's left edge to its operator ("alt", "else"), and the least room after its condition to the right edge. */
+      blockHeaderInset: 12,
+      /** Room between the operator and its condition. */
+      blockKeywordGap: 8,
+      lifelineDash: "4 5",
+      lifelineOvershoot: 22
+    };
+    CANVAS_METRICS = {
+      padding: 24,
+      titleGap: 20,
+      nodeSpacing: 28,
+      layerSpacing: 64,
+      edgeNodeSpacing: 20,
+      /** Space between two parallel edges, and between the stubs of two edges that leave one side of a node. */
+      edgeSpacing: 14,
+      /** Width in px that fits a Markdown column without scaling text below readable size. */
+      targetWidth: 880
+    };
+  }
+});
+
+// ../../packages/diagrams/src/theme/group-colors.ts
+function groupFrameColors(theme, tone, depth = 0) {
+  const level2 = Math.min(Math.max(depth, 0), GROUP_DEPTH_LIMIT);
+  const hue = tone === "neutral" ? theme.ink : theme.tones[tone].accent;
+  const fillShare = (tone === "neutral" ? 0 : GROUP_FILL_TINT) + level2 * GROUP_DEPTH_FILL_STEP * (tone === "neutral" ? 0.5 : 1);
+  const borderShare = (tone === "neutral" ? 0 : GROUP_BORDER_TINT) + level2 * GROUP_DEPTH_BORDER_STEP * (tone === "neutral" ? 0.5 : 1);
+  return {
+    fill: fillShare === 0 ? theme.surfaceGroup : mix(hue, theme.surfaceGroup, fillShare),
+    border: borderShare === 0 ? theme.borderGroup : mix(hue, theme.borderGroup, borderShare)
+  };
+}
+function groupTabColors(theme, tone, iconTone2, depth = 0) {
+  const fill = theme.tones[tone].chipFill;
+  return {
+    fill,
+    border: groupFrameColors(theme, tone, depth).border,
+    text: theme.ink,
+    icon: ensureContrast(theme.tones[iconTone2 ?? tone].ink, fill, TAB_ICON_CONTRAST, theme.ink)
+  };
+}
+function groupHeadingColors(theme, tone, iconTone2, depth = 0) {
+  const fill = groupFrameColors(theme, tone, depth).fill;
+  return { fill, text: theme.ink, icon: ensureContrast(theme.tones[iconTone2 ?? tone].ink, fill, TAB_ICON_CONTRAST, theme.ink) };
+}
+var GROUP_FILL_TINT, GROUP_BORDER_TINT, GROUP_DEPTH_FILL_STEP, GROUP_DEPTH_BORDER_STEP, GROUP_DEPTH_LIMIT, TAB_ICON_CONTRAST;
+var init_group_colors = __esm({
+  "../../packages/diagrams/src/theme/group-colors.ts"() {
+    "use strict";
+    init_color();
+    GROUP_FILL_TINT = 0.07;
+    GROUP_BORDER_TINT = 0.55;
+    GROUP_DEPTH_FILL_STEP = 0.045;
+    GROUP_DEPTH_BORDER_STEP = 0.08;
+    GROUP_DEPTH_LIMIT = 4;
+    TAB_ICON_CONTRAST = 4.5;
+  }
+});
+
+// ../../packages/diagrams/src/theme/vendor-tile.ts
+var VENDOR_TILE;
+var init_vendor_tile = __esm({
+  "../../packages/diagrams/src/theme/vendor-tile.ts"() {
+    "use strict";
+    VENDOR_TILE = {
+      fill: "#ffffff",
+      border: "#cfcec6",
+      /** Share of the tile's side left empty around the artwork on each side. */
+      inset: 0.12,
+      /** Corner radius as a share of the tile's side. */
+      radius: 0.22
+    };
   }
 });
 
@@ -4451,13 +4464,17 @@ var init_palette = __esm({
 });
 
 // ../../packages/diagrams/src/theme/themes.ts
+function singleScheme(setting) {
+  return setting === "light-and-dark" ? "light" : setting;
+}
 function buildToneStyle(accent, input2) {
   const chipFill = mix(accent, input2.surfaces.surface, input2.tint);
+  const floor = input2.graphicContrast ?? GRAPHIC_CONTRAST;
   return {
     accent,
     chipFill,
-    ink: ensureContrast(accent, chipFill, GRAPHIC_CONTRAST, input2.pushToward),
-    outline: ensureContrast(accent, input2.surfaces.surface, GRAPHIC_CONTRAST, input2.pushToward)
+    ink: ensureContrast(accent, chipFill, floor, input2.pushToward),
+    outline: ensureContrast(accent, input2.surfaces.surface, floor, input2.pushToward)
   };
 }
 function buildTheme(input2) {
@@ -4479,7 +4496,7 @@ var init_themes = __esm({
     init_palette();
     THEME_NAMES = ["light", "dark"];
     PICTURE_SCHEMES = [...THEME_NAMES, "auto"];
-    PICTURE_FILE_SCHEMES = ["light-and-dark", "auto"];
+    PICTURE_FILE_SCHEMES = ["auto", "light", "dark", "light-and-dark"];
     GRAPHIC_CONTRAST = 3;
     SCHEME_INPUTS = {
       light: { name: "light", surfaces: LIGHT_SURFACES, tones: LIGHT_TONES, tint: 0.12, pushToward: "#000000" },
@@ -4488,6 +4505,98 @@ var init_themes = __esm({
     LIGHT_THEME = buildTheme(SCHEME_INPUTS.light);
     DARK_THEME = buildTheme(SCHEME_INPUTS.dark);
     BARE_GLYPH_CONTRAST = 4.5;
+  }
+});
+
+// ../../packages/diagrams/src/theme/palettes.ts
+function paletteInput(colorTheme, scheme) {
+  const base = SCHEME_INPUTS[scheme];
+  if (colorTheme === "plotwork") return base;
+  const palette = PALETTES[colorTheme][scheme];
+  const input2 = { ...base, surfaces: palette.surfaces, tones: palette.tones, tint: palette.tint ?? base.tint };
+  return palette.graphicContrast === void 0 ? input2 : { ...input2, graphicContrast: palette.graphicContrast };
+}
+function paletteTheme(colorTheme, scheme) {
+  if (colorTheme === "plotwork") return getTheme(scheme);
+  const key = `${colorTheme}|${scheme}`;
+  const built = BUILT.get(key);
+  if (built !== void 0) return built;
+  const theme = buildTheme(paletteInput(colorTheme, scheme));
+  BUILT.set(key, theme);
+  return theme;
+}
+var PALETTES, BUILT;
+var init_palettes = __esm({
+  "../../packages/diagrams/src/theme/palettes.ts"() {
+    "use strict";
+    init_themes();
+    PALETTES = {
+      slate: {
+        light: {
+          surfaces: { surface: "#ffffff", surfaceGroup: "#f4f6f9", border: "#d5dbe3", borderGroup: "#cad1db", ink: "#0f172a", inkSecondary: "#475569", edge: "#8590a0" },
+          tones: { neutral: "#475569", blue: "#2f6fd0", violet: "#5b4bc4", aqua: "#0f9488", orange: "#d4622e", green: "#1a7f37", amber: "#c98a00", red: "#d03a3a" }
+        },
+        dark: {
+          surfaces: { surface: "#1c2230", surfaceGroup: "#131824", border: "#343d4e", borderGroup: "#3e4859", ink: "#eef2f7", inkSecondary: "#b4bfcd", edge: "#7d899b" },
+          tones: { neutral: "#b4bfcd", blue: "#4b8ff0", violet: "#998cf0", aqua: "#1fa99a", orange: "#e2774a", green: "#2e9e4f", amber: "#cf9a17", red: "#e86a6a" }
+        }
+      },
+      ocean: {
+        light: {
+          surfaces: { surface: "#ffffff", surfaceGroup: "#eff6f8", border: "#cfe0e6", borderGroup: "#c1d5dc", ink: "#0b2533", inkSecondary: "#3e5a68", edge: "#7b97a4" },
+          tones: { neutral: "#3e5a68", blue: "#1666b0", violet: "#4b4fb8", aqua: "#0b8f8c", orange: "#d0673a", green: "#18804a", amber: "#c48a0a", red: "#cc3d4a" }
+        },
+        dark: {
+          surfaces: { surface: "#12232c", surfaceGroup: "#0b1920", border: "#244050", borderGroup: "#2c4b5a", ink: "#e8f3f6", inkSecondary: "#a9c3cc", edge: "#6e8e9b" },
+          tones: { neutral: "#a9c3cc", blue: "#3d8fd9", violet: "#8b8ff0", aqua: "#25aaa6", orange: "#e0835a", green: "#2f9e62", amber: "#d29d2a", red: "#e6707a" }
+        }
+      },
+      forest: {
+        light: {
+          surfaces: { surface: "#ffffff", surfaceGroup: "#f2f5f0", border: "#d5ddd1", borderGroup: "#c9d3c4", ink: "#17211a", inkSecondary: "#4a5a4c", edge: "#879585" },
+          tones: { neutral: "#4a5a4c", blue: "#2d6a8f", violet: "#6b4a8a", aqua: "#24877a", orange: "#bf5d2c", green: "#2f7d32", amber: "#b8860b", red: "#b8423a" }
+        },
+        dark: {
+          surfaces: { surface: "#1a201b", surfaceGroup: "#121713", border: "#343d35", borderGroup: "#3e4840", ink: "#eef2ec", inkSecondary: "#b9c4b6", edge: "#7f8c7d" },
+          tones: { neutral: "#b9c4b6", blue: "#4f94bd", violet: "#a585c7", aqua: "#36a593", orange: "#d47c4c", green: "#45a049", amber: "#cfa02a", red: "#de7168" }
+        }
+      },
+      sunset: {
+        light: {
+          surfaces: { surface: "#ffffff", surfaceGroup: "#fbf5f1", border: "#ebdcd2", borderGroup: "#e2cfc3", ink: "#2a1a17", inkSecondary: "#6b4f47", edge: "#a58a7f" },
+          tones: { neutral: "#6b4f47", blue: "#3f5fb0", violet: "#9b3f8a", aqua: "#1f8a8a", orange: "#e0603a", green: "#3d8a3a", amber: "#d98e04", red: "#c9303e" }
+        },
+        dark: {
+          surfaces: { surface: "#261c1a", surfaceGroup: "#1c1413", border: "#45332f", borderGroup: "#503c38", ink: "#f8eee9", inkSecondary: "#d4bcb3", edge: "#9a8077" },
+          tones: { neutral: "#d4bcb3", blue: "#6b8be0", violet: "#d276bf", aqua: "#30a8a5", orange: "#ec7d58", green: "#55a650", amber: "#e3a43a", red: "#ec6670" }
+        }
+      },
+      mono: {
+        light: {
+          surfaces: { surface: "#ffffff", surfaceGroup: "#f5f5f5", border: "#d9d9d9", borderGroup: "#cecece", ink: "#111111", inkSecondary: "#505050", edge: "#8c8c8c" },
+          tones: { neutral: "#505050", blue: "#52667d", violet: "#655b80", aqua: "#4c7570", orange: "#8a6450", green: "#3f7a45", amber: "#9a7a2a", red: "#b04545" }
+        },
+        dark: {
+          surfaces: { surface: "#1e1e1e", surfaceGroup: "#161616", border: "#383838", borderGroup: "#424242", ink: "#f2f2f2", inkSecondary: "#bdbdbd", edge: "#8a8a8a" },
+          tones: { neutral: "#bdbdbd", blue: "#8aa0b8", violet: "#a49bc0", aqua: "#86aaa4", orange: "#c09a85", green: "#6fae76", amber: "#c9a95a", red: "#e07a7a" }
+        }
+      },
+      contrast: {
+        light: {
+          surfaces: { surface: "#ffffff", surfaceGroup: "#f2f2f2", border: "#6b6b6b", borderGroup: "#595959", ink: "#000000", inkSecondary: "#2e2e2e", edge: "#4d4d4d" },
+          tones: { neutral: "#2e2e2e", blue: "#0050b3", violet: "#4b1fa8", aqua: "#006b5a", orange: "#b03a00", green: "#006400", amber: "#8a5a00", red: "#b00020" },
+          tint: 0.1,
+          graphicContrast: 4.5
+        },
+        dark: {
+          surfaces: { surface: "#0a0a0a", surfaceGroup: "#000000", border: "#a3a3a3", borderGroup: "#bdbdbd", ink: "#ffffff", inkSecondary: "#e0e0e0", edge: "#c2c2c2" },
+          tones: { neutral: "#e0e0e0", blue: "#6cb4ff", violet: "#c4a5ff", aqua: "#3fe0c5", orange: "#ffa463", green: "#6fe07a", amber: "#ffd04d", red: "#ff7a85" },
+          tint: 0.22,
+          graphicContrast: 4.5
+        }
+      }
+    };
+    BUILT = /* @__PURE__ */ new Map();
   }
 });
 
@@ -4583,13 +4692,14 @@ function brandTheme(scheme, brand) {
     }
   });
 }
-function themeFor(scheme, brand) {
-  if (brand === void 0 || brand === null) return getTheme(scheme);
+function themeFor(scheme, brand, colorTheme = DEFAULT_COLOR_THEME) {
+  if (brand === void 0 || brand === null) return paletteTheme(colorTheme, scheme);
   const key = `${scheme}|${brand.primary}|${brand.secondary ?? ""}|${brand.accent ?? ""}`;
   const cached3 = CACHE.get(key);
   if (cached3 !== void 0) return cached3;
   const checked2 = checkBrand(brand);
-  const theme = checked2.brand === null ? getTheme(scheme) : brandTheme(scheme, checked2.brand);
+  if (checked2.brand === null) return paletteTheme(colorTheme, scheme);
+  const theme = brandTheme(scheme, checked2.brand);
   if (CACHE.size >= CACHE_LIMIT) CACHE.delete(CACHE.keys().next().value);
   CACHE.set(key, theme);
   return theme;
@@ -4598,7 +4708,9 @@ var BRAND_ROLES, HUE_STEP, TONE_OF_ROLE, STATUS_HUES, STATUS_HUE_DISTANCE, STATU
 var init_brand = __esm({
   "../../packages/diagrams/src/theme/brand.ts"() {
     "use strict";
+    init_constants();
     init_color();
+    init_palettes();
     init_themes();
     BRAND_ROLES = ["primary", "secondary", "accent"];
     HUE_STEP = { secondary: 40, accent: -40 };
@@ -4628,6 +4740,7 @@ var init_theme = __esm({
     init_group_colors();
     init_vendor_tile();
     init_themes();
+    init_palettes();
     init_brand();
   }
 });
@@ -159814,6 +159927,54 @@ var init_prose = __esm({
   }
 });
 
+// ../../packages/diagrams/src/parse/color-theme.ts
+function themeHint(value) {
+  if (PICTURE_SCHEMES.includes(value)) {
+    return `${value} is a scheme, not a colour theme: light, dark, or auto is chosen where the picture is drawn (the scheme argument of a tool, --scheme, or the scheme setting). Write theme= with one of: ${COLOR_THEMES.join(", ")}.`;
+  }
+  const close2 = suggest(value, COLOR_THEMES, 3);
+  return `${close2 === null ? "" : `Did you mean "${close2}"? `}The colour themes are: ${COLOR_THEMES.join(", ")}.`;
+}
+function readColorTheme(header, report4) {
+  const kept2 = [];
+  let colorTheme = null;
+  let seen = false;
+  const tokens = header.tokens;
+  for (let index2 = 0; index2 < tokens.length; index2 += 1) {
+    const token = tokens[index2];
+    const isOption = index2 > 0 && token.kind === "word" && token.text === COLOR_THEME_OPTION && tokens[index2 + 1]?.kind === "equals";
+    if (!isOption) {
+      kept2.push(token);
+      continue;
+    }
+    const value = tokens[index2 + 2];
+    if (value === void 0 || value.kind !== "word" && value.kind !== "string") {
+      report4.push(errorAt(DIAGNOSTIC_CODES.badOptionValue, 'Option "theme" needs a value', token, `Write theme=${DEFAULT_COLOR_THEME} or another colour theme: ${COLOR_THEMES.join(", ")}.`));
+      index2 += 1;
+      continue;
+    }
+    index2 += 2;
+    if (seen) {
+      report4.push(errorAt(DIAGNOSTIC_CODES.badOptionValue, "The header names a colour theme twice", token, "Keep one theme= on the header."));
+      continue;
+    }
+    seen = true;
+    const known3 = COLOR_THEMES.find((name) => name === value.text);
+    if (known3 === void 0) report4.push(errorAt(DIAGNOSTIC_CODES.badOptionValue, `Unknown colour theme "${value.text}"`, value, themeHint(value.text)));
+    else colorTheme = known3;
+  }
+  return { header: kept2.length === tokens.length ? header : { ...header, tokens: kept2 }, colorTheme };
+}
+var init_color_theme = __esm({
+  "../../packages/diagrams/src/parse/color-theme.ts"() {
+    "use strict";
+    init_constants();
+    init_core();
+    init_theme();
+    init_suggest();
+  }
+});
+
 // ../../packages/diagrams/src/parse/parse-diagram.ts
 function parseDiagram(source) {
   const lexed = lex(source);
@@ -159838,7 +159999,9 @@ function parseDiagram(source) {
     return err(report4);
   }
   const definition = kindModule(kind);
-  const diagram = definition.parse(lexed.lines, report4);
+  const themed = readColorTheme(lexed.lines[0], report4);
+  const parsed = definition.parse([themed.header, ...lexed.lines.slice(1)], report4);
+  const diagram = themed.colorTheme === null || themed.colorTheme === DEFAULT_COLOR_THEME ? parsed : { ...parsed, meta: { ...parsed.meta, colorTheme: themed.colorTheme } };
   if (!report4.some((diagnostic) => diagnostic.severity === "error")) report4.push(...definition.checkParsed?.(diagram, header) ?? []);
   return report4.some((diagnostic) => diagnostic.severity === "error") ? err(report4) : ok(diagram);
 }
@@ -159849,6 +160012,7 @@ var init_parse_diagram = __esm({
     init_core();
     init_prose();
     init_registry2();
+    init_color_theme();
     init_lexer();
     init_suggest();
   }
@@ -160152,7 +160316,7 @@ var init_apply_defaults = __esm({
     init_core();
     init_lexer();
     init_parse_diagram();
-    SHARED_OPTIONS = ["icons", "legend", "direction", "animate", "numbered"];
+    SHARED_OPTIONS = ["icons", "legend", "direction", "animate", "numbered", "theme"];
   }
 });
 
@@ -160362,6 +160526,13 @@ var init_types3 = __esm({
 });
 
 // ../../packages/diagrams/src/settings/sources.ts
+function movedKeysError(moved3) {
+  return (issue3) => {
+    if (issue3.code !== "unrecognized_keys") return void 0;
+    const notes = (issue3.keys ?? []).flatMap((key) => moved3[key] === void 0 ? [] : [moved3[key]]);
+    return notes.length === 0 ? void 0 : notes.join("; ");
+  };
+}
 var repositoryPath, pattern2, outPath, SourceOptionsSchema, SourcePublishSchema, SourceSchema;
 var init_sources2 = __esm({
   "../../packages/diagrams/src/settings/sources.ts"() {
@@ -160390,10 +160561,10 @@ var init_sources2 = __esm({
       organization: external_exports.string().regex(/^[A-Za-z0-9_-]{1,64}$/, "Write the organisation's slug or id, such as acme").optional().describe("Publish into this organisation's library. Left out, with no alias, the organisation of brand.organization is used."),
       folder: external_exports.string().min(1).max(300).optional().describe("The folder of the library to file it in, such as Platform/Infra."),
       name: external_exports.string().min(1).max(120).optional().describe("Its name in the library; the diagram's title when left out."),
-      theme: external_exports.enum(PICTURE_SCHEMES).optional().describe("light, dark, or auto; defaults.theme, then light, when left out."),
+      scheme: external_exports.enum(PICTURE_SCHEMES).optional().describe("light, dark, or auto; the picture of defaults.scheme, then light, when left out."),
       embedSource: external_exports.boolean().optional().describe("Write the diagram source into the hosted picture. Left out, it is not."),
       required: external_exports.boolean().optional().describe("Fail the run when this source cannot be published, such as with no key. Left out, a skipped publish is a notice.")
-    }).meta({ id: "SourcePublish", description: "Where the GitHub Action publishes a generated diagram when publish is on." });
+    }, { error: movedKeysError({ theme: "publish.theme is now publish.scheme (light, dark, or auto); theme= names a colour theme in the diagram's header" }) }).meta({ id: "SourcePublish", description: "Where the GitHub Action publishes a generated diagram when publish is on." });
     SourceSchema = external_exports.strictObject({
       name: external_exports.string().regex(/^[a-z0-9][a-z0-9._-]{0,63}$/, "A name is lower-case letters, digits, dots, hyphens and underscores, such as infra").optional().describe("A short name for --source and the summary; the out path when left out."),
       from: external_exports.union([pattern2, external_exports.array(pattern2).min(1).max(GENERATE.maxPatterns)]).describe("The files to read: one pattern or a list."),
@@ -160404,14 +160575,18 @@ var init_sources2 = __esm({
       options: SourceOptionsSchema.optional(),
       overrides: repositoryPath.refine((path) => path.endsWith(".json"), { message: "An overrides file is a .json file" }).optional().describe("The overrides file, applied after every import. Left out: the out path with .overrides.json in place of .diagram, or <file>.<fence id>.overrides.json beside a Markdown file."),
       pictures: external_exports.boolean().optional().describe("For a .diagram out: also write its light and dark SVG beside it. On when left out."),
-      schemes: external_exports.enum(PICTURE_FILE_SCHEMES).optional().describe("The pictures this source writes: auto writes one <name>.svg that follows the reader's light or dark setting; light-and-dark writes <name>.svg and <name>.dark.svg. defaults.schemes, then auto, when left out."),
+      scheme: external_exports.enum(PICTURE_FILE_SCHEMES).optional().describe("The pictures this source writes: auto writes one <name>.svg that follows the reader's light or dark setting; light or dark writes one <name>.svg in that scheme; light-and-dark writes <name>.svg and <name>.dark.svg. defaults.scheme, then auto, when left out."),
       publish: SourcePublishSchema.optional()
-    }).meta({ id: "Source", description: "One diagram generated from files of the repository and kept in step with them." });
+    }, { error: movedKeysError({ schemes: "A source's schemes is now scheme, which takes auto, light, dark, or light-and-dark" }) }).meta({ id: "Source", description: "One diagram generated from files of the repository and kept in step with them." });
   }
 });
 
 // ../../packages/diagrams/src/settings/schema.ts
-var optionKey, optionValue, DefaultsSchema, SettingsBrandSchema, SettingsSchema;
+function themeError(issue3) {
+  const value = typeof issue3.input === "string" ? issue3.input : "";
+  return PICTURE_SCHEMES.includes(value) ? `"${value}" is a scheme, not a colour theme (${COLOR_THEMES.join(", ")}); write "scheme": "${value}" for the ${value} picture` : void 0;
+}
+var optionKey, optionValue, MOVED_DEFAULTS, DefaultsSchema, SettingsBrandSchema, SettingsSchema;
 var init_schema4 = __esm({
   "../../packages/diagrams/src/settings/schema.ts"() {
     "use strict";
@@ -160422,17 +160597,21 @@ var init_schema4 = __esm({
     init_sources2();
     optionKey = external_exports.string().regex(/^[a-z][a-z0-9-]*$/, "Write the header option as the header writes it, such as direction or layout").refine((key) => key !== "title", { message: "A title is the diagram's own; it has no default" });
     optionValue = external_exports.union([external_exports.string().min(1).max(SETTINGS_FILE.maxValueLength), external_exports.number(), external_exports.boolean()]);
+    MOVED_DEFAULTS = {
+      schemes: "defaults.schemes is now defaults.scheme, which takes auto, light, dark, or light-and-dark",
+      colorTheme: "defaults.colorTheme is now defaults.theme"
+    };
     DefaultsSchema = external_exports.strictObject({
       icons: external_exports.enum(ICON_MODES).optional().describe("icons= on every header that takes it: auto gives an item the icon its label names, off keeps items plain."),
       legend: external_exports.enum(SWITCH_VALUES).optional().describe("legend= on every header that takes it: off draws no legend of line roles."),
       direction: external_exports.enum(DIRECTIONS).optional().describe("direction= on every header that takes this value."),
       animate: external_exports.enum(SWITCH_VALUES).optional().describe("animate= on every header that takes it: on moves dashes along every line."),
       numbered: external_exports.enum(SWITCH_VALUES).optional().describe("numbered= on every header that takes it: on numbers every line in the order written."),
-      theme: external_exports.enum(PICTURE_SCHEMES).optional().describe("The color scheme the command line and the GitHub Action draw a single picture in."),
+      theme: external_exports.enum(COLOR_THEMES, { error: themeError }).optional().describe("theme= on every header: the colour theme a diagram is drawn in when its header names none, such as ocean or contrast. plotwork is the default."),
+      scheme: external_exports.enum(PICTURE_FILE_SCHEMES).optional().describe("The pictures a diagram gets. auto writes one <name>.svg that holds both schemes and follows the reader's light or dark setting, so GitHub shows it right in either theme. light or dark writes one picture in that scheme. light-and-dark writes <name>.svg and <name>.dark.svg from sync and generate, which a <picture> element shows by GitHub's own theme setting, and the light picture from render and publish. Left out: auto from sync and generate, light from render and publish."),
       embedSource: external_exports.boolean().optional().describe("Write the source into every SVG the command line, the GitHub Action, and the drawing tools save."),
-      schemes: external_exports.enum(PICTURE_FILE_SCHEMES).optional().describe("The pictures generate and sync write. auto, the default, writes one <name>.svg that holds both schemes and follows the reader's light or dark setting, so GitHub shows it right in either theme. light-and-dark writes <name>.svg and <name>.dark.svg, which a <picture> element shows by GitHub's own theme setting."),
       kinds: external_exports.partialRecord(external_exports.enum(DIAGRAM_KINDS), external_exports.record(optionKey, optionValue)).optional().describe('Header options for one kind, such as { "mindmap": { "layout": "radial" } }. A value the kind refuses is left out with warning S200.')
-    }).meta({ id: "SettingsDefaults", description: "Header options a diagram gets when its header does not set them." });
+    }, { error: movedKeysError(MOVED_DEFAULTS) }).meta({ id: "SettingsDefaults", description: "Header options a diagram gets when its header does not set them." });
     SettingsBrandSchema = external_exports.strictObject({
       organization: external_exports.string().regex(/^[A-Za-z0-9_-]{1,64}$/, "Write the organisation's slug or id, such as acme").describe("The organisation's slug or id. Hosted calls by a member use its brand while its owner's plan includes brand themes.")
     }).meta({ id: "SettingsBrand", description: "The organisation whose saved brand hosted calls use." });
@@ -160480,6 +160659,14 @@ var init_tool_settings = __esm({
   }
 });
 
+// ../../packages/diagrams/src/settings/detect-sources.ts
+var init_detect_sources = __esm({
+  "../../packages/diagrams/src/settings/detect-sources.ts"() {
+    "use strict";
+    init_style_rules();
+  }
+});
+
 // ../../packages/diagrams/src/settings/index.ts
 var init_settings = __esm({
   "../../packages/diagrams/src/settings/index.ts"() {
@@ -160489,6 +160676,8 @@ var init_settings = __esm({
     init_schema4();
     init_json_schema2();
     init_tool_settings();
+    init_detect_sources();
+    init_sources2();
   }
 });
 
@@ -160774,7 +160963,8 @@ function hashBlock(source, pair2, schemes) {
   return createHash("sha256").update(`${BLOCK_FORMAT_VERSION}
 ${source}
 ${pair2.light}
-${pair2.dark}${schemes === "auto" ? "\nauto" : ""}`).digest("hex").slice(0, 12);
+${pair2.dark}${schemes === "light-and-dark" ? "" : `
+${schemes}`}`).digest("hex").slice(0, 12);
 }
 function slugify2(text4) {
   const slug = text4.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -160817,8 +161007,9 @@ async function syncMarkdown(markdown, stem, hooks) {
       continue;
     }
     const { pair: pair2 } = outcome;
-    const merged = hooks.schemes === "light-and-dark" ? null : mergeSchemes(pair2.light, pair2.dark, id);
-    const hash2 = hashBlock(fence.source, pair2, merged === null ? "light-and-dark" : "auto");
+    const scheme = hooks.scheme ?? "auto";
+    const merged = scheme === "light" ? pair2.light : scheme === "dark" ? pair2.dark : scheme === "light-and-dark" ? null : mergeSchemes(pair2.light, pair2.dark, id);
+    const hash2 = hashBlock(fence.source, pair2, merged === null ? "light-and-dark" : scheme);
     const isFresh = place2.block !== null && readBlockHash(lines[place2.block.start] ?? "") === hash2;
     if (isFresh && !needsWrap) {
       unchangedCount += 1;
@@ -160885,16 +161076,1216 @@ var init_outline18 = __esm({
   }
 });
 
+// ../../packages/diagrams/src/edit/source-text.ts
+function isBare(text4) {
+  return BARE.test(text4);
+}
+function isId(text4) {
+  return ID2.test(text4);
+}
+function written2(text4, forceQuotes = false) {
+  return !forceQuotes && isBare(text4) ? text4 : quote(text4);
+}
+function indentOf4(line3) {
+  return /^[ \t]*/.exec(line3)?.[0] ?? "";
+}
+function deeper(line3) {
+  const indent = indentOf4(line3);
+  return `${indent}${indent.includes("	") ? "	" : "  "}`;
+}
+function plural2(count3, noun) {
+  return `${count3} ${noun}${count3 === 1 ? "" : "s"}`;
+}
+function lineList(lines) {
+  const sorted = [...new Set(lines)].sort((a, b) => a - b);
+  if (sorted.length === 1) return `line ${sorted[0]}`;
+  return `lines ${sorted.slice(0, -1).join(", ")} and ${sorted[sorted.length - 1]}`;
+}
+var BARE, ID2;
+var init_source_text = __esm({
+  "../../packages/diagrams/src/edit/source-text.ts"() {
+    "use strict";
+    init_emit();
+    BARE = /^[A-Za-z0-9_]+(?:[-.:,][A-Za-z0-9_]+)*$/;
+    ID2 = /^[A-Za-z_][A-Za-z0-9_]*(?:-[A-Za-z0-9_]+)*$/;
+  }
+});
+
+// ../../packages/diagrams/src/edit/find.ts
+function namesIn2(scan) {
+  const names8 = /* @__PURE__ */ new Set();
+  for (const element of scan.elements) {
+    if (!NAMED_ROLES.has(element.role)) continue;
+    if (element.id !== null) names8.add(element.id);
+    if (element.label !== null) names8.add(element.label);
+  }
+  return [...names8];
+}
+function unknownHint(scan, target2) {
+  const close2 = suggest(target2, namesIn2(scan));
+  return close2 === null ? "Use an id or a label exactly as the source writes it; outline_diagram lists them." : `Did you mean "${close2}"?`;
+}
+function findDotted(scan, target2) {
+  const dot2 = target2.indexOf(".");
+  if (dot2 <= 0) return null;
+  const [outer, inner] = [target2.slice(0, dot2), target2.slice(dot2 + 1)];
+  const block = scan.elements.findIndex((element) => element.role === "group" && (element.id === outer || element.label === outer));
+  if (block < 0) return null;
+  const found = scan.elements.findIndex((element) => element.parent === block && (element.id === inner || element.label === inner));
+  return found < 0 ? null : found;
+}
+function findTarget(scan, target2) {
+  if (target2 === "header") {
+    const header = scan.elements.findIndex((element) => element.role === "header");
+    return header < 0 ? { ok: false, message: "The source has no header line.", hint: 'Start the source with the header, such as flow "Title".' } : { ok: true, index: header };
+  }
+  const byId = scan.elements.findIndex((element) => NAMED_ROLES.has(element.role) && element.id === target2 && element.keyword !== null);
+  if (byId >= 0) return { ok: true, index: byId };
+  const dotted = findDotted(scan, target2);
+  if (dotted !== null) return { ok: true, index: dotted };
+  const byLabel = scan.elements.flatMap((element, index2) => NAMED_ROLES.has(element.role) && element.label === target2 ? [index2] : []);
+  if (byLabel.length === 1) return { ok: true, index: byLabel[0] };
+  if (byLabel.length > 1) {
+    const lines = byLabel.map((index2) => scan.elements[index2].start);
+    return { ok: false, message: `"${target2}" is the label of ${byLabel.length} statements, on ${lineList(lines)}.`, hint: "Name it by its id, or use replace_text with the exact line." };
+  }
+  const bare = scan.elements.findIndex((element) => NAMED_ROLES.has(element.role) && element.id === target2);
+  if (bare >= 0) return { ok: true, index: bare };
+  return { ok: false, message: `Nothing is named "${target2}".`, hint: unknownHint(scan, target2) };
+}
+function findBlock(scan, target2) {
+  const found = findTarget(scan, target2);
+  if (!found.ok) return found;
+  const element = scan.elements[found.index];
+  if (element.role !== "group") return { ok: false, message: `"${target2}" on line ${element.start} is not a block, so nothing can go in it.`, hint: "Name a statement that opens a block with {, such as a group, lane, layer, or section." };
+  return found;
+}
+function isKnownEnd(scan, end) {
+  if (end === "start" || end === "end") return true;
+  if (namesIn2(scan).includes(end)) return true;
+  return findDotted(scan, end) !== null;
+}
+function unknownEndHint(scan, end) {
+  return unknownHint(scan, end);
+}
+var NAMED_ROLES;
+var init_find = __esm({
+  "../../packages/diagrams/src/edit/find.ts"() {
+    "use strict";
+    init_suggest();
+    init_source_text();
+    NAMED_ROLES = /* @__PURE__ */ new Set(["node", "group", "row"]);
+  }
+});
+
+// ../../packages/diagrams/src/edit/outcome.ts
+function refused2(message2, hint2) {
+  return { ok: false, message: message2, hint: hint2 };
+}
+var REFERENCE_OPTIONS;
+var init_outcome = __esm({
+  "../../packages/diagrams/src/edit/outcome.ts"() {
+    "use strict";
+    REFERENCE_OPTIONS = /* @__PURE__ */ new Set(["after", "from", "to", "at", "actors", "parent"]);
+  }
+});
+
+// ../../packages/diagrams/src/edit/keywords.ts
+function statementKeywords() {
+  if (known !== null) return known;
+  const words = /* @__PURE__ */ new Set([...SHARED_KEYWORDS, ...implementedKinds()]);
+  for (const details of kindDetails()) {
+    for (const statement of details.statements) {
+      const first = statement.syntax.split(/[\s"<[]/)[0] ?? "";
+      for (const word2 of first.split("|")) if (/^[a-z][a-z-]*$/.test(word2)) words.add(word2);
+    }
+  }
+  known = words;
+  return known;
+}
+var SHARED_KEYWORDS, known;
+var init_keywords2 = __esm({
+  "../../packages/diagrams/src/edit/keywords.ts"() {
+    "use strict";
+    init_constants();
+    init_registry2();
+    SHARED_KEYWORDS = ["node", "group", "overlay", "desc", "direction", "table", "actor", "note", "else", "and", ...SEQUENCE_BLOCK_TYPES];
+    known = null;
+  }
+});
+
+// ../../packages/diagrams/src/edit/references.ts
+function optionKeyOf(tokens, index2) {
+  let at3 = index2 - 1;
+  while (tokens[index2]?.kind === "word" && at3 >= 1 && tokens[at3]?.kind === "comma" && tokens[at3 - 1]?.kind === "word") at3 -= 2;
+  if (tokens[at3]?.kind !== "equals") return null;
+  const key = tokens[at3 - 1];
+  return key?.kind === "word" ? key.text : null;
+}
+function idReferences(tokens, name, isHeader) {
+  const isEdge = tokens.some((token) => token.kind === "arrow");
+  const found = [];
+  tokens.forEach((token, index2) => {
+    if (token.kind !== "word") return;
+    if (isHeader || tokens[index2 + 1]?.kind === "equals") return;
+    if (index2 === 0 && !isEdge && statementKeywords().has(token.text)) return;
+    const key = optionKeyOf(tokens, index2);
+    if (key !== null && !REFERENCE_OPTIONS.has(key)) return;
+    if (key === null && index2 >= 2 && !isEdge && TYPE_WORDS2.has(token.text)) return;
+    if (token.text === name) found.push({ token, suffix: "" });
+    else if (token.text.startsWith(`${name}.`)) found.push({ token, suffix: token.text.slice(name.length) });
+  });
+  return found;
+}
+function labelReferences(tokens, label, to, quote3) {
+  const found = [];
+  tokens.forEach((token, index2) => {
+    if (token.kind !== "string") return;
+    const key = optionKeyOf(tokens, index2);
+    const start2 = token.column - 1;
+    const end = start2 + token.length;
+    if (key === null && token.text === label) found.push({ start: start2, end, text: quote3(to) });
+    if (key === null || !REFERENCE_OPTIONS.has(key)) return;
+    const items2 = token.text.split(",").map((item) => item.trim());
+    if (!items2.includes(label)) return;
+    found.push({ start: start2, end, text: quote3(items2.map((item) => item === label ? to : item).join(", ")) });
+  });
+  return found;
+}
+function spliced(line3, splices) {
+  return [...splices].sort((a, b) => b.start - a.start).reduce((text4, splice) => `${text4.slice(0, splice.start)}${splice.text}${text4.slice(splice.end)}`, line3);
+}
+var TYPE_WORDS2;
+var init_references = __esm({
+  "../../packages/diagrams/src/edit/references.ts"() {
+    "use strict";
+    init_constants();
+    init_keywords2();
+    init_outcome();
+    TYPE_WORDS2 = new Set(FLOW_NODE_TYPES);
+  }
+});
+
+// ../../packages/diagrams/src/edit/scan.ts
+function tokenText(token) {
+  if (token.kind === "word" || token.kind === "string" || token.kind === "arrow") return token.text;
+  return { colon: ":", equals: "=", comma: ",", lbrace: "{", rbrace: "}" }[token.kind];
+}
+function optionsOf2(tokens) {
+  const found = [];
+  for (let index2 = 0; index2 < tokens.length - 2; index2 += 1) {
+    const key = tokens[index2];
+    if (key.kind !== "word" || tokens[index2 + 1]?.kind !== "equals") continue;
+    const first = tokens[index2 + 2];
+    if (first.kind !== "word" && first.kind !== "string") continue;
+    let last = index2 + 2;
+    while (tokens[last + 1]?.kind === "comma" && tokens[last + 2]?.kind === "word" && tokens[last + 3]?.kind !== "equals") last += 2;
+    const values = tokens.slice(index2 + 2, last + 1).filter((token) => token.kind === "word" || token.kind === "string");
+    const end = tokens[last];
+    found.push({ key: key.text, value: values.map(tokenText).join(","), quoted: first.kind === "string", start: key.column - 1, end: end.column - 1 + end.length });
+    index2 = last;
+  }
+  return found;
+}
+function optionIndexes(tokens, options3) {
+  const inside2 = /* @__PURE__ */ new Set();
+  tokens.forEach((token, index2) => {
+    if (options3.some((option) => token.column - 1 >= option.start && token.column - 1 < option.end)) inside2.add(index2);
+  });
+  return inside2;
+}
+function shapeOf3(tokens, isHeader, inBlock) {
+  const options3 = optionsOf2(tokens);
+  const skip = optionIndexes(tokens, options3);
+  const first = tokens[0];
+  const arrowAt2 = tokens.findIndex((token) => token.kind === "arrow");
+  const restOf = (used) => tokens.filter((token, index2) => !used.has(index2) && !skip.has(index2) && token.kind !== "lbrace" && token.kind !== "rbrace").map(tokenText).join(" ");
+  if (arrowAt2 > 0 && !isHeader) {
+    const from = tokens[arrowAt2 - 1];
+    const to = tokens[arrowAt2 + 1];
+    const colon2 = tokens.findIndex((token) => token.kind === "colon");
+    const label2 = colon2 < 0 ? void 0 : tokens.slice(colon2 + 1).find((token, index2) => !skip.has(colon2 + 1 + index2) && (token.kind === "string" || token.kind === "word"));
+    const used = /* @__PURE__ */ new Set([arrowAt2 - 1, arrowAt2, arrowAt2 + 1, ...colon2 < 0 ? [] : [colon2]]);
+    if (label2 !== void 0) used.add(tokens.indexOf(label2));
+    return {
+      role: "edge",
+      keyword: null,
+      id: null,
+      label: label2 === void 0 ? null : tokenText(label2),
+      from: tokenText(from),
+      to: to === void 0 ? null : tokenText(to),
+      arrow: tokenText(tokens[arrowAt2]),
+      rest: restOf(used),
+      options: options3
+    };
+  }
+  const opens = tokens[tokens.length - 1]?.kind === "lbrace";
+  const colon = tokens.findIndex((token) => token.kind === "colon");
+  const head = colon < 0 ? tokens : tokens.slice(0, colon);
+  const labelAt = head.findIndex((token, index2) => token.kind === "string" && !skip.has(index2));
+  const label = labelAt < 0 ? null : tokenText(head[labelAt]);
+  const isKeyword3 = first.kind === "word" && (isHeader || statementKeywords().has(first.text));
+  if (isKeyword3) {
+    const second = tokens[1];
+    const hasId = second?.kind === "word" && tokens[2]?.kind !== "equals" && !skip.has(1);
+    const used = /* @__PURE__ */ new Set([0, ...hasId ? [1] : [], ...labelAt < 0 ? [] : [labelAt]]);
+    const named2 = hasId || label !== null;
+    const role = isHeader ? "header" : opens ? "group" : named2 ? "node" : "other";
+    return { role, keyword: first.text, id: hasId ? second.text : null, label, from: null, to: null, arrow: null, rest: restOf(used), options: options3 };
+  }
+  if (inBlock && first.kind === "word") {
+    return { role: opens ? "group" : "row", keyword: null, id: first.text, label, from: null, to: null, arrow: null, rest: restOf(/* @__PURE__ */ new Set([0, ...labelAt < 0 ? [] : [labelAt]])), options: options3 };
+  }
+  if (inBlock && first.kind === "string") {
+    return { role: "row", keyword: null, id: null, label: tokenText(first), from: null, to: null, arrow: null, rest: restOf(/* @__PURE__ */ new Set([0])), options: options3 };
+  }
+  return { role: "other", keyword: null, id: null, label: null, from: null, to: null, arrow: null, rest: restOf(/* @__PURE__ */ new Set()), options: options3 };
+}
+function scanSource(source) {
+  const lines = source.split("\n");
+  const lexed = lex(source).lines;
+  const tokens = new Map(lexed.map((line3) => [line3.line, line3.tokens]));
+  const elements = [];
+  const ends = /* @__PURE__ */ new Map();
+  const open2 = [];
+  lexed.forEach((line3, position) => {
+    const first = line3.tokens[0];
+    let body2 = line3.tokens;
+    if (first.kind === "rbrace") {
+      const closed = open2.pop();
+      if (closed !== void 0) ends.set(closed, line3.line);
+      body2 = line3.tokens.slice(1);
+      if (body2.length === 0 || body2[body2.length - 1]?.kind !== "lbrace") return;
+    }
+    const parent = open2[open2.length - 1] ?? null;
+    const shape = shapeOf3(body2, position === 0, parent !== null);
+    elements.push({ ...shape, start: line3.line, end: line3.line, parent });
+    if (body2[body2.length - 1]?.kind === "lbrace") open2.push(elements.length - 1);
+  });
+  const last = lines.length;
+  return {
+    lines,
+    tokens,
+    elements: elements.map((element, index2) => element.role === "group" || ends.has(index2) || open2.includes(index2) ? { ...element, end: ends.get(index2) ?? last } : element)
+  };
+}
+function descendantsOf(scan, index2) {
+  const inside2 = [];
+  scan.elements.forEach((element, at3) => {
+    let parent = element.parent;
+    while (parent !== null && parent !== index2) parent = scan.elements[parent]?.parent ?? null;
+    if (parent === index2) inside2.push(at3);
+  });
+  return inside2;
+}
+function nameOf7(element) {
+  if (element.role === "edge") return `${element.from ?? ""} ${element.arrow ?? ""} ${element.to ?? ""}`;
+  return element.id ?? (element.label === null ? element.rest : `"${element.label}"`);
+}
+var init_scan2 = __esm({
+  "../../packages/diagrams/src/edit/scan.ts"() {
+    "use strict";
+    init_lexer();
+    init_keywords2();
+  }
+});
+
+// ../../packages/diagrams/src/edit/structure.ts
+function kindOf(scan) {
+  return scan.elements.find((element) => element.role === "header")?.keyword ?? null;
+}
+function placeInside(scan, block) {
+  const element = scan.elements[block];
+  const child = scan.elements.find((candidate2) => candidate2.parent === block);
+  const indent = child === void 0 ? deeper(scan.lines[element.start - 1] ?? "") : indentOf4(scan.lines[child.start - 1] ?? "");
+  const closes2 = element.end > element.start && scan.tokens.get(element.end)?.[0]?.kind === "rbrace";
+  return { index: closes2 ? element.end - 1 : element.end, indent };
+}
+function placeAtTop(scan, skip = /* @__PURE__ */ new Set()) {
+  const declared3 = scan.elements.filter((element, index2) => element.parent === null && (element.role === "node" || element.role === "group") && !skip.has(index2));
+  const last = declared3[declared3.length - 1];
+  if (last !== void 0) return { index: last.end, indent: indentOf4(scan.lines[last.start - 1] ?? "") };
+  const header = scan.elements.find((element) => element.role === "header");
+  return { index: header?.end ?? 0, indent: "" };
+}
+function nodeLine3(kind, op) {
+  const options3 = Object.entries(op.options ?? {}).map(([key, value]) => ` ${key}=${written2(value)}`).join("");
+  if (op.statement !== void 0) {
+    if (op.statement.includes("\n")) return { ok: false, outcome: refused2("statement must be one line.", "Add a block one line at a time, or use replace_text.") };
+    return { ok: true, line: `${op.statement.trim()}${options3}` };
+  }
+  const shape = kind === null ? void 0 : NODE_STATEMENTS[kind];
+  if (shape === void 0) return { ok: false, outcome: refused2(`A ${kind ?? "source with no header"} diagram has no plain node statement.`, "Send statement with the whole line to add, as get_diagram_syntax shows it for this kind.") };
+  if (op.label === void 0) return { ok: false, outcome: refused2("add_node needs label.", "Send label, the text the item shows.") };
+  if (shape.id && (op.id === void 0 || !isId(op.id))) return { ok: false, outcome: refused2(`A ${kind} item needs an id.`, "Send id: letters, digits, and _, with single - between them.") };
+  const keyword = shape.typed === void 0 ? op.type ?? shape.keyword : shape.keyword;
+  const type = shape.typed === void 0 ? "" : ` ${op.type ?? shape.typed}`;
+  const id = shape.id ? ` ${op.id}` : "";
+  return { ok: true, line: `${keyword}${id}${type} ${quote(op.label)}${options3}` };
+}
+function addNode2(scan, op) {
+  const made = nodeLine3(kindOf(scan), op);
+  if (!made.ok) return made.outcome;
+  if (op.id !== void 0 && scan.elements.some((element) => element.id === op.id && element.keyword !== null)) return refused2(`The id "${op.id}" is already used.`, "Choose an id nothing else has.");
+  let place2;
+  if (op.into !== void 0 && op.into !== null) {
+    const block = findBlock(scan, op.into);
+    if (!block.ok) return refused2(block.message, block.hint);
+    place2 = placeInside(scan, block.index);
+  } else if (op.after !== void 0) {
+    const found = findTarget(scan, op.after);
+    if (!found.ok) return refused2(found.message, found.hint);
+    const element = scan.elements[found.index];
+    place2 = { index: element.end, indent: indentOf4(scan.lines[element.start - 1] ?? "") };
+  } else {
+    place2 = placeAtTop(scan);
+  }
+  const lines = [...scan.lines];
+  lines.splice(place2.index, 0, `${place2.indent}${made.line}`);
+  return { ok: true, source: lines.join("\n"), lines: [place2.index + 1], message: `Added line ${place2.index + 1}: ${made.line}` };
+}
+function referenceName(element) {
+  return element.id ?? element.label;
+}
+function remove(scan, op) {
+  if (op.target === void 0) return refused2("remove needs target.", "Send the id or label of the statement to remove; remove_edge removes an edge.");
+  const found = findTarget(scan, op.target);
+  if (!found.ok) return refused2(found.message, found.hint);
+  const element = scan.elements[found.index];
+  if (element.role === "header") return refused2("The header cannot be removed.", "Change it with set, or replace_text.");
+  const gone = [found.index, ...descendantsOf(scan, found.index)];
+  const names8 = new Set(gone.map((index2) => referenceName(scan.elements[index2])).filter((name) => name !== null));
+  const block = element.parent === null ? null : scan.elements[element.parent];
+  if (element.role === "row" && element.id !== null && block !== null) names8.add(`${block.id ?? block.label ?? ""}.${element.id}`);
+  const drop = /* @__PURE__ */ new Set();
+  for (let line3 = element.start; line3 <= element.end; line3 += 1) drop.add(line3);
+  const left = [];
+  let edges = 0;
+  let others = 0;
+  const isGone = (end) => end !== null && [...names8].some((name) => end === name || end.startsWith(`${name}.`));
+  scan.elements.forEach((candidate2) => {
+    if (drop.has(candidate2.start) || candidate2.role === "header") return;
+    const tokens = scan.tokens.get(candidate2.start) ?? [];
+    if (candidate2.role === "edge" ? isGone(candidate2.from) || isGone(candidate2.to) : candidate2.role === "other" && [...names8].some((name) => idReferences(tokens, name, false).length > 0 || tokens.some((token) => token.kind === "string" && token.text === name))) {
+      if (candidate2.role === "edge") edges += 1;
+      else others += 1;
+      for (let line3 = candidate2.start; line3 <= candidate2.end; line3 += 1) drop.add(line3);
+    } else if (candidate2.options.some((option) => REFERENCE_OPTIONS.has(option.key) && option.value.split(",").some((value) => names8.has(value.trim())))) {
+      left.push(candidate2.start);
+    }
+  });
+  const lines = scan.lines.filter((_, index2) => !drop.has(index2 + 1));
+  const what = [`line ${element.start}${element.end > element.start ? ` to ${element.end}` : ""}`, ...edges > 0 ? [plural2(edges, "edge")] : [], ...others > 0 ? [plural2(others, "line")] : []];
+  return {
+    ok: true,
+    source: lines.join("\n"),
+    lines: [...drop].sort((a, b) => a - b),
+    message: `Removed ${op.target}: ${what.join(", ")}.`,
+    ...left.length > 0 ? { hint: `${lineList(left)} still name it in an option such as after=; change them.` } : {}
+  };
+}
+function move2(scan, op) {
+  if (op.target === void 0 || op.into === void 0) return refused2("move needs target and into.", "Send into as the id or label of a block, or null for the top level.");
+  const found = findTarget(scan, op.target);
+  if (!found.ok) return refused2(found.message, found.hint);
+  const element = scan.elements[found.index];
+  if (element.role === "header") return refused2("The header cannot be moved.", "Move a statement instead.");
+  if (op.into === null && element.parent === null) return refused2(`${op.target} is already at the top level.`, "Name a block in into to move it inside one.");
+  if (op.into !== null) {
+    const block = findBlock(scan, op.into);
+    if (!block.ok) return refused2(block.message, block.hint);
+    if (block.index === found.index || descendantsOf(scan, found.index).includes(block.index)) return refused2(`${op.target} cannot go inside itself.`, "Name a block outside it.");
+    if (element.parent === block.index) return refused2(`${op.target} is already in ${op.into}.`, "Nothing to move.");
+  }
+  const moved3 = scan.lines.slice(element.start - 1, element.end);
+  const from = indentOf4(moved3[0] ?? "");
+  const rest = scanSource([...scan.lines.slice(0, element.start - 1), ...scan.lines.slice(element.end)].join("\n"));
+  let place2;
+  if (op.into === null) place2 = placeAtTop(rest);
+  else {
+    const block = findBlock(rest, op.into);
+    if (!block.ok) return refused2(block.message, block.hint);
+    place2 = placeInside(rest, block.index);
+  }
+  const shifted3 = moved3.map((line3) => line3.trim() === "" ? line3 : line3.startsWith(from) ? `${place2.indent}${line3.slice(from.length)}` : line3);
+  const lines = [...rest.lines];
+  lines.splice(place2.index, 0, ...shifted3);
+  const placed3 = shifted3.map((_, index2) => place2.index + 1 + index2);
+  return { ok: true, source: lines.join("\n"), lines: placed3, message: `Moved ${op.target} ${op.into === null ? "to the top level" : `into ${op.into}`}, now on ${lineList(placed3)}.` };
+}
+var NODE_STATEMENTS;
+var init_structure = __esm({
+  "../../packages/diagrams/src/edit/structure.ts"() {
+    "use strict";
+    init_find();
+    init_outcome();
+    init_references();
+    init_scan2();
+    init_source_text();
+    NODE_STATEMENTS = {
+      flow: { keyword: "node", typed: "service", id: true },
+      sequence: { keyword: "actor", typed: "service", id: true },
+      state: { keyword: "state", id: true },
+      swimlane: { keyword: "step", id: true },
+      layers: { keyword: "block", id: true },
+      c4: { keyword: "system", id: true },
+      class: { keyword: "class", id: true },
+      gantt: { keyword: "task", id: true },
+      mindmap: { keyword: "topic", id: false },
+      sankey: { keyword: "node", id: false },
+      tree: { keyword: "file", id: false },
+      quadrant: { keyword: "point", id: false },
+      journey: { keyword: "task", id: false },
+      git: { keyword: "commit", id: false },
+      matrix: { keyword: "row", id: false }
+    };
+  }
+});
+
+// ../../packages/diagrams/src/edit/edges.ts
+function endText(scan, end) {
+  const byLabelOnly = scan.elements.some((element) => element.id === null && element.label === end && element.role !== "edge");
+  return written2(end, byLabelOnly);
+}
+function addEdge(scan, op) {
+  if (op.from === void 0 || op.to === void 0) return refused2("add_edge needs from and to.", "Send the id or label of both ends.");
+  for (const end of [op.from, op.to]) if (!isKnownEnd(scan, end)) return refused2(`Nothing is named "${end}".`, unknownEndHint(scan, end));
+  const isSankey = kindOf(scan) === "sankey";
+  if (isSankey && (op.label === void 0 || !/^\d+(\.\d+)?$/.test(op.label))) return refused2("A Sankey edge needs its amount as label.", 'Send label as a number, such as "1200".');
+  const label = op.label === void 0 ? "" : ` : ${isSankey ? op.label : quote(op.label)}`;
+  const options3 = Object.entries(op.options ?? {}).map(([key, value]) => ` ${key}=${written2(value)}`).join("");
+  const text4 = `${endText(scan, op.from)} ${op.arrow ?? "->"} ${endText(scan, op.to)}${label}${options3}`;
+  const edges = scan.elements.filter((element) => element.role === "edge" && element.parent === null);
+  const last = edges[edges.length - 1];
+  const lines = [...scan.lines];
+  let at3;
+  if (last !== void 0) {
+    at3 = last.end;
+    lines.splice(at3, 0, `${indentOf4(scan.lines[last.start - 1] ?? "")}${text4}`);
+  } else {
+    let end = lines.length;
+    while (end > 0 && (lines[end - 1] ?? "").trim() === "") end -= 1;
+    lines.splice(end, 0, "", text4);
+    at3 = end + 1;
+  }
+  return { ok: true, source: lines.join("\n"), lines: [at3 + 1], message: `Added line ${at3 + 1}: ${text4}` };
+}
+function removeEdge(scan, op) {
+  if (op.from === void 0 || op.to === void 0) return refused2("remove_edge needs from and to.", "Send the id or label of both ends.");
+  const matches3 = scan.elements.filter((element) => element.role === "edge" && element.from === op.from && element.to === op.to && (op.label === void 0 || element.label === op.label));
+  if (matches3.length === 0) {
+    const near3 = scan.elements.filter((element) => element.role === "edge" && (element.from === op.from || element.to === op.to)).slice(0, 5);
+    const listed2 = near3.map((element) => `${element.from} ${element.arrow} ${element.to} (line ${element.start})`).join("; ");
+    return refused2(`There is no edge from ${op.from} to ${op.to}${op.label === void 0 ? "" : ` labelled "${op.label}"`}.`, near3.length === 0 ? "Check both ends; outline_diagram lists the connections." : `Edges near it: ${listed2}.`);
+  }
+  const drop = new Set(matches3.flatMap((element) => Array.from({ length: element.end - element.start + 1 }, (_, offset) => element.start + offset)));
+  const lines = scan.lines.filter((_, index2) => !drop.has(index2 + 1));
+  return { ok: true, source: lines.join("\n"), lines: [...drop], message: `Removed ${plural2(matches3.length, "edge")} from ${op.from} to ${op.to}, on ${lineList([...drop])}.` };
+}
+function replaceText(scan, op) {
+  if (op.find === void 0 || op.replace === void 0) return refused2("replace_text needs find and replace.", "Send the exact text to find and what to put instead.");
+  const source = scan.lines.join("\n");
+  const count3 = source.split(op.find).length - 1;
+  if (count3 === 0) return refused2("The text to find is not in the source.", "Copy it exactly, spaces and quotes included.");
+  if (count3 > 1 && op.all !== true) return refused2(`The text occurs ${count3} times.`, "Send all true to replace every one, or a longer find that occurs once.");
+  const lines = [];
+  let result = "";
+  let rest = source;
+  for (let index2 = rest.indexOf(op.find); index2 >= 0 && (op.all === true || lines.length === 0); index2 = rest.indexOf(op.find)) {
+    result += rest.slice(0, index2);
+    const line3 = result.split("\n").length;
+    result += op.replace;
+    lines.push(...Array.from({ length: op.replace.split("\n").length }, (_, offset) => line3 + offset));
+    rest = rest.slice(index2 + op.find.length);
+  }
+  result += rest;
+  return { ok: true, source: result, lines: [...new Set(lines)], message: `Replaced ${op.all === true && count3 > 1 ? `${count3} matches` : "the match"}, on ${lineList(lines)}.` };
+}
+var init_edges2 = __esm({
+  "../../packages/diagrams/src/edit/edges.ts"() {
+    "use strict";
+    init_find();
+    init_outcome();
+    init_source_text();
+    init_structure();
+  }
+});
+
+// ../../packages/diagrams/src/edit/rename-set.ts
+function applySplices(scan, byLine) {
+  const lines = scan.lines.map((line3, index2) => {
+    const splices = byLine.get(index2 + 1);
+    return splices === void 0 || splices.length === 0 ? line3 : spliced(line3, splices);
+  });
+  return { source: lines.join("\n"), lines: [...byLine.keys()].filter((line3) => (byLine.get(line3)?.length ?? 0) > 0) };
+}
+function renameId(scan, from, to, column) {
+  if (!isId(to)) return refused2(`"${to}" is not a legal id.`, "An id is letters, digits, and _, with single - between them, and starts with a letter or _.");
+  if (scan.elements.some((element) => element.id === to && element.keyword !== null)) return refused2(`The id "${to}" is already used.`, "Choose an id nothing else has, or remove the other statement first.");
+  const header = scan.elements.find((element) => element.role === "header")?.start;
+  const byLine = /* @__PURE__ */ new Map();
+  for (const [line3, tokens] of scan.tokens) {
+    const name = column === null ? from : `${from}.${column}`;
+    const places = idReferences(tokens, name, line3 === header).map(({ token, suffix }) => ({
+      start: token.column - 1,
+      end: token.column - 1 + token.length,
+      text: column === null ? `${to}${suffix}` : `${from}.${to}${suffix}`
+    }));
+    if (places.length > 0) byLine.set(line3, places);
+  }
+  const done = applySplices(scan, byLine);
+  const count3 = [...byLine.values()].reduce((total, places) => total + places.length, 0);
+  return { ok: true, source: done.source, lines: done.lines, message: `Renamed the id ${column === null ? from : `${from}.${column}`} to ${to} in ${plural2(count3, "place")}, on ${lineList(done.lines)}.` };
+}
+function renameColumn(scan, element, to) {
+  const block = element.parent === null ? null : scan.elements[element.parent];
+  const table = block?.id ?? block?.label ?? null;
+  if (table === null || element.id === null) return refused2("Only a column with a bare name can be renamed this way.", "Use replace_text with the exact line.");
+  const own2 = scan.tokens.get(element.start)?.[0];
+  const outcome = renameId(scan, table, to, element.id);
+  if (!outcome.ok || own2 === void 0) return outcome;
+  const lines = outcome.source.split("\n");
+  const at3 = element.start - 1;
+  lines[at3] = spliced(lines[at3] ?? "", [{ start: own2.column - 1, end: own2.column - 1 + own2.length, text: to }]);
+  return { ...outcome, source: lines.join("\n"), lines: [.../* @__PURE__ */ new Set([element.start, ...outcome.lines])].sort((a, b) => a - b) };
+}
+function renameLabel(scan, from, to) {
+  const byLine = /* @__PURE__ */ new Map();
+  for (const [line3, tokens] of scan.tokens) {
+    const places = labelReferences(tokens, from, to, quote);
+    if (places.length > 0) byLine.set(line3, places);
+  }
+  if (byLine.size === 0) return refused2(`No quoted text is exactly "${from}".`, "Use the label exactly as the source writes it, or replace_text.");
+  const done = applySplices(scan, byLine);
+  return { ok: true, source: done.source, lines: done.lines, message: `Renamed the label "${from}" to "${to}" on ${lineList(done.lines)}.` };
+}
+function rename(scan, op) {
+  if (op.target === void 0 || op.to === void 0) return refused2("rename needs target and to.", "Send target (the id or label now) and to (the new one).");
+  if (op.target === op.to) return refused2("target and to are the same.", "Send the new name in to.");
+  const found = findTarget(scan, op.target);
+  const element = found.ok ? scan.elements[found.index] : null;
+  if (element !== null && element.role === "row" && element.keyword === null && op.target.includes(".")) return renameColumn(scan, element, op.to);
+  if (element !== null && element.id === op.target) return renameId(scan, op.target, op.to, null);
+  if (scan.lines.some((_, index2) => (scan.tokens.get(index2 + 1) ?? []).some((token) => token.kind === "string" && token.text === op.target))) return renameLabel(scan, op.target, op.to);
+  return found.ok ? renameLabel(scan, op.target, op.to) : refused2(found.message, found.hint);
+}
+function setTarget(scan, op) {
+  if (op.target === void 0 && op.from !== void 0 && op.to !== void 0) {
+    const edge = scan.elements.find((element) => element.role === "edge" && element.from === op.from && element.to === op.to);
+    if (edge === void 0) return { ok: false, outcome: refused2(`There is no edge from ${op.from} to ${op.to}.`, "Check both ends, or add it with add_edge.") };
+    return { ok: true, element: edge };
+  }
+  if (op.target === void 0) return { ok: false, outcome: refused2("set needs target, or from and to for an edge.", 'Send target "header" to set an option of the header line.') };
+  const found = findTarget(scan, op.target);
+  if (!found.ok) return { ok: false, outcome: refused2(found.message, found.hint) };
+  return { ok: true, element: scan.elements[found.index] };
+}
+function insertAt(scan, element) {
+  const tokens = scan.tokens.get(element.start) ?? [];
+  const stop = element.role === "edge" ? -1 : tokens.findIndex((token, index2) => index2 > 0 && (token.kind === "colon" || token.kind === "lbrace"));
+  const before = stop < 0 ? tokens[tokens.length - 1] : tokens[stop - 1];
+  return before === void 0 ? (scan.lines[element.start - 1] ?? "").length : before.column - 1 + before.length;
+}
+function setOption(scan, op) {
+  if (op.option === void 0 || op.value === void 0) return refused2("set needs option and value.", "Send option (such as icon) and value; value null removes it.");
+  const picked = setTarget(scan, op);
+  if (!picked.ok) return picked.outcome;
+  const { element } = picked;
+  const existing = element.options.find((option) => option.key === op.option);
+  const line3 = scan.lines[element.start - 1] ?? "";
+  const where = `line ${element.start}`;
+  let text4;
+  if (op.value === null) {
+    if (existing === void 0) return refused2(`The statement on ${where} has no ${op.option} option.`, "Nothing to remove.");
+    const start2 = /[ \t]*$/.exec(line3.slice(0, existing.start))?.index ?? existing.start;
+    text4 = `${line3.slice(0, start2)}${line3.slice(existing.end)}`;
+  } else {
+    const value = `${op.option}=${written2(op.value, existing?.quoted === true)}`;
+    if (existing !== void 0) text4 = `${line3.slice(0, existing.start)}${value}${line3.slice(existing.end)}`;
+    else {
+      const at3 = insertAt(scan, element);
+      text4 = `${line3.slice(0, at3)} ${value}${line3.slice(at3)}`;
+    }
+  }
+  const lines = [...scan.lines];
+  lines[element.start - 1] = text4;
+  const verb = op.value === null ? `Removed ${op.option}` : existing === void 0 ? `Set ${op.option}` : `Changed ${op.option}`;
+  return { ok: true, source: lines.join("\n"), lines: [element.start], message: `${verb} on ${where}.` };
+}
+var init_rename_set = __esm({
+  "../../packages/diagrams/src/edit/rename-set.ts"() {
+    "use strict";
+    init_find();
+    init_outcome();
+    init_references();
+    init_source_text();
+  }
+});
+
+// ../../packages/diagrams/src/edit/apply.ts
+function applyEdits(source, operations) {
+  let current = source;
+  const results = [];
+  for (const op of operations) {
+    const outcome = RUN[op.op](scanSource(current), op);
+    if (outcome.ok) {
+      current = outcome.source;
+      results.push({ op: op.op, applied: true, lines: [...outcome.lines], message: outcome.message, hint: outcome.hint ?? null });
+    } else {
+      results.push({ op: op.op, applied: false, lines: [], message: outcome.message, hint: outcome.hint });
+    }
+  }
+  return { source: current, results };
+}
+var RUN;
+var init_apply = __esm({
+  "../../packages/diagrams/src/edit/apply.ts"() {
+    "use strict";
+    init_edges2();
+    init_rename_set();
+    init_scan2();
+    init_structure();
+    RUN = {
+      rename,
+      set: setOption,
+      add_node: addNode2,
+      remove,
+      add_edge: addEdge,
+      remove_edge: removeEdge,
+      move: move2,
+      replace_text: replaceText
+    };
+  }
+});
+
+// ../../packages/diagrams/src/edit/compare.ts
+function subjectOf(element) {
+  if (element.role === "header") return "header";
+  if (element.role === "edge") return "edge";
+  if (element.role === "group") return "group";
+  if (element.role === "row" || element.keyword === "row") return "row";
+  if (element.keyword !== null && SERIES_KEYWORDS.has(element.keyword)) return "series";
+  return element.role === "node" ? "node" : "line";
+}
+function renamedName(element, rename2) {
+  if (element.role === "edge") return `${rename2(element.from ?? "")} -> ${rename2(element.to ?? "")}`;
+  if (element.role === "header") return "header";
+  return element.id === null ? nameOf7(element) : rename2(element.id);
+}
+function entriesOf3(source, rename2) {
+  const { elements } = scanSource(source);
+  const seen = /* @__PURE__ */ new Map();
+  const parentOf4 = (element) => element.parent === null ? null : renamedName(elements[element.parent], rename2);
+  return elements.map((element) => {
+    const own2 = renamedName(element, rename2);
+    const base = element.role === "row" && element.keyword === null ? `${parentOf4(element) ?? ""}.${own2}` : own2;
+    const count3 = (seen.get(base) ?? 0) + 1;
+    seen.set(base, count3);
+    return { key: count3 === 1 ? base : `${base}#${count3}`, element, subject: subjectOf(element), parent: parentOf4(element) };
+  });
+}
+function valueChange(before, after) {
+  if (before.length <= LONG_VALUE && after.length <= LONG_VALUE) return `"${before}" became "${after}"`;
+  const a = before.split(" ");
+  const b = after.split(" ");
+  let start2 = 0;
+  while (start2 < a.length && start2 < b.length && a[start2] === b[start2]) start2 += 1;
+  let end = 0;
+  while (end < a.length - start2 && end < b.length - start2 && a[a.length - 1 - end] === b[b.length - 1 - end]) end += 1;
+  const was = a.slice(start2, a.length - end).join(" ");
+  const now = b.slice(start2, b.length - end).join(" ");
+  if (was === "") return `changed: "${now}" added`;
+  if (now === "") return `changed: "${was}" removed`;
+  return `changed: "${was}" became "${now}"`;
+}
+function differences(before, after) {
+  const found = [];
+  if (before.keyword !== after.keyword) found.push(`${before.keyword ?? "statement"} became ${after.keyword ?? "statement"}`);
+  if (before.role === "edge" && before.arrow !== after.arrow) found.push(`arrow ${before.arrow} became ${after.arrow}`);
+  if (before.rest !== after.rest) found.push(before.rest === "" ? `"${after.rest}" added` : after.rest === "" ? `"${before.rest}" removed` : valueChange(before.rest, after.rest));
+  const old = new Map(before.options.map((option) => [option.key, option.value]));
+  const now = new Map(after.options.map((option) => [option.key, option.value]));
+  for (const [key, value] of now) if (!old.has(key)) found.push(`${key}=${value} added`);
+  for (const [key, value] of old) if (!now.has(key)) found.push(`${key}=${value} removed`);
+  for (const [key, value] of now) {
+    const was = old.get(key);
+    if (was === void 0 || was === value) continue;
+    found.push(was.length <= LONG_VALUE && value.length <= LONG_VALUE ? `${key} ${was} became ${value}` : `${key} ${valueChange(was, value)}`);
+  }
+  return found;
+}
+function labelChange(before, after) {
+  if (before.label === after.label) return null;
+  const noun = before.role === "header" ? "title" : "label";
+  if (before.label === null) return `${noun} "${after.label}" added`;
+  if (after.label === null) return `${noun} "${before.label}" removed`;
+  return `${noun} ${valueChange(before.label, after.label)}`;
+}
+function renamedIds(before, after) {
+  const afterKeys = new Set(after.map((entry2) => entry2.key));
+  const beforeKeys = new Set(before.map((entry2) => entry2.key));
+  const declared3 = (entry2) => entry2.element.id !== null && entry2.element.keyword !== null && entry2.element.label !== null;
+  const gone = before.filter((entry2) => !afterKeys.has(entry2.key) && declared3(entry2));
+  const came = after.filter((entry2) => !beforeKeys.has(entry2.key) && declared3(entry2));
+  const twin = (a, b) => a.element.keyword === b.element.keyword && a.element.label === b.element.label;
+  const map2 = /* @__PURE__ */ new Map();
+  for (const old of gone) {
+    const matches3 = came.filter((entry2) => twin(old, entry2));
+    const only = matches3[0];
+    if (matches3.length === 1 && only !== void 0 && gone.filter((entry2) => twin(entry2, only)).length === 1) map2.set(old.element.id, only.element.id);
+  }
+  return map2;
+}
+function compareSources(before, after) {
+  const same = (name) => name;
+  const renamed = renamedIds(entriesOf3(before, same), entriesOf3(after, same));
+  const old = entriesOf3(before, (name) => renamed.get(name) ?? name);
+  const now = entriesOf3(after, same);
+  const byKey = new Map(now.map((entry2) => [entry2.key, entry2]));
+  const oldKeys = new Set(old.map((entry2) => entry2.key));
+  const changes = [];
+  for (const entry2 of old) {
+    const match = byKey.get(entry2.key);
+    const { element } = entry2;
+    if (match === void 0) {
+      changes.push({ change: "removed", subject: entry2.subject, name: entry2.key, line: element.start, detail: `was on line ${element.start}` });
+      continue;
+    }
+    const at3 = match.element.start;
+    const newId2 = element.id === null ? void 0 : renamed.get(element.id);
+    if (newId2 !== void 0 && element.role !== "edge") changes.push({ change: "renamed", subject: entry2.subject, name: match.key, line: at3, detail: `id ${element.id} became ${newId2}` });
+    const label = labelChange(element, match.element);
+    const isRename = label !== null && element.role !== "edge" && element.role !== "header";
+    if (isRename) changes.push({ change: "renamed", subject: entry2.subject, name: match.key, line: at3, detail: label });
+    if (entry2.parent !== match.parent) changes.push({ change: "moved", subject: entry2.subject, name: match.key, line: at3, detail: `from ${entry2.parent ?? "the top level"} to ${match.parent ?? "the top level"}` });
+    const rest = [...label !== null && !isRename ? [label] : [], ...differences(element, match.element)];
+    if (rest.length > 0) changes.push({ change: "changed", subject: entry2.subject, name: match.key, line: at3, detail: rest.join("; ") });
+  }
+  for (const entry2 of now) if (!oldKeys.has(entry2.key)) changes.push({ change: "added", subject: entry2.subject, name: entry2.key, line: entry2.element.start, detail: `line ${entry2.element.start}` });
+  return changes;
+}
+var SERIES_KEYWORDS, LONG_VALUE;
+var init_compare = __esm({
+  "../../packages/diagrams/src/edit/compare.ts"() {
+    "use strict";
+    init_scan2();
+    SERIES_KEYWORDS = /* @__PURE__ */ new Set(["bar", "line", "area"]);
+    LONG_VALUE = 60;
+  }
+});
+
+// ../../packages/diagrams/src/parse/guess-kind.ts
+function guessKind(source) {
+  const first = source.split("\n").find((line3) => line3.trim() !== "" && !line3.trim().startsWith("#"));
+  const word2 = first?.trim().split(/\s+/)[0];
+  return implementedKinds().find((kind) => kind === word2) ?? null;
+}
+var init_guess_kind = __esm({
+  "../../packages/diagrams/src/parse/guess-kind.ts"() {
+    "use strict";
+    init_registry2();
+  }
+});
+
+// ../../packages/diagrams/src/render/svg/picture-facts.ts
+function unescapeXml(text4) {
+  return text4.replace(/&(?:#x([0-9a-f]+)|#(\d+)|(amp|lt|gt|quot|apos));/gi, (whole2, hex3, decimal, name) => {
+    const code = hex3 !== void 0 ? Number.parseInt(hex3, 16) : decimal !== void 0 ? Number.parseInt(decimal, 10) : null;
+    if (code !== null) return Number.isSafeInteger(code) && code >= 0 && code <= 1114111 ? String.fromCodePoint(code) : whole2;
+    return ENTITIES2[(name ?? "").toLowerCase()] ?? whole2;
+  });
+}
+function dimension(value) {
+  const number4 = Number(value);
+  return value !== void 0 && Number.isFinite(number4) && number4 > 0 ? number4 : null;
+}
+function labelled(root, tag) {
+  const match = new RegExp(`<${tag}\\s[^>]*id="[^"]*-${tag}"[^>]*>([\\s\\S]*?)</${tag}>`).exec(root);
+  return match?.[1] === void 0 ? null : unescapeXml(match[1]);
+}
+function readPicture(svg) {
+  const root = fromRoot(svg);
+  if (root === null) return null;
+  const tag = root.slice(0, Math.max(0, root.indexOf(">")));
+  const attributes2 = attributesOf(tag);
+  const title = labelled(root, "title");
+  const description = labelled(root, "desc");
+  const labels2 = [...root.matchAll(/<text(?:\s[^>]*)?>([\s\S]*?)<\/text>/g)].map((match) => unescapeXml((match[1] ?? "").replace(/<[^>]*>/g, "")).trim()).filter((label) => label !== "");
+  const width = dimension(attributes2.get("width"));
+  const height = dimension(attributes2.get("height"));
+  const summary2 = attributes2.get("aria-description");
+  return {
+    title,
+    summary: summary2 === void 0 ? null : unescapeXml(summary2),
+    outline: description === null ? [] : description.split("\n").filter((line3) => line3 !== ""),
+    labels: [...new Set(labels2)].slice(0, MAX_LABELS),
+    scheme: attributes2.get("data-theme") ?? null,
+    size: width === null || height === null ? null : { width, height }
+  };
+}
+var MAX_LABELS, ENTITIES2;
+var init_picture_facts = __esm({
+  "../../packages/diagrams/src/render/svg/picture-facts.ts"() {
+    "use strict";
+    init_source_metadata();
+    MAX_LABELS = 400;
+    ENTITIES2 = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+  }
+});
+
+// ../../packages/diagrams/src/services/diagram-id.ts
+function isDiagramId(value) {
+  return DIAGRAM_ID_PATTERN.test(value);
+}
+function rootTagEnd(svg) {
+  if (!svg.startsWith("<svg ")) throw new Error("The picture does not start with an svg root element");
+  const end = svg.indexOf(">");
+  if (end === -1) throw new Error("The svg root element is never closed");
+  return end;
+}
+function readDiagramId(svg) {
+  let end;
+  try {
+    end = rootTagEnd(svg);
+  } catch {
+    return null;
+  }
+  const match = new RegExp(` ${DIAGRAM_ID_ATTRIBUTE}="([^"]*)"`).exec(svg.slice(0, end));
+  const id = match?.[1];
+  return id !== void 0 && isDiagramId(id) ? id : null;
+}
+var DIAGRAM_ID_ATTRIBUTE, DIAGRAM_ID_PATTERN, STAMP_PATTERN;
+var init_diagram_id = __esm({
+  "../../packages/diagrams/src/services/diagram-id.ts"() {
+    "use strict";
+    DIAGRAM_ID_ATTRIBUTE = "data-plotwork-id";
+    DIAGRAM_ID_PATTERN = /^[A-Za-z0-9_-]{8,64}$/;
+    STAMP_PATTERN = new RegExp(` ${DIAGRAM_ID_ATTRIBUTE}="[^"]*"`);
+  }
+});
+
+// ../../packages/diagrams/src/services/fetch-diagram-link.ts
+function refusalOfLink(text4) {
+  let link2;
+  try {
+    link2 = new URL(text4.trim());
+  } catch {
+    return `"${text4.slice(0, 80)}" is not a link. Send the link of a hosted picture, https://${DIAGRAM_LINK_HOSTS[0]}/d/<22 characters>.svg.`;
+  }
+  if (link2.protocol !== "https:") return "Only https links are fetched.";
+  if (link2.username !== "" || link2.password !== "" || link2.port !== "") return "A link with a user name, a password, or a port is not fetched.";
+  if (!DIAGRAM_LINK_HOSTS.includes(link2.hostname)) return `Only links on ${HOSTS} are fetched, because this tool reads Plotwork pictures and nothing else.`;
+  if (!DIAGRAM_LINK_PATH.test(link2.pathname)) return "The path of a hosted picture is /d/ and a 22 character token followed by .svg.";
+  if (link2.search !== "" || link2.hash !== "") return "Send the link as it was published, without a query or a fragment.";
+  return null;
+}
+async function readCapped(response, maxBytes) {
+  const declared3 = Number(response.headers.get("content-length"));
+  if (Number.isFinite(declared3) && declared3 > maxBytes) return null;
+  const reader = response.body?.getReader();
+  if (reader === void 0) {
+    const text4 = await response.text();
+    return text4.length > maxBytes ? null : text4;
+  }
+  const chunks = [];
+  let total = 0;
+  for (; ; ) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(bytes);
+}
+async function fetchDiagramLink(text4, fetchLink = (url2, init) => fetch(url2, { ...init, signal: init.signal })) {
+  const refusal2 = refusalOfLink(text4);
+  if (refusal2 !== null) return REFUSED(refusal2);
+  const seconds = READ_LIMITS.timeoutMs / 1e3;
+  try {
+    const response = await fetchLink(new URL(text4.trim()).href, { redirect: "manual", signal: AbortSignal.timeout(READ_LIMITS.timeoutMs), headers: { accept: "image/svg+xml" } });
+    if (response.status >= 300 && response.status < 400) return REFUSED("The link answered with a redirect, and redirects are not followed.");
+    if (response.status === 404) return UNREACHABLE("There is no picture at this link: it was deleted, or the link is wrong.");
+    if (response.status !== 200) return UNREACHABLE(`The link answered with status ${response.status}.`);
+    const body2 = await readCapped(response, READ_LIMITS.maxBytes);
+    return body2 === null ? REFUSED(`The picture is larger than ${READ_LIMITS.maxBytes} bytes, which is more than a Plotwork picture is.`) : { ok: true, svg: body2 };
+  } catch (error62) {
+    return UNREACHABLE(error62 instanceof Error && error62.name === "TimeoutError" ? `The link did not answer within ${seconds} seconds.` : "The link could not be fetched.");
+  }
+}
+var REFUSED, UNREACHABLE, HOSTS;
+var init_fetch_diagram_link = __esm({
+  "../../packages/diagrams/src/services/fetch-diagram-link.ts"() {
+    "use strict";
+    init_constants();
+    REFUSED = (message2) => ({ ok: false, status: "refused", message: message2 });
+    UNREACHABLE = (message2) => ({ ok: false, status: "unreachable", message: message2 });
+    HOSTS = DIAGRAM_LINK_HOSTS.join(" and ");
+  }
+});
+
+// ../../packages/diagrams/src/services/to-dto.ts
+function diagnosticToDto(diagnostic) {
+  return {
+    code: diagnostic.code,
+    severity: diagnostic.severity,
+    message: diagnostic.message,
+    line: diagnostic.line,
+    column: diagnostic.column,
+    length: diagnostic.length,
+    hint: diagnostic.hint
+  };
+}
+var init_to_dto = __esm({
+  "../../packages/diagrams/src/services/to-dto.ts"() {
+    "use strict";
+  }
+});
+
+// ../../packages/diagrams/src/services/read-diagram.ts
+function withoutSource(status, message2, next, from, svg) {
+  const facts = svg === null ? null : readPicture(svg);
+  return {
+    status,
+    hasSource: false,
+    source: null,
+    kind: null,
+    id: svg === null ? null : readDiagramId(svg),
+    from,
+    validation: null,
+    picture: facts === null ? null : {
+      title: facts.title,
+      summary: facts.summary,
+      scheme: facts.scheme,
+      size: facts.size === null ? null : { width: Math.round(facts.size.width), height: Math.round(facts.size.height) },
+      outline: [...facts.outline],
+      labels: [...facts.labels]
+    },
+    message: message2,
+    next
+  };
+}
+async function readDiagram(input2, deps = {}) {
+  const from = input2.url === void 0 ? "text" : "url";
+  let svg = input2.svg ?? "";
+  if (input2.url !== void 0) {
+    const fetched = await fetchDiagramLink(input2.url, deps.fetch);
+    if (!fetched.ok) return withoutSource(fetched.status, fetched.message, fetched.status === "refused" ? "Send the link of a hosted Plotwork picture as it was published, or send the text of the SVG as svg." : "Check the link, or send the text of the SVG as svg.", from, null);
+    svg = fetched.svg;
+  }
+  const extracted = extractSource(svg);
+  if (!extracted.ok) {
+    const { reason, message: message2 } = extracted.error;
+    if (reason === "not-a-picture") return withoutSource("not-a-picture", message2, "Send the content of the .svg file, which starts with an svg element, or the link of a hosted picture.", from, svg);
+    if (reason === "damaged") return withoutSource("damaged", message2, NO_SOURCE_NEXT, from, svg);
+    return withoutSource("no-source", message2, NO_SOURCE_NEXT, from, svg);
+  }
+  const { source } = extracted.value;
+  const parsed = parseDiagram(source);
+  const facts = readPicture(svg);
+  const id = readDiagramId(svg);
+  const idNote = id === null ? "" : ` It is the stored diagram ${id}: publishing the edited source makes a new link.`;
+  return {
+    status: "read",
+    hasSource: true,
+    source,
+    kind: parsed.ok ? parsed.value.kind : guessKind(source),
+    id,
+    from,
+    validation: parsed.ok ? { valid: true, errors: [], summary: summarizeDiagram(parsed.value) } : { valid: false, errors: parsed.error.map(diagnosticToDto), summary: null },
+    picture: {
+      title: facts?.title ?? null,
+      summary: facts?.summary ?? null,
+      scheme: facts?.scheme ?? null,
+      size: facts?.size === void 0 || facts.size === null ? null : { width: Math.round(facts.size.width), height: Math.round(facts.size.height) },
+      outline: [],
+      labels: []
+    },
+    message: parsed.ok ? `Read the source of the picture (${source.length} characters).${idNote}` : `Read the source of the picture, but it has ${parsed.error.length} ${parsed.error.length === 1 ? "error" : "errors"}.${idNote}`,
+    next: parsed.ok ? EDIT_NEXT : `Fix the errors using each line, column, and hint, then call draw_diagram with the source. ${EDIT_NEXT}`
+  };
+}
+var EDIT_NEXT, NO_SOURCE_NEXT;
+var init_read_diagram = __esm({
+  "../../packages/diagrams/src/services/read-diagram.ts"() {
+    "use strict";
+    init_source_metadata();
+    init_picture_facts();
+    init_outline18();
+    init_parse20();
+    init_guess_kind();
+    init_diagram_id();
+    init_fetch_diagram_link();
+    init_to_dto();
+    EDIT_NEXT = "Edit the source, call draw_diagram with it to check and draw it, then write the SVG file again or call publish_diagram (the link changes when a diagram is published again, so replace the old link). Set embedSource true when you save or publish, so the next reader gets the source too.";
+    NO_SOURCE_NEXT = "Look for the source where the picture came from: a diagram fence in the Markdown file that shows it, or a .diagram file in the repository. If there is none, rebuild the diagram from picture (its title, outline, and labels), call draw_diagram, and from now on save with embedSource true so the file carries its source.";
+  }
+});
+
+// ../../packages/diagrams/src/schemas/kinds.ts
+function openKindSchema(description) {
+  return external_exports.string().describe(description);
+}
+var BUILT_KINDS, KindNameSchema;
+var init_kinds2 = __esm({
+  "../../packages/diagrams/src/schemas/kinds.ts"() {
+    "use strict";
+    init_zod();
+    init_constants();
+    init_registry2();
+    BUILT_KINDS = implementedKinds();
+    KindNameSchema = openKindSchema(`A diagram kind: ${joinWords(BUILT_KINDS, "or")} today. Later versions add kinds, so expect others.`);
+  }
+});
+
+// ../../packages/diagrams/src/schemas/compare-diagrams.ts
+var SideSchema, CompareDiagramsInputSchema, CHANGE_TYPES, CHANGE_SUBJECTS, SideReportSchema, ChangeSchema, CompareDiagramsResponseSchema;
+var init_compare_diagrams = __esm({
+  "../../packages/diagrams/src/schemas/compare-diagrams.ts"() {
+    "use strict";
+    init_zod();
+    init_constants();
+    init_kinds2();
+    SideSchema = external_exports.string().min(1).max(READ_LIMITS.maxBytes);
+    CompareDiagramsInputSchema = external_exports.object({
+      before: SideSchema.describe("The old diagram: source, the text of a Plotwork SVG that carries its source, or a cdn.plotwork.dev link."),
+      after: SideSchema.describe("The new diagram, in any of the same three forms."),
+      markdown: external_exports.boolean().default(false).describe("Also return a Markdown block ready to paste as a pull request comment.")
+    }).meta({ id: "CompareDiagramsInput", description: "Two versions of a diagram to compare." });
+    CHANGE_TYPES = ["added", "removed", "renamed", "moved", "changed"];
+    CHANGE_SUBJECTS = ["header", "node", "group", "edge", "row", "series", "line"];
+    SideReportSchema = external_exports.object({
+      from: external_exports.enum(["source", "svg", "url"]),
+      read: external_exports.boolean().describe("False when no source could be read from it; message says why."),
+      kind: KindNameSchema.nullable(),
+      valid: external_exports.boolean(),
+      message: external_exports.string().nullable()
+    });
+    ChangeSchema = external_exports.object({
+      change: external_exports.enum(CHANGE_TYPES),
+      subject: external_exports.enum(CHANGE_SUBJECTS),
+      name: external_exports.string().describe("The id, the label in quotes, or for an edge its ends."),
+      line: external_exports.number().int().nullable().describe("The line in after, or in before for a removal."),
+      detail: external_exports.string()
+    });
+    CompareDiagramsResponseSchema = external_exports.object({
+      same: external_exports.boolean(),
+      before: SideReportSchema,
+      after: SideReportSchema,
+      counts: external_exports.object({ added: external_exports.number().int(), removed: external_exports.number().int(), renamed: external_exports.number().int(), moved: external_exports.number().int(), changed: external_exports.number().int() }),
+      changes: external_exports.array(ChangeSchema),
+      truncated: external_exports.boolean().describe("True when more changes were found than are listed; counts covers all of them."),
+      summary: external_exports.string().describe("The changes in plain words, for a pull request review."),
+      markdown: external_exports.string().nullable(),
+      next: external_exports.string()
+    }).meta({ id: "CompareDiagramsResponse", description: "What changed between two versions of a diagram." });
+  }
+});
+
+// ../../packages/diagrams/src/edit/compare-report.ts
+function names4(changes, show) {
+  const shown = changes.slice(0, NAMES_PER_SENTENCE).map(show);
+  const more = changes.length - shown.length;
+  const list = more > 0 ? [...shown, `${more} more`] : shown;
+  if (list.length <= 1) return list.join("");
+  return `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}`;
+}
+function counted(count3, subject) {
+  if (subject === "series") return `${count3} series`;
+  return plural2(count3, subject === "line" ? "other line" : subject);
+}
+function summarize(changes) {
+  if (changes.length === 0) return "The two versions mean the same diagram: no statement was added, removed, renamed, moved, or changed.";
+  const sentences = [];
+  for (const type of Object.keys(VERBS)) {
+    const ofType = changes.filter((change) => change.change === type);
+    if (ofType.length === 0) continue;
+    const subjects = [...new Set(ofType.map((change) => change.subject))];
+    const parts = subjects.map((subject) => {
+      const same = ofType.filter((change) => change.subject === subject);
+      return `${counted(same.length, subject)} (${names4(same, SHOWN[type])})`;
+    });
+    const joined2 = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+    sentences.push(`${VERBS[type]} ${joined2}.`);
+  }
+  return sentences.join(" ");
+}
+var NAMES_PER_SENTENCE, SHOWN, VERBS;
+var init_compare_report = __esm({
+  "../../packages/diagrams/src/edit/compare-report.ts"() {
+    "use strict";
+    init_compare_diagrams();
+    init_source_text();
+    NAMES_PER_SENTENCE = 6;
+    SHOWN = {
+      added: (change) => change.name,
+      removed: (change) => change.name,
+      renamed: (change) => change.detail,
+      moved: (change) => `${change.name} ${change.detail}`,
+      /* A changed header is `Changed 1 header (desc ...)`: its name is the word already counted, so only the detail is shown. */
+      changed: (change) => change.name === change.subject ? change.detail : `${change.name} (${change.detail})`
+    };
+    VERBS = { added: "Added", removed: "Removed", renamed: "Renamed", moved: "Moved", changed: "Changed" };
+  }
+});
+
+// ../../packages/diagrams/src/edit/compare-diagrams.ts
+var init_compare_diagrams2 = __esm({
+  "../../packages/diagrams/src/edit/compare-diagrams.ts"() {
+    "use strict";
+    init_constants();
+    init_parse20();
+    init_guess_kind();
+    init_read_diagram();
+    init_compare();
+    init_compare_report();
+    init_scan2();
+  }
+});
+
+// ../../packages/diagrams/src/edit/merge.ts
+var init_merge = __esm({
+  "../../packages/diagrams/src/edit/merge.ts"() {
+    "use strict";
+    init_apply();
+    init_compare();
+    init_references();
+    init_scan2();
+  }
+});
+
+// ../../packages/diagrams/src/edit/index.ts
+var init_edit = __esm({
+  "../../packages/diagrams/src/edit/index.ts"() {
+    "use strict";
+    init_apply();
+    init_compare();
+    init_compare_diagrams2();
+    init_compare_report();
+    init_scan2();
+    init_merge();
+  }
+});
+
 // ../../packages/diagrams/src/render/render-diagram.ts
 function iconsOf(diagram) {
   return [...iconRefsIn(diagram), ...moduleOf(diagram).iconsDrawn?.(diagram) ?? []];
 }
 async function paintScheme(diagram, scheme, options3) {
   const document2 = { idPrefix: options3.idPrefix ?? "dg", source: options3.source ?? null };
-  return moduleOf(diagram).render(diagram, themeFor(scheme, options3.brand), document2);
+  return moduleOf(diagram).render(diagram, themeFor(scheme, options3.brand, options3.theme ?? diagram.meta.colorTheme), document2);
 }
 async function paintAsked(diagram, options3) {
-  const scheme = options3.theme ?? "light";
+  const scheme = options3.scheme ?? "light";
   if (scheme !== "auto") return paintScheme(diagram, scheme, options3);
   const [light, dark] = await Promise.all([paintScheme(diagram, "light", options3), paintScheme(diagram, "dark", options3)]);
   const merged = mergeSchemes(light.svg, dark.svg, options3.idPrefix ?? "dg");
@@ -161648,7 +163039,7 @@ function qualityOf(diagram, svg) {
   return { score, grade, measures: { ...measured.measures, ...own2.measures }, hints, line: lineOf(score, grade, hints) };
 }
 async function assessQuality(diagram) {
-  const rendered = await renderDiagramDetailed(diagram, { theme: "light", idPrefix: "q" });
+  const rendered = await renderDiagramDetailed(diagram, { scheme: "light", idPrefix: "q" });
   return qualityOf(diagram, rendered.svg);
 }
 var QUALITY_GRADES, MAX_HINTS, HINT_PENALTY;
@@ -161790,683 +163181,6 @@ var init_build_vocabulary = __esm({
   }
 });
 
-// ../../packages/diagrams/src/parse/guess-kind.ts
-function guessKind(source) {
-  const first = source.split("\n").find((line3) => line3.trim() !== "" && !line3.trim().startsWith("#"));
-  const word2 = first?.trim().split(/\s+/)[0];
-  return implementedKinds().find((kind) => kind === word2) ?? null;
-}
-var init_guess_kind = __esm({
-  "../../packages/diagrams/src/parse/guess-kind.ts"() {
-    "use strict";
-    init_registry2();
-  }
-});
-
-// ../../packages/diagrams/src/render/svg/picture-facts.ts
-function unescapeXml(text4) {
-  return text4.replace(/&(?:#x([0-9a-f]+)|#(\d+)|(amp|lt|gt|quot|apos));/gi, (whole2, hex3, decimal, name) => {
-    const code = hex3 !== void 0 ? Number.parseInt(hex3, 16) : decimal !== void 0 ? Number.parseInt(decimal, 10) : null;
-    if (code !== null) return Number.isSafeInteger(code) && code >= 0 && code <= 1114111 ? String.fromCodePoint(code) : whole2;
-    return ENTITIES2[(name ?? "").toLowerCase()] ?? whole2;
-  });
-}
-function dimension(value) {
-  const number4 = Number(value);
-  return value !== void 0 && Number.isFinite(number4) && number4 > 0 ? number4 : null;
-}
-function labelled(root, tag) {
-  const match = new RegExp(`<${tag}\\s[^>]*id="[^"]*-${tag}"[^>]*>([\\s\\S]*?)</${tag}>`).exec(root);
-  return match?.[1] === void 0 ? null : unescapeXml(match[1]);
-}
-function readPicture(svg) {
-  const root = fromRoot(svg);
-  if (root === null) return null;
-  const tag = root.slice(0, Math.max(0, root.indexOf(">")));
-  const attributes2 = attributesOf(tag);
-  const title = labelled(root, "title");
-  const description = labelled(root, "desc");
-  const labels2 = [...root.matchAll(/<text(?:\s[^>]*)?>([\s\S]*?)<\/text>/g)].map((match) => unescapeXml((match[1] ?? "").replace(/<[^>]*>/g, "")).trim()).filter((label) => label !== "");
-  const width = dimension(attributes2.get("width"));
-  const height = dimension(attributes2.get("height"));
-  const summary2 = attributes2.get("aria-description");
-  return {
-    title,
-    summary: summary2 === void 0 ? null : unescapeXml(summary2),
-    outline: description === null ? [] : description.split("\n").filter((line3) => line3 !== ""),
-    labels: [...new Set(labels2)].slice(0, MAX_LABELS),
-    theme: attributes2.get("data-theme") ?? null,
-    size: width === null || height === null ? null : { width, height }
-  };
-}
-var MAX_LABELS, ENTITIES2;
-var init_picture_facts = __esm({
-  "../../packages/diagrams/src/render/svg/picture-facts.ts"() {
-    "use strict";
-    init_source_metadata();
-    MAX_LABELS = 400;
-    ENTITIES2 = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
-  }
-});
-
-// ../../packages/diagrams/src/services/diagram-id.ts
-function isDiagramId(value) {
-  return DIAGRAM_ID_PATTERN.test(value);
-}
-function rootTagEnd(svg) {
-  if (!svg.startsWith("<svg ")) throw new Error("The picture does not start with an svg root element");
-  const end = svg.indexOf(">");
-  if (end === -1) throw new Error("The svg root element is never closed");
-  return end;
-}
-function readDiagramId(svg) {
-  let end;
-  try {
-    end = rootTagEnd(svg);
-  } catch {
-    return null;
-  }
-  const match = new RegExp(` ${DIAGRAM_ID_ATTRIBUTE}="([^"]*)"`).exec(svg.slice(0, end));
-  const id = match?.[1];
-  return id !== void 0 && isDiagramId(id) ? id : null;
-}
-var DIAGRAM_ID_ATTRIBUTE, DIAGRAM_ID_PATTERN, STAMP_PATTERN;
-var init_diagram_id = __esm({
-  "../../packages/diagrams/src/services/diagram-id.ts"() {
-    "use strict";
-    DIAGRAM_ID_ATTRIBUTE = "data-plotwork-id";
-    DIAGRAM_ID_PATTERN = /^[A-Za-z0-9_-]{8,64}$/;
-    STAMP_PATTERN = new RegExp(` ${DIAGRAM_ID_ATTRIBUTE}="[^"]*"`);
-  }
-});
-
-// ../../packages/diagrams/src/services/fetch-diagram-link.ts
-function refusalOfLink(text4) {
-  let link2;
-  try {
-    link2 = new URL(text4.trim());
-  } catch {
-    return `"${text4.slice(0, 80)}" is not a link. Send the link of a hosted picture, https://${DIAGRAM_LINK_HOSTS[0]}/d/<22 characters>.svg.`;
-  }
-  if (link2.protocol !== "https:") return "Only https links are fetched.";
-  if (link2.username !== "" || link2.password !== "" || link2.port !== "") return "A link with a user name, a password, or a port is not fetched.";
-  if (!DIAGRAM_LINK_HOSTS.includes(link2.hostname)) return `Only links on ${HOSTS} are fetched, because this tool reads Plotwork pictures and nothing else.`;
-  if (!DIAGRAM_LINK_PATH.test(link2.pathname)) return "The path of a hosted picture is /d/ and a 22 character token followed by .svg.";
-  if (link2.search !== "" || link2.hash !== "") return "Send the link as it was published, without a query or a fragment.";
-  return null;
-}
-async function readCapped(response, maxBytes) {
-  const declared3 = Number(response.headers.get("content-length"));
-  if (Number.isFinite(declared3) && declared3 > maxBytes) return null;
-  const reader = response.body?.getReader();
-  if (reader === void 0) {
-    const text4 = await response.text();
-    return text4.length > maxBytes ? null : text4;
-  }
-  const chunks = [];
-  let total = 0;
-  for (; ; ) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > maxBytes) {
-      await reader.cancel();
-      return null;
-    }
-    chunks.push(value);
-  }
-  const bytes = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return new TextDecoder().decode(bytes);
-}
-async function fetchDiagramLink(text4, fetchLink = (url2, init) => fetch(url2, { ...init, signal: init.signal })) {
-  const refusal2 = refusalOfLink(text4);
-  if (refusal2 !== null) return REFUSED(refusal2);
-  const seconds = READ_LIMITS.timeoutMs / 1e3;
-  try {
-    const response = await fetchLink(new URL(text4.trim()).href, { redirect: "manual", signal: AbortSignal.timeout(READ_LIMITS.timeoutMs), headers: { accept: "image/svg+xml" } });
-    if (response.status >= 300 && response.status < 400) return REFUSED("The link answered with a redirect, and redirects are not followed.");
-    if (response.status === 404) return UNREACHABLE("There is no picture at this link: it was deleted, or the link is wrong.");
-    if (response.status !== 200) return UNREACHABLE(`The link answered with status ${response.status}.`);
-    const body2 = await readCapped(response, READ_LIMITS.maxBytes);
-    return body2 === null ? REFUSED(`The picture is larger than ${READ_LIMITS.maxBytes} bytes, which is more than a Plotwork picture is.`) : { ok: true, svg: body2 };
-  } catch (error62) {
-    return UNREACHABLE(error62 instanceof Error && error62.name === "TimeoutError" ? `The link did not answer within ${seconds} seconds.` : "The link could not be fetched.");
-  }
-}
-var REFUSED, UNREACHABLE, HOSTS;
-var init_fetch_diagram_link = __esm({
-  "../../packages/diagrams/src/services/fetch-diagram-link.ts"() {
-    "use strict";
-    init_constants();
-    REFUSED = (message2) => ({ ok: false, status: "refused", message: message2 });
-    UNREACHABLE = (message2) => ({ ok: false, status: "unreachable", message: message2 });
-    HOSTS = DIAGRAM_LINK_HOSTS.join(" and ");
-  }
-});
-
-// ../../packages/diagrams/src/services/to-dto.ts
-function diagnosticToDto(diagnostic) {
-  return {
-    code: diagnostic.code,
-    severity: diagnostic.severity,
-    message: diagnostic.message,
-    line: diagnostic.line,
-    column: diagnostic.column,
-    length: diagnostic.length,
-    hint: diagnostic.hint
-  };
-}
-var init_to_dto = __esm({
-  "../../packages/diagrams/src/services/to-dto.ts"() {
-    "use strict";
-  }
-});
-
-// ../../packages/diagrams/src/services/read-diagram.ts
-function withoutSource(status, message2, next, from, svg) {
-  const facts = svg === null ? null : readPicture(svg);
-  return {
-    status,
-    hasSource: false,
-    source: null,
-    kind: null,
-    id: svg === null ? null : readDiagramId(svg),
-    from,
-    validation: null,
-    picture: facts === null ? null : {
-      title: facts.title,
-      summary: facts.summary,
-      theme: facts.theme,
-      size: facts.size === null ? null : { width: Math.round(facts.size.width), height: Math.round(facts.size.height) },
-      outline: [...facts.outline],
-      labels: [...facts.labels]
-    },
-    message: message2,
-    next
-  };
-}
-async function readDiagram(input2, deps = {}) {
-  const from = input2.url === void 0 ? "text" : "url";
-  let svg = input2.svg ?? "";
-  if (input2.url !== void 0) {
-    const fetched = await fetchDiagramLink(input2.url, deps.fetch);
-    if (!fetched.ok) return withoutSource(fetched.status, fetched.message, fetched.status === "refused" ? "Send the link of a hosted Plotwork picture as it was published, or send the text of the SVG as svg." : "Check the link, or send the text of the SVG as svg.", from, null);
-    svg = fetched.svg;
-  }
-  const extracted = extractSource(svg);
-  if (!extracted.ok) {
-    const { reason, message: message2 } = extracted.error;
-    if (reason === "not-a-picture") return withoutSource("not-a-picture", message2, "Send the content of the .svg file, which starts with an svg element, or the link of a hosted picture.", from, svg);
-    if (reason === "damaged") return withoutSource("damaged", message2, NO_SOURCE_NEXT, from, svg);
-    return withoutSource("no-source", message2, NO_SOURCE_NEXT, from, svg);
-  }
-  const { source } = extracted.value;
-  const parsed = parseDiagram(source);
-  const facts = readPicture(svg);
-  const id = readDiagramId(svg);
-  const idNote = id === null ? "" : ` It is the stored diagram ${id}: publishing the edited source makes a new link.`;
-  return {
-    status: "read",
-    hasSource: true,
-    source,
-    kind: parsed.ok ? parsed.value.kind : guessKind(source),
-    id,
-    from,
-    validation: parsed.ok ? { valid: true, errors: [], summary: summarizeDiagram(parsed.value) } : { valid: false, errors: parsed.error.map(diagnosticToDto), summary: null },
-    picture: {
-      title: facts?.title ?? null,
-      summary: facts?.summary ?? null,
-      theme: facts?.theme ?? null,
-      size: facts?.size === void 0 || facts.size === null ? null : { width: Math.round(facts.size.width), height: Math.round(facts.size.height) },
-      outline: [],
-      labels: []
-    },
-    message: parsed.ok ? `Read the source of the picture (${source.length} characters).${idNote}` : `Read the source of the picture, but it has ${parsed.error.length} ${parsed.error.length === 1 ? "error" : "errors"}.${idNote}`,
-    next: parsed.ok ? EDIT_NEXT : `Fix the errors using each line, column, and hint, then call draw_diagram with the source. ${EDIT_NEXT}`
-  };
-}
-var EDIT_NEXT, NO_SOURCE_NEXT;
-var init_read_diagram = __esm({
-  "../../packages/diagrams/src/services/read-diagram.ts"() {
-    "use strict";
-    init_source_metadata();
-    init_picture_facts();
-    init_outline18();
-    init_parse20();
-    init_guess_kind();
-    init_diagram_id();
-    init_fetch_diagram_link();
-    init_to_dto();
-    EDIT_NEXT = "Edit the source, call draw_diagram with it to check and draw it, then write the SVG file again or call publish_diagram (the link changes when a diagram is published again, so replace the old link). Set embedSource true when you save or publish, so the next reader gets the source too.";
-    NO_SOURCE_NEXT = "Look for the source where the picture came from: a diagram fence in the Markdown file that shows it, or a .diagram file in the repository. If there is none, rebuild the diagram from picture (its title, outline, and labels), call draw_diagram, and from now on save with embedSource true so the file carries its source.";
-  }
-});
-
-// ../../packages/diagrams/src/edit/keywords.ts
-function statementKeywords() {
-  if (known !== null) return known;
-  const words = /* @__PURE__ */ new Set([...SHARED_KEYWORDS, ...implementedKinds()]);
-  for (const details of kindDetails()) {
-    for (const statement of details.statements) {
-      const first = statement.syntax.split(/[\s"<[]/)[0] ?? "";
-      for (const word2 of first.split("|")) if (/^[a-z][a-z-]*$/.test(word2)) words.add(word2);
-    }
-  }
-  known = words;
-  return known;
-}
-var SHARED_KEYWORDS, known;
-var init_keywords2 = __esm({
-  "../../packages/diagrams/src/edit/keywords.ts"() {
-    "use strict";
-    init_constants();
-    init_registry2();
-    SHARED_KEYWORDS = ["node", "group", "overlay", "desc", "direction", "table", "actor", "note", "else", "and", ...SEQUENCE_BLOCK_TYPES];
-    known = null;
-  }
-});
-
-// ../../packages/diagrams/src/edit/scan.ts
-function tokenText(token) {
-  if (token.kind === "word" || token.kind === "string" || token.kind === "arrow") return token.text;
-  return { colon: ":", equals: "=", comma: ",", lbrace: "{", rbrace: "}" }[token.kind];
-}
-function optionsOf2(tokens) {
-  const found = [];
-  for (let index2 = 0; index2 < tokens.length - 2; index2 += 1) {
-    const key = tokens[index2];
-    if (key.kind !== "word" || tokens[index2 + 1]?.kind !== "equals") continue;
-    const first = tokens[index2 + 2];
-    if (first.kind !== "word" && first.kind !== "string") continue;
-    let last = index2 + 2;
-    while (tokens[last + 1]?.kind === "comma" && tokens[last + 2]?.kind === "word" && tokens[last + 3]?.kind !== "equals") last += 2;
-    const values = tokens.slice(index2 + 2, last + 1).filter((token) => token.kind === "word" || token.kind === "string");
-    const end = tokens[last];
-    found.push({ key: key.text, value: values.map(tokenText).join(","), quoted: first.kind === "string", start: key.column - 1, end: end.column - 1 + end.length });
-    index2 = last;
-  }
-  return found;
-}
-function optionIndexes(tokens, options3) {
-  const inside2 = /* @__PURE__ */ new Set();
-  tokens.forEach((token, index2) => {
-    if (options3.some((option) => token.column - 1 >= option.start && token.column - 1 < option.end)) inside2.add(index2);
-  });
-  return inside2;
-}
-function shapeOf3(tokens, isHeader, inBlock) {
-  const options3 = optionsOf2(tokens);
-  const skip = optionIndexes(tokens, options3);
-  const first = tokens[0];
-  const arrowAt2 = tokens.findIndex((token) => token.kind === "arrow");
-  const restOf = (used) => tokens.filter((token, index2) => !used.has(index2) && !skip.has(index2) && token.kind !== "lbrace" && token.kind !== "rbrace").map(tokenText).join(" ");
-  if (arrowAt2 > 0 && !isHeader) {
-    const from = tokens[arrowAt2 - 1];
-    const to = tokens[arrowAt2 + 1];
-    const colon2 = tokens.findIndex((token) => token.kind === "colon");
-    const label2 = colon2 < 0 ? void 0 : tokens.slice(colon2 + 1).find((token, index2) => !skip.has(colon2 + 1 + index2) && (token.kind === "string" || token.kind === "word"));
-    const used = /* @__PURE__ */ new Set([arrowAt2 - 1, arrowAt2, arrowAt2 + 1, ...colon2 < 0 ? [] : [colon2]]);
-    if (label2 !== void 0) used.add(tokens.indexOf(label2));
-    return {
-      role: "edge",
-      keyword: null,
-      id: null,
-      label: label2 === void 0 ? null : tokenText(label2),
-      from: tokenText(from),
-      to: to === void 0 ? null : tokenText(to),
-      arrow: tokenText(tokens[arrowAt2]),
-      rest: restOf(used),
-      options: options3
-    };
-  }
-  const opens = tokens[tokens.length - 1]?.kind === "lbrace";
-  const colon = tokens.findIndex((token) => token.kind === "colon");
-  const head = colon < 0 ? tokens : tokens.slice(0, colon);
-  const labelAt = head.findIndex((token, index2) => token.kind === "string" && !skip.has(index2));
-  const label = labelAt < 0 ? null : tokenText(head[labelAt]);
-  const isKeyword3 = first.kind === "word" && (isHeader || statementKeywords().has(first.text));
-  if (isKeyword3) {
-    const second = tokens[1];
-    const hasId = second?.kind === "word" && tokens[2]?.kind !== "equals" && !skip.has(1);
-    const used = /* @__PURE__ */ new Set([0, ...hasId ? [1] : [], ...labelAt < 0 ? [] : [labelAt]]);
-    const named2 = hasId || label !== null;
-    const role = isHeader ? "header" : opens ? "group" : named2 ? "node" : "other";
-    return { role, keyword: first.text, id: hasId ? second.text : null, label, from: null, to: null, arrow: null, rest: restOf(used), options: options3 };
-  }
-  if (inBlock && first.kind === "word") {
-    return { role: opens ? "group" : "row", keyword: null, id: first.text, label, from: null, to: null, arrow: null, rest: restOf(/* @__PURE__ */ new Set([0, ...labelAt < 0 ? [] : [labelAt]])), options: options3 };
-  }
-  if (inBlock && first.kind === "string") {
-    return { role: "row", keyword: null, id: null, label: tokenText(first), from: null, to: null, arrow: null, rest: restOf(/* @__PURE__ */ new Set([0])), options: options3 };
-  }
-  return { role: "other", keyword: null, id: null, label: null, from: null, to: null, arrow: null, rest: restOf(/* @__PURE__ */ new Set()), options: options3 };
-}
-function scanSource(source) {
-  const lines = source.split("\n");
-  const lexed = lex(source).lines;
-  const tokens = new Map(lexed.map((line3) => [line3.line, line3.tokens]));
-  const elements = [];
-  const ends = /* @__PURE__ */ new Map();
-  const open2 = [];
-  lexed.forEach((line3, position) => {
-    const first = line3.tokens[0];
-    let body2 = line3.tokens;
-    if (first.kind === "rbrace") {
-      const closed = open2.pop();
-      if (closed !== void 0) ends.set(closed, line3.line);
-      body2 = line3.tokens.slice(1);
-      if (body2.length === 0 || body2[body2.length - 1]?.kind !== "lbrace") return;
-    }
-    const parent = open2[open2.length - 1] ?? null;
-    const shape = shapeOf3(body2, position === 0, parent !== null);
-    elements.push({ ...shape, start: line3.line, end: line3.line, parent });
-    if (body2[body2.length - 1]?.kind === "lbrace") open2.push(elements.length - 1);
-  });
-  const last = lines.length;
-  return {
-    lines,
-    tokens,
-    elements: elements.map((element, index2) => element.role === "group" || ends.has(index2) || open2.includes(index2) ? { ...element, end: ends.get(index2) ?? last } : element)
-  };
-}
-function descendantsOf(scan, index2) {
-  const inside2 = [];
-  scan.elements.forEach((element, at3) => {
-    let parent = element.parent;
-    while (parent !== null && parent !== index2) parent = scan.elements[parent]?.parent ?? null;
-    if (parent === index2) inside2.push(at3);
-  });
-  return inside2;
-}
-function nameOf7(element) {
-  if (element.role === "edge") return `${element.from ?? ""} ${element.arrow ?? ""} ${element.to ?? ""}`;
-  return element.id ?? (element.label === null ? element.rest : `"${element.label}"`);
-}
-var init_scan2 = __esm({
-  "../../packages/diagrams/src/edit/scan.ts"() {
-    "use strict";
-    init_lexer();
-    init_keywords2();
-  }
-});
-
-// ../../packages/diagrams/src/edit/compare.ts
-function subjectOf(element) {
-  if (element.role === "header") return "header";
-  if (element.role === "edge") return "edge";
-  if (element.role === "group") return "group";
-  if (element.role === "row" || element.keyword === "row") return "row";
-  if (element.keyword !== null && SERIES_KEYWORDS.has(element.keyword)) return "series";
-  return element.role === "node" ? "node" : "line";
-}
-function renamedName(element, rename2) {
-  if (element.role === "edge") return `${rename2(element.from ?? "")} -> ${rename2(element.to ?? "")}`;
-  if (element.role === "header") return "header";
-  return element.id === null ? nameOf7(element) : rename2(element.id);
-}
-function entriesOf3(source, rename2) {
-  const { elements } = scanSource(source);
-  const seen = /* @__PURE__ */ new Map();
-  const parentOf4 = (element) => element.parent === null ? null : renamedName(elements[element.parent], rename2);
-  return elements.map((element) => {
-    const own2 = renamedName(element, rename2);
-    const base = element.role === "row" && element.keyword === null ? `${parentOf4(element) ?? ""}.${own2}` : own2;
-    const count3 = (seen.get(base) ?? 0) + 1;
-    seen.set(base, count3);
-    return { key: count3 === 1 ? base : `${base}#${count3}`, element, subject: subjectOf(element), parent: parentOf4(element) };
-  });
-}
-function valueChange(before, after) {
-  if (before.length <= LONG_VALUE && after.length <= LONG_VALUE) return `"${before}" became "${after}"`;
-  const a = before.split(" ");
-  const b = after.split(" ");
-  let start2 = 0;
-  while (start2 < a.length && start2 < b.length && a[start2] === b[start2]) start2 += 1;
-  let end = 0;
-  while (end < a.length - start2 && end < b.length - start2 && a[a.length - 1 - end] === b[b.length - 1 - end]) end += 1;
-  const was = a.slice(start2, a.length - end).join(" ");
-  const now = b.slice(start2, b.length - end).join(" ");
-  if (was === "") return `changed: "${now}" added`;
-  if (now === "") return `changed: "${was}" removed`;
-  return `changed: "${was}" became "${now}"`;
-}
-function differences(before, after) {
-  const found = [];
-  if (before.keyword !== after.keyword) found.push(`${before.keyword ?? "statement"} became ${after.keyword ?? "statement"}`);
-  if (before.role === "edge" && before.arrow !== after.arrow) found.push(`arrow ${before.arrow} became ${after.arrow}`);
-  if (before.rest !== after.rest) found.push(before.rest === "" ? `"${after.rest}" added` : after.rest === "" ? `"${before.rest}" removed` : valueChange(before.rest, after.rest));
-  const old = new Map(before.options.map((option) => [option.key, option.value]));
-  const now = new Map(after.options.map((option) => [option.key, option.value]));
-  for (const [key, value] of now) if (!old.has(key)) found.push(`${key}=${value} added`);
-  for (const [key, value] of old) if (!now.has(key)) found.push(`${key}=${value} removed`);
-  for (const [key, value] of now) {
-    const was = old.get(key);
-    if (was === void 0 || was === value) continue;
-    found.push(was.length <= LONG_VALUE && value.length <= LONG_VALUE ? `${key} ${was} became ${value}` : `${key} ${valueChange(was, value)}`);
-  }
-  return found;
-}
-function labelChange(before, after) {
-  if (before.label === after.label) return null;
-  const noun = before.role === "header" ? "title" : "label";
-  if (before.label === null) return `${noun} "${after.label}" added`;
-  if (after.label === null) return `${noun} "${before.label}" removed`;
-  return `${noun} ${valueChange(before.label, after.label)}`;
-}
-function renamedIds(before, after) {
-  const afterKeys = new Set(after.map((entry2) => entry2.key));
-  const beforeKeys = new Set(before.map((entry2) => entry2.key));
-  const declared3 = (entry2) => entry2.element.id !== null && entry2.element.keyword !== null && entry2.element.label !== null;
-  const gone = before.filter((entry2) => !afterKeys.has(entry2.key) && declared3(entry2));
-  const came = after.filter((entry2) => !beforeKeys.has(entry2.key) && declared3(entry2));
-  const twin = (a, b) => a.element.keyword === b.element.keyword && a.element.label === b.element.label;
-  const map2 = /* @__PURE__ */ new Map();
-  for (const old of gone) {
-    const matches3 = came.filter((entry2) => twin(old, entry2));
-    const only = matches3[0];
-    if (matches3.length === 1 && only !== void 0 && gone.filter((entry2) => twin(entry2, only)).length === 1) map2.set(old.element.id, only.element.id);
-  }
-  return map2;
-}
-function compareSources(before, after) {
-  const same = (name) => name;
-  const renamed = renamedIds(entriesOf3(before, same), entriesOf3(after, same));
-  const old = entriesOf3(before, (name) => renamed.get(name) ?? name);
-  const now = entriesOf3(after, same);
-  const byKey = new Map(now.map((entry2) => [entry2.key, entry2]));
-  const oldKeys = new Set(old.map((entry2) => entry2.key));
-  const changes = [];
-  for (const entry2 of old) {
-    const match = byKey.get(entry2.key);
-    const { element } = entry2;
-    if (match === void 0) {
-      changes.push({ change: "removed", subject: entry2.subject, name: entry2.key, line: element.start, detail: `was on line ${element.start}` });
-      continue;
-    }
-    const at3 = match.element.start;
-    const newId2 = element.id === null ? void 0 : renamed.get(element.id);
-    if (newId2 !== void 0 && element.role !== "edge") changes.push({ change: "renamed", subject: entry2.subject, name: match.key, line: at3, detail: `id ${element.id} became ${newId2}` });
-    const label = labelChange(element, match.element);
-    const isRename = label !== null && element.role !== "edge" && element.role !== "header";
-    if (isRename) changes.push({ change: "renamed", subject: entry2.subject, name: match.key, line: at3, detail: label });
-    if (entry2.parent !== match.parent) changes.push({ change: "moved", subject: entry2.subject, name: match.key, line: at3, detail: `from ${entry2.parent ?? "the top level"} to ${match.parent ?? "the top level"}` });
-    const rest = [...label !== null && !isRename ? [label] : [], ...differences(element, match.element)];
-    if (rest.length > 0) changes.push({ change: "changed", subject: entry2.subject, name: match.key, line: at3, detail: rest.join("; ") });
-  }
-  for (const entry2 of now) if (!oldKeys.has(entry2.key)) changes.push({ change: "added", subject: entry2.subject, name: entry2.key, line: entry2.element.start, detail: `line ${entry2.element.start}` });
-  return changes;
-}
-var SERIES_KEYWORDS, LONG_VALUE;
-var init_compare = __esm({
-  "../../packages/diagrams/src/edit/compare.ts"() {
-    "use strict";
-    init_scan2();
-    SERIES_KEYWORDS = /* @__PURE__ */ new Set(["bar", "line", "area"]);
-    LONG_VALUE = 60;
-  }
-});
-
-// ../../packages/diagrams/src/schemas/kinds.ts
-function openKindSchema(description) {
-  return external_exports.string().describe(description);
-}
-var BUILT_KINDS, KindNameSchema;
-var init_kinds2 = __esm({
-  "../../packages/diagrams/src/schemas/kinds.ts"() {
-    "use strict";
-    init_zod();
-    init_constants();
-    init_registry2();
-    BUILT_KINDS = implementedKinds();
-    KindNameSchema = openKindSchema(`A diagram kind: ${joinWords(BUILT_KINDS, "or")} today. Later versions add kinds, so expect others.`);
-  }
-});
-
-// ../../packages/diagrams/src/schemas/compare-diagrams.ts
-var SideSchema, CompareDiagramsInputSchema, CHANGE_TYPES, CHANGE_SUBJECTS, SideReportSchema, ChangeSchema, CompareDiagramsResponseSchema;
-var init_compare_diagrams = __esm({
-  "../../packages/diagrams/src/schemas/compare-diagrams.ts"() {
-    "use strict";
-    init_zod();
-    init_constants();
-    init_kinds2();
-    SideSchema = external_exports.string().min(1).max(READ_LIMITS.maxBytes);
-    CompareDiagramsInputSchema = external_exports.object({
-      before: SideSchema.describe("The old diagram: source, the text of a Plotwork SVG that carries its source, or a cdn.plotwork.dev link."),
-      after: SideSchema.describe("The new diagram, in any of the same three forms."),
-      markdown: external_exports.boolean().default(false).describe("Also return a Markdown block ready to paste as a pull request comment.")
-    }).meta({ id: "CompareDiagramsInput", description: "Two versions of a diagram to compare." });
-    CHANGE_TYPES = ["added", "removed", "renamed", "moved", "changed"];
-    CHANGE_SUBJECTS = ["header", "node", "group", "edge", "row", "series", "line"];
-    SideReportSchema = external_exports.object({
-      from: external_exports.enum(["source", "svg", "url"]),
-      read: external_exports.boolean().describe("False when no source could be read from it; message says why."),
-      kind: KindNameSchema.nullable(),
-      valid: external_exports.boolean(),
-      message: external_exports.string().nullable()
-    });
-    ChangeSchema = external_exports.object({
-      change: external_exports.enum(CHANGE_TYPES),
-      subject: external_exports.enum(CHANGE_SUBJECTS),
-      name: external_exports.string().describe("The id, the label in quotes, or for an edge its ends."),
-      line: external_exports.number().int().nullable().describe("The line in after, or in before for a removal."),
-      detail: external_exports.string()
-    });
-    CompareDiagramsResponseSchema = external_exports.object({
-      same: external_exports.boolean(),
-      before: SideReportSchema,
-      after: SideReportSchema,
-      counts: external_exports.object({ added: external_exports.number().int(), removed: external_exports.number().int(), renamed: external_exports.number().int(), moved: external_exports.number().int(), changed: external_exports.number().int() }),
-      changes: external_exports.array(ChangeSchema),
-      truncated: external_exports.boolean().describe("True when more changes were found than are listed; counts covers all of them."),
-      summary: external_exports.string().describe("The changes in plain words, for a pull request review."),
-      markdown: external_exports.string().nullable(),
-      next: external_exports.string()
-    }).meta({ id: "CompareDiagramsResponse", description: "What changed between two versions of a diagram." });
-  }
-});
-
-// ../../packages/diagrams/src/edit/source-text.ts
-function isBare(text4) {
-  return BARE.test(text4);
-}
-function isId(text4) {
-  return ID2.test(text4);
-}
-function written2(text4, forceQuotes = false) {
-  return !forceQuotes && isBare(text4) ? text4 : quote(text4);
-}
-function indentOf4(line3) {
-  return /^[ \t]*/.exec(line3)?.[0] ?? "";
-}
-function deeper(line3) {
-  const indent = indentOf4(line3);
-  return `${indent}${indent.includes("	") ? "	" : "  "}`;
-}
-function plural2(count3, noun) {
-  return `${count3} ${noun}${count3 === 1 ? "" : "s"}`;
-}
-function lineList(lines) {
-  const sorted = [...new Set(lines)].sort((a, b) => a - b);
-  if (sorted.length === 1) return `line ${sorted[0]}`;
-  return `lines ${sorted.slice(0, -1).join(", ")} and ${sorted[sorted.length - 1]}`;
-}
-var BARE, ID2;
-var init_source_text = __esm({
-  "../../packages/diagrams/src/edit/source-text.ts"() {
-    "use strict";
-    init_emit();
-    BARE = /^[A-Za-z0-9_]+(?:[-.:,][A-Za-z0-9_]+)*$/;
-    ID2 = /^[A-Za-z_][A-Za-z0-9_]*(?:-[A-Za-z0-9_]+)*$/;
-  }
-});
-
-// ../../packages/diagrams/src/edit/compare-report.ts
-function names4(changes, show) {
-  const shown = changes.slice(0, NAMES_PER_SENTENCE).map(show);
-  const more = changes.length - shown.length;
-  const list = more > 0 ? [...shown, `${more} more`] : shown;
-  if (list.length <= 1) return list.join("");
-  return `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}`;
-}
-function counted(count3, subject) {
-  if (subject === "series") return `${count3} series`;
-  return plural2(count3, subject === "line" ? "other line" : subject);
-}
-function summarize(changes) {
-  if (changes.length === 0) return "The two versions mean the same diagram: no statement was added, removed, renamed, moved, or changed.";
-  const sentences = [];
-  for (const type of Object.keys(VERBS)) {
-    const ofType = changes.filter((change) => change.change === type);
-    if (ofType.length === 0) continue;
-    const subjects = [...new Set(ofType.map((change) => change.subject))];
-    const parts = subjects.map((subject) => {
-      const same = ofType.filter((change) => change.subject === subject);
-      return `${counted(same.length, subject)} (${names4(same, SHOWN[type])})`;
-    });
-    const joined2 = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
-    sentences.push(`${VERBS[type]} ${joined2}.`);
-  }
-  return sentences.join(" ");
-}
-var NAMES_PER_SENTENCE, SHOWN, VERBS;
-var init_compare_report = __esm({
-  "../../packages/diagrams/src/edit/compare-report.ts"() {
-    "use strict";
-    init_compare_diagrams();
-    init_source_text();
-    NAMES_PER_SENTENCE = 6;
-    SHOWN = {
-      added: (change) => change.name,
-      removed: (change) => change.name,
-      renamed: (change) => change.detail,
-      moved: (change) => `${change.name} ${change.detail}`,
-      /* A changed header is `Changed 1 header (desc ...)`: its name is the word already counted, so only the detail is shown. */
-      changed: (change) => change.name === change.subject ? change.detail : `${change.name} (${change.detail})`
-    };
-    VERBS = { added: "Added", removed: "Removed", renamed: "Renamed", moved: "Moved", changed: "Changed" };
-  }
-});
-
-// ../../packages/diagrams/src/edit/compare-diagrams.ts
-var init_compare_diagrams2 = __esm({
-  "../../packages/diagrams/src/edit/compare-diagrams.ts"() {
-    "use strict";
-    init_constants();
-    init_parse20();
-    init_guess_kind();
-    init_read_diagram();
-    init_compare();
-    init_compare_report();
-    init_scan2();
-  }
-});
-
 // ../../packages/diagrams/src/services/classification-stamp.ts
 var CLASSIFICATION_ATTRIBUTE, ELEMENT_PATTERN;
 var init_classification_stamp = __esm({
@@ -162492,8 +163206,8 @@ async function renderPairDetailed(source, idPrefix, brand = null) {
   const parsed = parseDiagram(source);
   if (!parsed.ok) return { outcome: { diagnostics: parsed.error }, kind: null, warnings: [] };
   const [light, dark] = await Promise.all([
-    renderDiagramDetailed(parsed.value, { theme: "light", idPrefix, source, brand }),
-    renderDiagramDetailed(parsed.value, { theme: "dark", idPrefix, source, brand })
+    renderDiagramDetailed(parsed.value, { scheme: "light", idPrefix, source, brand }),
+    renderDiagramDetailed(parsed.value, { scheme: "dark", idPrefix, source, brand })
   ]);
   return {
     outcome: {
@@ -162533,12 +163247,13 @@ async function renderDiagramSource(input2, brand = null) {
   const parsed = parseDiagram(input2.source);
   if (!parsed.ok) return err(parsed.error);
   const { svg, size, overlayCovers, missingIcons } = await renderDiagramDetailed(parsed.value, {
-    theme: input2.theme,
+    scheme: input2.scheme,
+    ...input2.theme === void 0 ? {} : { theme: input2.theme },
     brand,
     ...input2.idPrefix === void 0 ? {} : { idPrefix: input2.idPrefix },
     ...input2.embedSource ? { source: input2.source } : {}
   });
-  return ok({ svg, theme: input2.theme, size, warnings: [...unknownIconWarnings(input2.source), ...secretWarnings(input2.source), ...lintDiagram(parsed.value, size, overlayCovers), ...iconArtWarnings(missingIcons, input2.source)].map(diagnosticToDto) });
+  return ok({ svg, scheme: input2.scheme, size, warnings: [...unknownIconWarnings(input2.source), ...secretWarnings(input2.source), ...lintDiagram(parsed.value, size, overlayCovers), ...iconArtWarnings(missingIcons, input2.source)].map(diagnosticToDto) });
 }
 var init_render_diagram_svg = __esm({
   "../../packages/diagrams/src/services/render-diagram-svg.ts"() {
@@ -163175,7 +163890,7 @@ async function runSync(document2, settings, ops, cache, limit) {
   const result = await syncMarkdown(document2, settings.stem, {
     render,
     assetDir: settings.assetDir,
-    ...settings.defaults?.schemes === void 0 ? {} : { schemes: settings.defaults.schemes },
+    ...settings.defaults?.scheme === void 0 ? {} : { scheme: settings.defaults.scheme },
     ...settings.prefix === void 0 ? {} : { idPrefix: settings.prefix }
   });
   return { result, calls };
@@ -163436,8 +164151,8 @@ async function drawForView(source) {
   const parsed = parseDiagram(source);
   if (!parsed.ok) return err(parsed.error.map(diagnosticToDto));
   const [light, dark] = await Promise.all([
-    renderDiagramDetailed(parsed.value, { theme: "light", idPrefix: ID_PREFIX, source }),
-    renderDiagramDetailed(parsed.value, { theme: "dark", idPrefix: ID_PREFIX, source })
+    renderDiagramDetailed(parsed.value, { scheme: "light", idPrefix: ID_PREFIX, source }),
+    renderDiagramDetailed(parsed.value, { scheme: "dark", idPrefix: ID_PREFIX, source })
   ]);
   return ok({
     title: parsed.value.meta.title ?? "Diagram",
@@ -163554,7 +164269,7 @@ async function outlineFile(path, defaults) {
   }
   return failed2 ? EXIT.problems : EXIT.ok;
 }
-async function renderFile(path, outPath2, theme, embedSource = true, defaults) {
+async function renderFile(path, outPath2, scheme, embedSource = true, defaults, colorTheme) {
   let unit3;
   if (isViewLink(path)) {
     const read = await sourceOfViewLink(path);
@@ -163569,13 +164284,14 @@ async function renderFile(path, outPath2, theme, embedSource = true, defaults) {
     console.error(`no diagram found in ${path}`);
     return EXIT.problems;
   }
-  const parsed = parseDiagram(unit3.source);
+  const source = colorTheme === void 0 ? unit3.source : applyEdits(unit3.source, [{ op: "set", target: "header", option: "theme", value: colorTheme === "plotwork" ? null : colorTheme }]).source;
+  const parsed = parseDiagram(source);
   if (!parsed.ok) {
     report3(unit3, parsed.error);
     return EXIT.problems;
   }
   mkdirSync(dirname(outPath2), { recursive: true });
-  writeFileSync(outPath2, await renderDiagram(parsed.value, { theme, ...embedSource ? { source: unit3.source } : {} }));
+  writeFileSync(outPath2, await renderDiagram(parsed.value, { scheme, ...embedSource ? { source } : {} }));
   console.log(`wrote ${outPath2}`);
   return EXIT.ok;
 }
@@ -163609,7 +164325,7 @@ async function syncFile(path, check2, assetDir = DEFAULT_ASSET_DIR, idPrefix, ho
     render: (source, id) => renderPair(applyDefaults(source, defaults).source, id),
     assetDir,
     ...idPrefix === void 0 ? {} : { idPrefix },
-    ...defaults?.schemes === void 0 ? {} : { schemes: defaults.schemes }
+    ...defaults?.scheme === void 0 ? {} : { scheme: defaults.scheme }
   });
   const stale = result.assets.length > 0 || result.markdown !== markdown;
   if (check2) {
@@ -163650,6 +164366,7 @@ var init_commands = __esm({
     init_lint21();
     init_markdown();
     init_outline18();
+    init_edit();
     init_parse20();
     init_icon_alias_notes();
     init_quality();
@@ -163949,7 +164666,7 @@ async function exportFile(path, options3) {
     const fileName = `${slugify2(drawn.value.title)}.svg`;
     const target2 = join5(options3.out === void 0 ? "." : dirname3(options3.out), fileName);
     mkdirSync2(dirname3(target2), { recursive: true });
-    writeFileSync2(target2, drawn.value[options3.theme].svg);
+    writeFileSync2(target2, drawn.value[options3.scheme].svg);
     console.error(`wrote ${target2}`);
     image = { kind: "file", fileName };
   } else {
@@ -163980,517 +164697,6 @@ var init_export_command = __esm({
     init_view();
     init_commands();
     init_input();
-  }
-});
-
-// ../../packages/diagrams/src/edit/find.ts
-function namesIn2(scan) {
-  const names8 = /* @__PURE__ */ new Set();
-  for (const element of scan.elements) {
-    if (!NAMED_ROLES.has(element.role)) continue;
-    if (element.id !== null) names8.add(element.id);
-    if (element.label !== null) names8.add(element.label);
-  }
-  return [...names8];
-}
-function unknownHint(scan, target2) {
-  const close2 = suggest(target2, namesIn2(scan));
-  return close2 === null ? "Use an id or a label exactly as the source writes it; outline_diagram lists them." : `Did you mean "${close2}"?`;
-}
-function findDotted(scan, target2) {
-  const dot2 = target2.indexOf(".");
-  if (dot2 <= 0) return null;
-  const [outer, inner] = [target2.slice(0, dot2), target2.slice(dot2 + 1)];
-  const block = scan.elements.findIndex((element) => element.role === "group" && (element.id === outer || element.label === outer));
-  if (block < 0) return null;
-  const found = scan.elements.findIndex((element) => element.parent === block && (element.id === inner || element.label === inner));
-  return found < 0 ? null : found;
-}
-function findTarget(scan, target2) {
-  if (target2 === "header") {
-    const header = scan.elements.findIndex((element) => element.role === "header");
-    return header < 0 ? { ok: false, message: "The source has no header line.", hint: 'Start the source with the header, such as flow "Title".' } : { ok: true, index: header };
-  }
-  const byId = scan.elements.findIndex((element) => NAMED_ROLES.has(element.role) && element.id === target2 && element.keyword !== null);
-  if (byId >= 0) return { ok: true, index: byId };
-  const dotted = findDotted(scan, target2);
-  if (dotted !== null) return { ok: true, index: dotted };
-  const byLabel = scan.elements.flatMap((element, index2) => NAMED_ROLES.has(element.role) && element.label === target2 ? [index2] : []);
-  if (byLabel.length === 1) return { ok: true, index: byLabel[0] };
-  if (byLabel.length > 1) {
-    const lines = byLabel.map((index2) => scan.elements[index2].start);
-    return { ok: false, message: `"${target2}" is the label of ${byLabel.length} statements, on ${lineList(lines)}.`, hint: "Name it by its id, or use replace_text with the exact line." };
-  }
-  const bare = scan.elements.findIndex((element) => NAMED_ROLES.has(element.role) && element.id === target2);
-  if (bare >= 0) return { ok: true, index: bare };
-  return { ok: false, message: `Nothing is named "${target2}".`, hint: unknownHint(scan, target2) };
-}
-function findBlock(scan, target2) {
-  const found = findTarget(scan, target2);
-  if (!found.ok) return found;
-  const element = scan.elements[found.index];
-  if (element.role !== "group") return { ok: false, message: `"${target2}" on line ${element.start} is not a block, so nothing can go in it.`, hint: "Name a statement that opens a block with {, such as a group, lane, layer, or section." };
-  return found;
-}
-function isKnownEnd(scan, end) {
-  if (end === "start" || end === "end") return true;
-  if (namesIn2(scan).includes(end)) return true;
-  return findDotted(scan, end) !== null;
-}
-function unknownEndHint(scan, end) {
-  return unknownHint(scan, end);
-}
-var NAMED_ROLES;
-var init_find = __esm({
-  "../../packages/diagrams/src/edit/find.ts"() {
-    "use strict";
-    init_suggest();
-    init_source_text();
-    NAMED_ROLES = /* @__PURE__ */ new Set(["node", "group", "row"]);
-  }
-});
-
-// ../../packages/diagrams/src/edit/outcome.ts
-function refused2(message2, hint2) {
-  return { ok: false, message: message2, hint: hint2 };
-}
-var REFERENCE_OPTIONS;
-var init_outcome = __esm({
-  "../../packages/diagrams/src/edit/outcome.ts"() {
-    "use strict";
-    REFERENCE_OPTIONS = /* @__PURE__ */ new Set(["after", "from", "to", "at", "actors", "parent"]);
-  }
-});
-
-// ../../packages/diagrams/src/edit/references.ts
-function optionKeyOf(tokens, index2) {
-  let at3 = index2 - 1;
-  while (tokens[index2]?.kind === "word" && at3 >= 1 && tokens[at3]?.kind === "comma" && tokens[at3 - 1]?.kind === "word") at3 -= 2;
-  if (tokens[at3]?.kind !== "equals") return null;
-  const key = tokens[at3 - 1];
-  return key?.kind === "word" ? key.text : null;
-}
-function idReferences(tokens, name, isHeader) {
-  const isEdge = tokens.some((token) => token.kind === "arrow");
-  const found = [];
-  tokens.forEach((token, index2) => {
-    if (token.kind !== "word") return;
-    if (isHeader || tokens[index2 + 1]?.kind === "equals") return;
-    if (index2 === 0 && !isEdge && statementKeywords().has(token.text)) return;
-    const key = optionKeyOf(tokens, index2);
-    if (key !== null && !REFERENCE_OPTIONS.has(key)) return;
-    if (key === null && index2 >= 2 && !isEdge && TYPE_WORDS2.has(token.text)) return;
-    if (token.text === name) found.push({ token, suffix: "" });
-    else if (token.text.startsWith(`${name}.`)) found.push({ token, suffix: token.text.slice(name.length) });
-  });
-  return found;
-}
-function labelReferences(tokens, label, to, quote3) {
-  const found = [];
-  tokens.forEach((token, index2) => {
-    if (token.kind !== "string") return;
-    const key = optionKeyOf(tokens, index2);
-    const start2 = token.column - 1;
-    const end = start2 + token.length;
-    if (key === null && token.text === label) found.push({ start: start2, end, text: quote3(to) });
-    if (key === null || !REFERENCE_OPTIONS.has(key)) return;
-    const items2 = token.text.split(",").map((item) => item.trim());
-    if (!items2.includes(label)) return;
-    found.push({ start: start2, end, text: quote3(items2.map((item) => item === label ? to : item).join(", ")) });
-  });
-  return found;
-}
-function spliced(line3, splices) {
-  return [...splices].sort((a, b) => b.start - a.start).reduce((text4, splice) => `${text4.slice(0, splice.start)}${splice.text}${text4.slice(splice.end)}`, line3);
-}
-var TYPE_WORDS2;
-var init_references = __esm({
-  "../../packages/diagrams/src/edit/references.ts"() {
-    "use strict";
-    init_constants();
-    init_keywords2();
-    init_outcome();
-    TYPE_WORDS2 = new Set(FLOW_NODE_TYPES);
-  }
-});
-
-// ../../packages/diagrams/src/edit/structure.ts
-function kindOf(scan) {
-  return scan.elements.find((element) => element.role === "header")?.keyword ?? null;
-}
-function placeInside(scan, block) {
-  const element = scan.elements[block];
-  const child = scan.elements.find((candidate2) => candidate2.parent === block);
-  const indent = child === void 0 ? deeper(scan.lines[element.start - 1] ?? "") : indentOf4(scan.lines[child.start - 1] ?? "");
-  const closes2 = element.end > element.start && scan.tokens.get(element.end)?.[0]?.kind === "rbrace";
-  return { index: closes2 ? element.end - 1 : element.end, indent };
-}
-function placeAtTop(scan, skip = /* @__PURE__ */ new Set()) {
-  const declared3 = scan.elements.filter((element, index2) => element.parent === null && (element.role === "node" || element.role === "group") && !skip.has(index2));
-  const last = declared3[declared3.length - 1];
-  if (last !== void 0) return { index: last.end, indent: indentOf4(scan.lines[last.start - 1] ?? "") };
-  const header = scan.elements.find((element) => element.role === "header");
-  return { index: header?.end ?? 0, indent: "" };
-}
-function nodeLine3(kind, op) {
-  const options3 = Object.entries(op.options ?? {}).map(([key, value]) => ` ${key}=${written2(value)}`).join("");
-  if (op.statement !== void 0) {
-    if (op.statement.includes("\n")) return { ok: false, outcome: refused2("statement must be one line.", "Add a block one line at a time, or use replace_text.") };
-    return { ok: true, line: `${op.statement.trim()}${options3}` };
-  }
-  const shape = kind === null ? void 0 : NODE_STATEMENTS[kind];
-  if (shape === void 0) return { ok: false, outcome: refused2(`A ${kind ?? "source with no header"} diagram has no plain node statement.`, "Send statement with the whole line to add, as get_diagram_syntax shows it for this kind.") };
-  if (op.label === void 0) return { ok: false, outcome: refused2("add_node needs label.", "Send label, the text the item shows.") };
-  if (shape.id && (op.id === void 0 || !isId(op.id))) return { ok: false, outcome: refused2(`A ${kind} item needs an id.`, "Send id: letters, digits, and _, with single - between them.") };
-  const keyword = shape.typed === void 0 ? op.type ?? shape.keyword : shape.keyword;
-  const type = shape.typed === void 0 ? "" : ` ${op.type ?? shape.typed}`;
-  const id = shape.id ? ` ${op.id}` : "";
-  return { ok: true, line: `${keyword}${id}${type} ${quote(op.label)}${options3}` };
-}
-function addNode2(scan, op) {
-  const made = nodeLine3(kindOf(scan), op);
-  if (!made.ok) return made.outcome;
-  if (op.id !== void 0 && scan.elements.some((element) => element.id === op.id && element.keyword !== null)) return refused2(`The id "${op.id}" is already used.`, "Choose an id nothing else has.");
-  let place2;
-  if (op.into !== void 0 && op.into !== null) {
-    const block = findBlock(scan, op.into);
-    if (!block.ok) return refused2(block.message, block.hint);
-    place2 = placeInside(scan, block.index);
-  } else if (op.after !== void 0) {
-    const found = findTarget(scan, op.after);
-    if (!found.ok) return refused2(found.message, found.hint);
-    const element = scan.elements[found.index];
-    place2 = { index: element.end, indent: indentOf4(scan.lines[element.start - 1] ?? "") };
-  } else {
-    place2 = placeAtTop(scan);
-  }
-  const lines = [...scan.lines];
-  lines.splice(place2.index, 0, `${place2.indent}${made.line}`);
-  return { ok: true, source: lines.join("\n"), lines: [place2.index + 1], message: `Added line ${place2.index + 1}: ${made.line}` };
-}
-function referenceName(element) {
-  return element.id ?? element.label;
-}
-function remove(scan, op) {
-  if (op.target === void 0) return refused2("remove needs target.", "Send the id or label of the statement to remove; remove_edge removes an edge.");
-  const found = findTarget(scan, op.target);
-  if (!found.ok) return refused2(found.message, found.hint);
-  const element = scan.elements[found.index];
-  if (element.role === "header") return refused2("The header cannot be removed.", "Change it with set, or replace_text.");
-  const gone = [found.index, ...descendantsOf(scan, found.index)];
-  const names8 = new Set(gone.map((index2) => referenceName(scan.elements[index2])).filter((name) => name !== null));
-  const block = element.parent === null ? null : scan.elements[element.parent];
-  if (element.role === "row" && element.id !== null && block !== null) names8.add(`${block.id ?? block.label ?? ""}.${element.id}`);
-  const drop = /* @__PURE__ */ new Set();
-  for (let line3 = element.start; line3 <= element.end; line3 += 1) drop.add(line3);
-  const left = [];
-  let edges = 0;
-  let others = 0;
-  const isGone = (end) => end !== null && [...names8].some((name) => end === name || end.startsWith(`${name}.`));
-  scan.elements.forEach((candidate2) => {
-    if (drop.has(candidate2.start) || candidate2.role === "header") return;
-    const tokens = scan.tokens.get(candidate2.start) ?? [];
-    if (candidate2.role === "edge" ? isGone(candidate2.from) || isGone(candidate2.to) : candidate2.role === "other" && [...names8].some((name) => idReferences(tokens, name, false).length > 0 || tokens.some((token) => token.kind === "string" && token.text === name))) {
-      if (candidate2.role === "edge") edges += 1;
-      else others += 1;
-      for (let line3 = candidate2.start; line3 <= candidate2.end; line3 += 1) drop.add(line3);
-    } else if (candidate2.options.some((option) => REFERENCE_OPTIONS.has(option.key) && option.value.split(",").some((value) => names8.has(value.trim())))) {
-      left.push(candidate2.start);
-    }
-  });
-  const lines = scan.lines.filter((_, index2) => !drop.has(index2 + 1));
-  const what = [`line ${element.start}${element.end > element.start ? ` to ${element.end}` : ""}`, ...edges > 0 ? [plural2(edges, "edge")] : [], ...others > 0 ? [plural2(others, "line")] : []];
-  return {
-    ok: true,
-    source: lines.join("\n"),
-    lines: [...drop].sort((a, b) => a - b),
-    message: `Removed ${op.target}: ${what.join(", ")}.`,
-    ...left.length > 0 ? { hint: `${lineList(left)} still name it in an option such as after=; change them.` } : {}
-  };
-}
-function move2(scan, op) {
-  if (op.target === void 0 || op.into === void 0) return refused2("move needs target and into.", "Send into as the id or label of a block, or null for the top level.");
-  const found = findTarget(scan, op.target);
-  if (!found.ok) return refused2(found.message, found.hint);
-  const element = scan.elements[found.index];
-  if (element.role === "header") return refused2("The header cannot be moved.", "Move a statement instead.");
-  if (op.into === null && element.parent === null) return refused2(`${op.target} is already at the top level.`, "Name a block in into to move it inside one.");
-  if (op.into !== null) {
-    const block = findBlock(scan, op.into);
-    if (!block.ok) return refused2(block.message, block.hint);
-    if (block.index === found.index || descendantsOf(scan, found.index).includes(block.index)) return refused2(`${op.target} cannot go inside itself.`, "Name a block outside it.");
-    if (element.parent === block.index) return refused2(`${op.target} is already in ${op.into}.`, "Nothing to move.");
-  }
-  const moved3 = scan.lines.slice(element.start - 1, element.end);
-  const from = indentOf4(moved3[0] ?? "");
-  const rest = scanSource([...scan.lines.slice(0, element.start - 1), ...scan.lines.slice(element.end)].join("\n"));
-  let place2;
-  if (op.into === null) place2 = placeAtTop(rest);
-  else {
-    const block = findBlock(rest, op.into);
-    if (!block.ok) return refused2(block.message, block.hint);
-    place2 = placeInside(rest, block.index);
-  }
-  const shifted3 = moved3.map((line3) => line3.trim() === "" ? line3 : line3.startsWith(from) ? `${place2.indent}${line3.slice(from.length)}` : line3);
-  const lines = [...rest.lines];
-  lines.splice(place2.index, 0, ...shifted3);
-  const placed3 = shifted3.map((_, index2) => place2.index + 1 + index2);
-  return { ok: true, source: lines.join("\n"), lines: placed3, message: `Moved ${op.target} ${op.into === null ? "to the top level" : `into ${op.into}`}, now on ${lineList(placed3)}.` };
-}
-var NODE_STATEMENTS;
-var init_structure = __esm({
-  "../../packages/diagrams/src/edit/structure.ts"() {
-    "use strict";
-    init_find();
-    init_outcome();
-    init_references();
-    init_scan2();
-    init_source_text();
-    NODE_STATEMENTS = {
-      flow: { keyword: "node", typed: "service", id: true },
-      sequence: { keyword: "actor", typed: "service", id: true },
-      state: { keyword: "state", id: true },
-      swimlane: { keyword: "step", id: true },
-      layers: { keyword: "block", id: true },
-      c4: { keyword: "system", id: true },
-      class: { keyword: "class", id: true },
-      gantt: { keyword: "task", id: true },
-      mindmap: { keyword: "topic", id: false },
-      sankey: { keyword: "node", id: false },
-      tree: { keyword: "file", id: false },
-      quadrant: { keyword: "point", id: false },
-      journey: { keyword: "task", id: false },
-      git: { keyword: "commit", id: false },
-      matrix: { keyword: "row", id: false }
-    };
-  }
-});
-
-// ../../packages/diagrams/src/edit/edges.ts
-function endText(scan, end) {
-  const byLabelOnly = scan.elements.some((element) => element.id === null && element.label === end && element.role !== "edge");
-  return written2(end, byLabelOnly);
-}
-function addEdge(scan, op) {
-  if (op.from === void 0 || op.to === void 0) return refused2("add_edge needs from and to.", "Send the id or label of both ends.");
-  for (const end of [op.from, op.to]) if (!isKnownEnd(scan, end)) return refused2(`Nothing is named "${end}".`, unknownEndHint(scan, end));
-  const isSankey = kindOf(scan) === "sankey";
-  if (isSankey && (op.label === void 0 || !/^\d+(\.\d+)?$/.test(op.label))) return refused2("A Sankey edge needs its amount as label.", 'Send label as a number, such as "1200".');
-  const label = op.label === void 0 ? "" : ` : ${isSankey ? op.label : quote(op.label)}`;
-  const options3 = Object.entries(op.options ?? {}).map(([key, value]) => ` ${key}=${written2(value)}`).join("");
-  const text4 = `${endText(scan, op.from)} ${op.arrow ?? "->"} ${endText(scan, op.to)}${label}${options3}`;
-  const edges = scan.elements.filter((element) => element.role === "edge" && element.parent === null);
-  const last = edges[edges.length - 1];
-  const lines = [...scan.lines];
-  let at3;
-  if (last !== void 0) {
-    at3 = last.end;
-    lines.splice(at3, 0, `${indentOf4(scan.lines[last.start - 1] ?? "")}${text4}`);
-  } else {
-    let end = lines.length;
-    while (end > 0 && (lines[end - 1] ?? "").trim() === "") end -= 1;
-    lines.splice(end, 0, "", text4);
-    at3 = end + 1;
-  }
-  return { ok: true, source: lines.join("\n"), lines: [at3 + 1], message: `Added line ${at3 + 1}: ${text4}` };
-}
-function removeEdge(scan, op) {
-  if (op.from === void 0 || op.to === void 0) return refused2("remove_edge needs from and to.", "Send the id or label of both ends.");
-  const matches3 = scan.elements.filter((element) => element.role === "edge" && element.from === op.from && element.to === op.to && (op.label === void 0 || element.label === op.label));
-  if (matches3.length === 0) {
-    const near3 = scan.elements.filter((element) => element.role === "edge" && (element.from === op.from || element.to === op.to)).slice(0, 5);
-    const listed2 = near3.map((element) => `${element.from} ${element.arrow} ${element.to} (line ${element.start})`).join("; ");
-    return refused2(`There is no edge from ${op.from} to ${op.to}${op.label === void 0 ? "" : ` labelled "${op.label}"`}.`, near3.length === 0 ? "Check both ends; outline_diagram lists the connections." : `Edges near it: ${listed2}.`);
-  }
-  const drop = new Set(matches3.flatMap((element) => Array.from({ length: element.end - element.start + 1 }, (_, offset) => element.start + offset)));
-  const lines = scan.lines.filter((_, index2) => !drop.has(index2 + 1));
-  return { ok: true, source: lines.join("\n"), lines: [...drop], message: `Removed ${plural2(matches3.length, "edge")} from ${op.from} to ${op.to}, on ${lineList([...drop])}.` };
-}
-function replaceText(scan, op) {
-  if (op.find === void 0 || op.replace === void 0) return refused2("replace_text needs find and replace.", "Send the exact text to find and what to put instead.");
-  const source = scan.lines.join("\n");
-  const count3 = source.split(op.find).length - 1;
-  if (count3 === 0) return refused2("The text to find is not in the source.", "Copy it exactly, spaces and quotes included.");
-  if (count3 > 1 && op.all !== true) return refused2(`The text occurs ${count3} times.`, "Send all true to replace every one, or a longer find that occurs once.");
-  const lines = [];
-  let result = "";
-  let rest = source;
-  for (let index2 = rest.indexOf(op.find); index2 >= 0 && (op.all === true || lines.length === 0); index2 = rest.indexOf(op.find)) {
-    result += rest.slice(0, index2);
-    const line3 = result.split("\n").length;
-    result += op.replace;
-    lines.push(...Array.from({ length: op.replace.split("\n").length }, (_, offset) => line3 + offset));
-    rest = rest.slice(index2 + op.find.length);
-  }
-  result += rest;
-  return { ok: true, source: result, lines: [...new Set(lines)], message: `Replaced ${op.all === true && count3 > 1 ? `${count3} matches` : "the match"}, on ${lineList(lines)}.` };
-}
-var init_edges2 = __esm({
-  "../../packages/diagrams/src/edit/edges.ts"() {
-    "use strict";
-    init_find();
-    init_outcome();
-    init_source_text();
-    init_structure();
-  }
-});
-
-// ../../packages/diagrams/src/edit/rename-set.ts
-function applySplices(scan, byLine) {
-  const lines = scan.lines.map((line3, index2) => {
-    const splices = byLine.get(index2 + 1);
-    return splices === void 0 || splices.length === 0 ? line3 : spliced(line3, splices);
-  });
-  return { source: lines.join("\n"), lines: [...byLine.keys()].filter((line3) => (byLine.get(line3)?.length ?? 0) > 0) };
-}
-function renameId(scan, from, to, column) {
-  if (!isId(to)) return refused2(`"${to}" is not a legal id.`, "An id is letters, digits, and _, with single - between them, and starts with a letter or _.");
-  if (scan.elements.some((element) => element.id === to && element.keyword !== null)) return refused2(`The id "${to}" is already used.`, "Choose an id nothing else has, or remove the other statement first.");
-  const header = scan.elements.find((element) => element.role === "header")?.start;
-  const byLine = /* @__PURE__ */ new Map();
-  for (const [line3, tokens] of scan.tokens) {
-    const name = column === null ? from : `${from}.${column}`;
-    const places = idReferences(tokens, name, line3 === header).map(({ token, suffix }) => ({
-      start: token.column - 1,
-      end: token.column - 1 + token.length,
-      text: column === null ? `${to}${suffix}` : `${from}.${to}${suffix}`
-    }));
-    if (places.length > 0) byLine.set(line3, places);
-  }
-  const done = applySplices(scan, byLine);
-  const count3 = [...byLine.values()].reduce((total, places) => total + places.length, 0);
-  return { ok: true, source: done.source, lines: done.lines, message: `Renamed the id ${column === null ? from : `${from}.${column}`} to ${to} in ${plural2(count3, "place")}, on ${lineList(done.lines)}.` };
-}
-function renameColumn(scan, element, to) {
-  const block = element.parent === null ? null : scan.elements[element.parent];
-  const table = block?.id ?? block?.label ?? null;
-  if (table === null || element.id === null) return refused2("Only a column with a bare name can be renamed this way.", "Use replace_text with the exact line.");
-  const own2 = scan.tokens.get(element.start)?.[0];
-  const outcome = renameId(scan, table, to, element.id);
-  if (!outcome.ok || own2 === void 0) return outcome;
-  const lines = outcome.source.split("\n");
-  const at3 = element.start - 1;
-  lines[at3] = spliced(lines[at3] ?? "", [{ start: own2.column - 1, end: own2.column - 1 + own2.length, text: to }]);
-  return { ...outcome, source: lines.join("\n"), lines: [.../* @__PURE__ */ new Set([element.start, ...outcome.lines])].sort((a, b) => a - b) };
-}
-function renameLabel(scan, from, to) {
-  const byLine = /* @__PURE__ */ new Map();
-  for (const [line3, tokens] of scan.tokens) {
-    const places = labelReferences(tokens, from, to, quote);
-    if (places.length > 0) byLine.set(line3, places);
-  }
-  if (byLine.size === 0) return refused2(`No quoted text is exactly "${from}".`, "Use the label exactly as the source writes it, or replace_text.");
-  const done = applySplices(scan, byLine);
-  return { ok: true, source: done.source, lines: done.lines, message: `Renamed the label "${from}" to "${to}" on ${lineList(done.lines)}.` };
-}
-function rename(scan, op) {
-  if (op.target === void 0 || op.to === void 0) return refused2("rename needs target and to.", "Send target (the id or label now) and to (the new one).");
-  if (op.target === op.to) return refused2("target and to are the same.", "Send the new name in to.");
-  const found = findTarget(scan, op.target);
-  const element = found.ok ? scan.elements[found.index] : null;
-  if (element !== null && element.role === "row" && element.keyword === null && op.target.includes(".")) return renameColumn(scan, element, op.to);
-  if (element !== null && element.id === op.target) return renameId(scan, op.target, op.to, null);
-  if (scan.lines.some((_, index2) => (scan.tokens.get(index2 + 1) ?? []).some((token) => token.kind === "string" && token.text === op.target))) return renameLabel(scan, op.target, op.to);
-  return found.ok ? renameLabel(scan, op.target, op.to) : refused2(found.message, found.hint);
-}
-function setTarget(scan, op) {
-  if (op.target === void 0 && op.from !== void 0 && op.to !== void 0) {
-    const edge = scan.elements.find((element) => element.role === "edge" && element.from === op.from && element.to === op.to);
-    if (edge === void 0) return { ok: false, outcome: refused2(`There is no edge from ${op.from} to ${op.to}.`, "Check both ends, or add it with add_edge.") };
-    return { ok: true, element: edge };
-  }
-  if (op.target === void 0) return { ok: false, outcome: refused2("set needs target, or from and to for an edge.", 'Send target "header" to set an option of the header line.') };
-  const found = findTarget(scan, op.target);
-  if (!found.ok) return { ok: false, outcome: refused2(found.message, found.hint) };
-  return { ok: true, element: scan.elements[found.index] };
-}
-function insertAt(scan, element) {
-  const tokens = scan.tokens.get(element.start) ?? [];
-  const stop = element.role === "edge" ? -1 : tokens.findIndex((token, index2) => index2 > 0 && (token.kind === "colon" || token.kind === "lbrace"));
-  const before = stop < 0 ? tokens[tokens.length - 1] : tokens[stop - 1];
-  return before === void 0 ? (scan.lines[element.start - 1] ?? "").length : before.column - 1 + before.length;
-}
-function setOption(scan, op) {
-  if (op.option === void 0 || op.value === void 0) return refused2("set needs option and value.", "Send option (such as icon) and value; value null removes it.");
-  const picked = setTarget(scan, op);
-  if (!picked.ok) return picked.outcome;
-  const { element } = picked;
-  const existing = element.options.find((option) => option.key === op.option);
-  const line3 = scan.lines[element.start - 1] ?? "";
-  const where = `line ${element.start}`;
-  let text4;
-  if (op.value === null) {
-    if (existing === void 0) return refused2(`The statement on ${where} has no ${op.option} option.`, "Nothing to remove.");
-    const start2 = /[ \t]*$/.exec(line3.slice(0, existing.start))?.index ?? existing.start;
-    text4 = `${line3.slice(0, start2)}${line3.slice(existing.end)}`;
-  } else {
-    const value = `${op.option}=${written2(op.value, existing?.quoted === true)}`;
-    if (existing !== void 0) text4 = `${line3.slice(0, existing.start)}${value}${line3.slice(existing.end)}`;
-    else {
-      const at3 = insertAt(scan, element);
-      text4 = `${line3.slice(0, at3)} ${value}${line3.slice(at3)}`;
-    }
-  }
-  const lines = [...scan.lines];
-  lines[element.start - 1] = text4;
-  const verb = op.value === null ? `Removed ${op.option}` : existing === void 0 ? `Set ${op.option}` : `Changed ${op.option}`;
-  return { ok: true, source: lines.join("\n"), lines: [element.start], message: `${verb} on ${where}.` };
-}
-var init_rename_set = __esm({
-  "../../packages/diagrams/src/edit/rename-set.ts"() {
-    "use strict";
-    init_find();
-    init_outcome();
-    init_references();
-    init_source_text();
-  }
-});
-
-// ../../packages/diagrams/src/edit/apply.ts
-function applyEdits(source, operations) {
-  let current = source;
-  const results = [];
-  for (const op of operations) {
-    const outcome = RUN[op.op](scanSource(current), op);
-    if (outcome.ok) {
-      current = outcome.source;
-      results.push({ op: op.op, applied: true, lines: [...outcome.lines], message: outcome.message, hint: outcome.hint ?? null });
-    } else {
-      results.push({ op: op.op, applied: false, lines: [], message: outcome.message, hint: outcome.hint });
-    }
-  }
-  return { source: current, results };
-}
-var RUN;
-var init_apply = __esm({
-  "../../packages/diagrams/src/edit/apply.ts"() {
-    "use strict";
-    init_edges2();
-    init_rename_set();
-    init_scan2();
-    init_structure();
-    RUN = {
-      rename,
-      set: setOption,
-      add_node: addNode2,
-      remove,
-      add_edge: addEdge,
-      remove_edge: removeEdge,
-      move: move2,
-      replace_text: replaceText
-    };
-  }
-});
-
-// ../../packages/diagrams/src/edit/index.ts
-var init_edit = __esm({
-  "../../packages/diagrams/src/edit/index.ts"() {
-    "use strict";
-    init_apply();
-    init_compare();
-    init_compare_diagrams2();
-    init_compare_report();
-    init_scan2();
   }
 });
 
@@ -180856,6 +181062,19 @@ function readIfThere(root, path) {
   const absolute = join6(root, path);
   return existsSync4(absolute) && statSync3(absolute).isFile() ? readFileSync4(absolute, "utf8") : null;
 }
+function diskFiles(root) {
+  return {
+    expand: (patterns) => expandSourcePatterns(root, patterns),
+    read: (path) => readIfThere(root, path),
+    list: (folder) => {
+      try {
+        return readdirSync(resolve6(root, folder));
+      } catch {
+        return null;
+      }
+    }
+  };
+}
 var SKIPPED4, MAX_DEPTH18, toPosix, hasGlob2, isSkipped2;
 var init_files = __esm({
   "../../packages/diagrams/src/generate/files.ts"() {
@@ -180868,9 +181087,7 @@ var init_files = __esm({
   }
 });
 
-// ../../packages/diagrams/src/generate/plan.ts
-import { mkdirSync as mkdirSync3, readdirSync as readdirSync2, rmSync as rmSync2, writeFileSync as writeFileSync3 } from "node:fs";
-import { basename as basename2, dirname as dirname4, posix, resolve as resolve7 } from "node:path";
+// ../../packages/diagrams/src/generate/plan-core.ts
 function partOut(out, index2) {
   return index2 === 0 ? out : out.replace(/\.diagram$/, `.${index2 + 1}.diagram`);
 }
@@ -180881,8 +181098,8 @@ function importDiagnostics(result, files) {
     return { ...diagnostic, file: file2, message: named2 === void 0 ? diagnostic.message : diagnostic.message.slice(named2.path.length + 2) };
   });
 }
-function readOverrides(root, path) {
-  const text4 = readIfThere(root, path);
+function readOverridesIn(files, path) {
+  const text4 = files.read(path);
   if (text4 === null) return { overrides: {}, text: void 0 };
   const read = readJsonWith(OverridesSchema, text4, DIAGNOSTIC_CODES.overridesInvalid, "See the diagrams as code guide for the fields an overrides file takes; an editor that reads $schema lists them as you type.", GENERATE.maxOverridesBytes);
   return read.ok ? { overrides: read.value, text: text4 } : { problems: placed(path, read.error) };
@@ -180928,74 +181145,75 @@ function drawErrors(text4, settings, file2, lineOffset = 0) {
   const parsed = parseDiagram(applyDefaults(text4, settings.defaults).source);
   return parsed.ok ? [] : parsed.error.map((diagnostic) => ({ ...diagnostic, line: diagnostic.line + lineOffset, file: file2, hint: `${diagnostic.hint ?? ""} The import or an override made this; check the overrides file.`.trim() }));
 }
-function leftoverParts(root, entry2, made) {
-  const folder = posix.dirname(entry2.out);
-  const stem = basename2(entry2.out).replace(/\.diagram$/, "");
-  let names8;
-  try {
-    names8 = readdirSync2(resolve7(root, folder));
-  } catch {
-    return [];
-  }
+function leftoverParts(source, entry2, made) {
+  const slash = entry2.out.lastIndexOf("/");
+  const folder = slash === -1 ? "." : entry2.out.slice(0, slash);
+  const stem = entry2.out.slice(slash + 1).replace(/\.diagram$/, "");
+  const names8 = source.list(folder) ?? [];
   const parts = names8.flatMap((name) => {
     const number4 = name.startsWith(`${stem}.`) ? /^(\d+)\.diagram$/.exec(name.slice(stem.length + 1))?.[1] : void 0;
     return number4 === void 0 || Number(number4) <= made || Number(number4) < 2 ? [] : [folder === "." ? name : `${folder}/${name}`];
   });
   const files = [];
   for (const part of parts.sort()) {
-    const before = readIfThere(root, part);
+    const before = source.read(part);
     if (before === null || !before.startsWith(ownBanner(entry2))) continue;
     files.push({ path: part, content: null, before });
     for (const picture2 of picturePaths(part)) {
-      const drawn = readIfThere(root, picture2);
+      const drawn = source.read(picture2);
       if (drawn !== null) files.push({ path: picture2, content: null, before: drawn });
     }
   }
   return files;
 }
-function retiredFiles(root, files) {
+function retiredFiles(source, files) {
   return retiredDarkPictures(files.filter((file2) => file2.content !== null).map((file2) => file2.path)).flatMap((path) => {
-    const before = readIfThere(root, path);
+    const before = source.read(path);
     return before !== null && isDrawnDarkPicture(before) ? [{ path, content: null, before }] : [];
   });
 }
-async function pictureFiles(root, out, source, schemes, embedSource) {
+async function pictureFiles(disk, out, source, schemes, embedSource) {
   const [lightPath, darkPath] = picturePaths(out);
-  if (schemes === "auto") {
-    const drawn = await renderDiagramSource({ source, theme: "auto", embedSource });
+  if (schemes === "light" || schemes === "dark") {
+    const drawn = await renderDiagramSource({ source, scheme: schemes, embedSource });
     if (!drawn.ok) return { files: [], diagnostics: placed(out, drawn.error) };
-    if (/^<svg\b[^>]* data-theme="auto"/.test(drawn.value.svg)) return { files: [{ path: lightPath, content: drawn.value.svg, before: readIfThere(root, lightPath) }], diagnostics: [] };
+    return { files: [{ path: lightPath, content: drawn.value.svg, before: disk.read(lightPath) }], diagnostics: [] };
+  }
+  if (schemes === "auto") {
+    const drawn = await renderDiagramSource({ source, scheme: "auto", embedSource });
+    if (!drawn.ok) return { files: [], diagnostics: placed(out, drawn.error) };
+    if (/^<svg\b[^>]* data-theme="auto"/.test(drawn.value.svg)) return { files: [{ path: lightPath, content: drawn.value.svg, before: disk.read(lightPath) }], diagnostics: [] };
   }
   const files = [];
   const diagnostics = [];
   for (const [theme, path] of [["light", lightPath], ["dark", darkPath]]) {
-    const drawn = await renderDiagramSource({ source, theme, embedSource });
-    if (drawn.ok) files.push({ path, content: drawn.value.svg, before: readIfThere(root, path) });
+    const drawn = await renderDiagramSource({ source, scheme: theme, embedSource });
+    if (drawn.ok) files.push({ path, content: drawn.value.svg, before: disk.read(path) });
     else diagnostics.push(...placed(out, drawn.error));
   }
   return { files, diagnostics };
 }
-async function diagramFiles(root, entry2, settings, texts) {
+async function diagramFiles(source, entry2, settings, texts) {
   const files = [];
   const diagnostics = [];
   const embedSource = settings.defaults?.embedSource ?? true;
   for (const [index2, text4] of texts.entries()) {
     const out = partOut(entry2.out, index2);
-    files.push({ path: out, content: text4, before: readIfThere(root, out) });
+    files.push({ path: out, content: text4, before: source.read(out) });
     const errors = drawErrors(text4, settings, out);
     diagnostics.push(...errors);
     if (errors.length > 0 || entry2.pictures === false) continue;
-    const pictures = await pictureFiles(root, out, applyDefaults(text4, settings.defaults).source, schemesOf2(entry2, settings), embedSource);
+    const pictures = await pictureFiles(source, out, applyDefaults(text4, settings.defaults).source, schemesOf2(entry2, settings), embedSource);
     files.push(...pictures.files);
     diagnostics.push(...pictures.diagnostics);
   }
-  files.push(...retiredFiles(root, files), ...leftoverParts(root, entry2, texts.length));
+  files.push(...retiredFiles(source, files), ...leftoverParts(source, entry2, texts.length));
   return { files, diagnostics };
 }
-async function fenceFiles(root, entry2, settings, text4) {
+async function fenceFiles(source, entry2, settings, text4) {
   const target2 = fenceTarget(entry2.out);
   if (target2 === null) return { files: [], diagnostics: [], before: null };
-  const markdown = readIfThere(root, target2.file);
+  const markdown = source.read(target2.file);
   const span = { line: 1, column: 1, length: 1 };
   if (markdown === null) return { files: [], before: null, diagnostics: [{ ...errorAt(DIAGNOSTIC_CODES.fenceMissing, `${target2.file} does not exist, so the fence ${target2.id} has no place to go.`, span, `Create ${target2.file} with a fence that opens with \`\`\`diagram id=${target2.id} where the diagram goes.`), file: target2.file }] };
   const fences = fencesWithId(markdown, target2.id);
@@ -181007,26 +181225,26 @@ async function fenceFiles(root, entry2, settings, text4) {
   const errors = drawErrors(text4, settings, target2.file, fence.openLine + 1);
   if (errors.length > 0) return { files: [], diagnostics: errors, before: fence.source };
   const replaced = replaceFenceBody(markdown, fence, text4);
-  const own2 = { ...settings, defaults: { ...settings.defaults, schemes: schemesOf2(entry2, settings) } };
+  const own2 = { ...settings, defaults: { ...settings.defaults, scheme: schemesOf2(entry2, settings) } };
   const synced = await syncDocument({ markdown: replaced, documentPath: target2.file, mode: "sync", convertMermaid: false, files: "inline", settings: own2 }, DEFAULT_SYNC_OPS, UNCAPPED_SYNC_LIMITS);
   const diagnostics = synced.report.filter((entry3) => entry3.status === "failed").flatMap((entry3) => entry3.diagnostics.map((diagnostic) => ({ code: diagnostic.code, severity: diagnostic.severity, message: diagnostic.message, hint: diagnostic.hint, line: diagnostic.line, column: diagnostic.column, length: diagnostic.length, file: target2.file })));
-  const files = [{ path: target2.file, content: synced.markdown, before: markdown }, ...synced.files.map((file2) => ({ path: file2.path, content: file2.content ?? "", before: readIfThere(root, file2.path) }))];
-  return { files: [...files, ...retiredFiles(root, files)], diagnostics, before: fence.source };
+  const files = [{ path: target2.file, content: synced.markdown, before: markdown }, ...synced.files.map((file2) => ({ path: file2.path, content: file2.content ?? "", before: source.read(file2.path) }))];
+  return { files: [...files, ...retiredFiles(source, files)], diagnostics, before: fence.source };
 }
-async function planOne(request, entry2) {
+async function planOne(request, entry2, source) {
   const name = sourceName(entry2);
   const overridesPath = overridesPathOf(entry2);
   const base = { name, format: entry2.format, from: patternsOf(entry2), out: entry2.out, overrides: overridesPath, publish: entry2.publish };
   const stopped = (inputs2, diagnostics2) => ({ ...base, inputs: inputs2, files: [], stale: false, diff: null, source: null, title: null, diagnostics: diagnostics2, failed: true });
-  const inputs = expandSourcePatterns(request.root, patternsOf(entry2));
+  const inputs = source.expand(patternsOf(entry2));
   if (inputs.length === 0 || inputs.length > GENERATE.maxFiles) {
     const message2 = inputs.length === 0 ? `No file matches ${patternsOf(entry2).join(", ")}.` : `${inputs.length} files match ${patternsOf(entry2).join(", ")}, more than the ${GENERATE.maxFiles} one source reads.`;
     return stopped(inputs, [{ ...errorAt(DIAGNOSTIC_CODES.sourceNoFiles, `The source ${name}: ${message2}`, spanOfValue(request.settingsText, patternsOf(entry2)[0] ?? ""), "Paths are relative to the folder of the settings file. Check the pattern, or that the files are checked out."), file: request.settingsFile }]);
   }
-  const read = readOverrides(request.root, overridesPath);
+  const read = readOverridesIn(source, overridesPath);
   if ("problems" in read) return stopped(inputs, read.problems);
   const missing = entry2.overrides !== void 0 && read.text === void 0 ? [{ ...warningAt(DIAGNOSTIC_CODES.overridesMissing, `The source ${name} names the overrides file ${overridesPath}, which is not there, so no override applies.`, spanOfValue(request.settingsText, overridesPath), "Check the path, or create the file; leave overrides out to use the default beside the diagram."), file: request.settingsFile }] : [];
-  const files = readSourceFiles(request.root, inputs);
+  const files = inputs.map((path) => ({ path, text: source.read(path) ?? "" }));
   const options3 = { ...entry2.options, view: entry2.view };
   const result = importSource(entry2.format, files, entry2.title ?? null, options3, LOCAL_IMPORT_LIMITS);
   const found = importDiagnostics(result, files);
@@ -181038,7 +181256,7 @@ async function planOne(request, entry2) {
   const done = overridden(result, read.overrides, overridesPath, read.text);
   const texts = done.sources.map((part) => withBanner(entry2, overridesPath, part.source));
   const first = done.sources[0]?.source ?? "";
-  const made = fence === null ? await diagramFiles(request.root, entry2, request.settings, texts) : await fenceFiles(request.root, entry2, request.settings, texts[0] ?? "");
+  const made = fence === null ? await diagramFiles(source, entry2, request.settings, texts) : await fenceFiles(source, entry2, request.settings, texts[0] ?? "");
   const before = made.before ?? null;
   const diagnostics = [...missing, ...found, ...done.notes, ...made.diagnostics];
   const failed2 = diagnostics.some((diagnostic) => diagnostic.severity === "error");
@@ -181055,18 +181273,18 @@ async function planOne(request, entry2) {
     failed: failed2
   };
 }
-function touches4(request, entry2) {
+function touches4(request, entry2, source) {
   const changed = request.changed ?? /* @__PURE__ */ new Set();
   if (changed.has(request.settingsFile)) return true;
-  if ([...changed].some((path) => readIfThere(request.root, path) === null && !/(?:\.svg|\.diagram|\.md|\.markdown|\.mdx|\.overrides\.json)$/.test(path))) return true;
+  if ([...changed].some((path) => source.read(path) === null && !/(?:\.svg|\.diagram|\.md|\.markdown|\.mdx|\.overrides\.json)$/.test(path))) return true;
   const fence = fenceTarget(entry2.out);
   const owned = [overridesPathOf(entry2), fence?.file ?? entry2.out, ...entry2.options?.varFiles ?? []];
   if (owned.some((path) => changed.has(path))) return true;
   const stem = entry2.out.replace(/\.diagram$/, "");
   if (fence === null && [...changed].some((path) => path.startsWith(`${stem}.`) && /\.(?:\d+\.)?(?:diagram|svg|dark\.svg)$/.test(path))) return true;
-  return expandSourcePatterns(request.root, patternsOf(entry2)).some((path) => changed.has(path));
+  return source.expand(patternsOf(entry2)).some((path) => changed.has(path));
 }
-async function planGeneration(request) {
+async function planWith(request, source) {
   const sources = request.settings.sources ?? [];
   const checked2 = checkSources(sources, request.settingsText);
   const problems = placed(request.settingsFile, checked2.problems);
@@ -181078,13 +181296,52 @@ async function planGeneration(request) {
   const unchanged = [];
   for (const { entry: entry2, index: index2 } of chosen) {
     if (checked2.refused.has(index2)) continue;
-    if (request.changed !== void 0 && !touches4(request, entry2)) {
+    if (request.changed !== void 0 && !touches4(request, entry2, source)) {
       unchanged.push(sourceName(entry2));
       continue;
     }
-    diagrams.push(await planOne(request, entry2));
+    diagrams.push(await planOne(request, entry2, source));
   }
   return { diagrams, problems, unchanged };
+}
+var placed, picturePaths, ownBanner, schemesOf2;
+var init_plan_core = __esm({
+  "../../packages/diagrams/src/generate/plan-core.ts"() {
+    "use strict";
+    init_constants();
+    init_core();
+    init_import_source();
+    init_parse_diagram();
+    init_read_rules();
+    init_dark_pictures();
+    init_services();
+    init_apply_defaults();
+    init_apply_overrides();
+    init_banner();
+    init_check_sources();
+    init_edit();
+    init_diff();
+    init_fence();
+    init_overrides_schema();
+    placed = (file2, diagnostics) => diagnostics.map((diagnostic) => ({ ...diagnostic, file: file2 }));
+    picturePaths = (out) => {
+      const stem = out.replace(/\.diagram$/, "");
+      return [`${stem}.svg`, `${stem}.dark.svg`];
+    };
+    ownBanner = (entry2) => `${bannerLines({ name: sourceName(entry2), format: entry2.format, from: patternsOf(entry2), overrides: "" })[0] ?? ""}
+`;
+    schemesOf2 = (entry2, settings) => entry2.scheme ?? settings.defaults?.scheme ?? "auto";
+  }
+});
+
+// ../../packages/diagrams/src/generate/plan.ts
+import { mkdirSync as mkdirSync3, rmSync as rmSync2, writeFileSync as writeFileSync3 } from "node:fs";
+import { dirname as dirname4, resolve as resolve7 } from "node:path";
+function readOverrides(root, path) {
+  return readOverridesIn(diskFiles(root), path);
+}
+function planGeneration(request) {
+  return planWith(request, diskFiles(request.root));
 }
 function writePlan(root, plan) {
   const written3 = [];
@@ -181103,34 +181360,12 @@ function writePlan(root, plan) {
   }
   return written3;
 }
-var placed, picturePaths, ownBanner, schemesOf2;
 var init_plan10 = __esm({
   "../../packages/diagrams/src/generate/plan.ts"() {
     "use strict";
-    init_constants();
-    init_core();
-    init_import_source();
-    init_parse_diagram();
-    init_read_rules();
-    init_dark_pictures();
-    init_services();
-    init_apply_defaults();
-    init_apply_overrides();
-    init_banner();
-    init_check_sources();
-    init_edit();
-    init_diff();
-    init_fence();
     init_files();
-    init_overrides_schema();
-    placed = (file2, diagnostics) => diagnostics.map((diagnostic) => ({ ...diagnostic, file: file2 }));
-    picturePaths = (out) => {
-      const stem = out.replace(/\.diagram$/, "");
-      return [`${stem}.svg`, `${stem}.dark.svg`];
-    };
-    ownBanner = (entry2) => `${bannerLines({ name: sourceName(entry2), format: entry2.format, from: patternsOf(entry2), overrides: "" })[0] ?? ""}
-`;
-    schemesOf2 = (entry2, settings) => entry2.schemes ?? settings.defaults?.schemes ?? "auto";
+    init_plan_core();
+    init_plan_core();
   }
 });
 
@@ -181526,10 +181761,10 @@ var init_generate2 = __esm({
 // ../../packages/diagrams/src/cli/generate-command.ts
 import { spawnSync } from "node:child_process";
 import { existsSync as existsSync6, mkdirSync as mkdirSync5, readFileSync as readFileSync6, writeFileSync as writeFileSync5 } from "node:fs";
-import { basename as basename3, dirname as dirname6, relative as relative7, resolve as resolve10 } from "node:path";
+import { basename as basename2, dirname as dirname6, relative as relative7, resolve as resolve10 } from "node:path";
 function settingsRoot(path) {
   const folder = dirname6(path);
-  return basename3(folder) === ".plotwork" && basename3(path) === "config.json" ? dirname6(folder) : folder;
+  return basename2(folder) === ".plotwork" && basename2(path) === "config.json" ? dirname6(folder) : folder;
 }
 function settingsPath(options3, deps) {
   const cwd = deps.cwd ?? process.cwd();
@@ -181722,7 +181957,7 @@ var init_manifest = __esm({
         operands: "<files...>",
         summary: "Draw the pictures under every diagram fence of Markdown files; `--check` fails when one is stale",
         description: [
-          "Draws every `diagram` fence of the Markdown files as one SVG that follows the reader's light or dark setting (a light and a dark SVG with `schemes` set to `light-and-dark` in the settings), and writes the picture block under the fence, so the diagram shows on GitHub, GitLab, and any Markdown viewer. A fence whose picture is already current is left as it is.",
+          "Draws every `diagram` fence of the Markdown files as one SVG that follows the reader's light or dark setting (a light and a dark SVG with `scheme` set to `light-and-dark` in the settings), and writes the picture block under the fence, so the diagram shows on GitHub, GitLab, and any Markdown viewer. A fence whose picture is already current is left as it is.",
           'Each word is a Markdown file, a folder (every `.md` file under it), or a quoted glob such as `"docs/**/*.md"`. The command expands the glob itself, so it means the same in every shell, and never looks in `node_modules`, `.git`, or build output.',
           "With `--check` it writes nothing and exits 1 when any picture is missing or stale, or any diagram has a mistake. That is the check to run in CI."
         ],
@@ -181792,13 +182027,15 @@ var init_manifest = __esm({
         ],
         options: [
           { flag: "--out", value: "<svg>", default: "the file name with `.svg`, or `diagram.svg` for a link", description: "The SVG to write." },
-          { flag: "--theme", value: "<theme>", values: PICTURE_SCHEMES, default: "the theme of the settings, else `light`", description: "The colours to draw in; `auto` draws one picture that follows the reader." },
+          { flag: "--scheme", value: "<scheme>", values: PICTURE_SCHEMES, default: "the scheme of the settings, else `light`", description: "The color scheme to draw in; `auto` draws one picture that follows the reader." },
+          { flag: "--theme", value: "<theme>", values: COLOR_THEMES, default: "the header's `theme=`", description: "The colour theme, written into the header of the picture's source." },
           { flag: "--no-embed-source", default: "the source is embedded", description: "Leave the source out of the SVG." },
           CONFIG
         ],
         examples: [
           { args: "render checkout.diagram --out checkout.svg", says: "Draw a diagram file to an SVG." },
-          { args: "render checkout.diagram --theme dark --out checkout.dark.svg", says: "Draw it in the dark theme." },
+          { args: "render checkout.diagram --scheme dark --out checkout.dark.svg", says: "Draw it in the dark scheme." },
+          { args: "render checkout.diagram --theme ocean", says: "Draw it in the ocean colour theme." },
           { args: 'render "<viewUrl>" --out flow.svg', says: "Write the picture of a view link a tool returned, with no request." }
         ],
         exits: { ok: "The SVG was written.", problems: "The diagram has an error, or the file holds no diagram.", usage: CLI_USAGE_MISTAKES },
@@ -181931,7 +182168,7 @@ var init_manifest = __esm({
           { flag: "--format", value: "<format>", values: WIKI_FORMATS, required: true, description: "The wiki to write for." },
           { flag: "--image", value: "<https link>", default: "the SVG is written beside the output", description: "An https address the wiki can fetch the picture from." },
           { flag: "--out", value: "<file>", default: "standard output", description: "Write the text to a file." },
-          { flag: "--theme", value: "<theme>", values: THEME_NAMES, default: "`light`", description: "The colours of the SVG written beside the output." },
+          { flag: "--scheme", value: "<scheme>", values: THEME_NAMES, default: "`light`", description: "The color scheme of the SVG written beside the output." },
           { flag: "--no-source", default: "the source is included", description: "Leave the diagram source out of the text." }
         ],
         examples: [
@@ -181957,7 +182194,7 @@ var init_manifest = __esm({
           { flag: "--folder", value: "<path>", default: "the top level", description: "The folder to file it in, such as `Payments/Checkout`." },
           { flag: "--name", value: "<name>", default: "the file name", description: "The name it is listed under." },
           { flag: "--alias", value: "<name>", description: "Point a stable link with this name at it, so one address shows the latest version. Personal only, and one diagram only." },
-          { flag: "--theme", value: "<theme>", values: PICTURE_SCHEMES, default: "the settings default, else `light`", description: "The colour scheme to draw it in." },
+          { flag: "--scheme", value: "<scheme>", values: PICTURE_SCHEMES, default: "the settings default, else `light`", description: "The color scheme to draw it in." },
           { flag: "--embed-source", description: "Write the source into the stored picture so it can be edited later; `--no-embed-source` leaves it out." },
           CONFIG
         ],
@@ -182211,7 +182448,7 @@ var init_importers = __esm({
 });
 
 // ../../packages/diagrams/src/cli/import-source-command.ts
-import { mkdirSync as mkdirSync7, readFileSync as readFileSync8, readdirSync as readdirSync3, statSync as statSync5, writeFileSync as writeFileSync7 } from "node:fs";
+import { mkdirSync as mkdirSync7, readFileSync as readFileSync8, readdirSync as readdirSync2, statSync as statSync5, writeFileSync as writeFileSync7 } from "node:fs";
 import { dirname as dirname8, join as join8, relative as relative8 } from "node:path";
 function readerOptions(options3) {
   const view = IMPORT_VIEWS.find((name) => name === options3.view);
@@ -182226,7 +182463,7 @@ function folderFiles(root) {
   const out = [];
   const walk2 = (folder, depth) => {
     if (depth > MAX_FOLDER_DEPTH) return;
-    for (const name of readdirSync3(folder).sort()) {
+    for (const name of readdirSync2(folder).sort()) {
       const path = join8(folder, name);
       const stat = statSync5(path);
       if (stat.isDirectory()) {
@@ -182302,9 +182539,9 @@ var init_import_source_command = __esm({
 });
 
 // ../../packages/diagrams/src/cli/publish-command.ts
-import { basename as basename4 } from "node:path";
+import { basename as basename3 } from "node:path";
 function nameOf10(path, given, index2, count3) {
-  const base = given ?? basename4(path).replace(/\.[^.]+$/, "");
+  const base = given ?? basename3(path).replace(/\.[^.]+$/, "");
   return count3 === 1 ? base : `${base} ${index2 + 1}`;
 }
 function placed2(name, answer) {
@@ -182334,8 +182571,8 @@ async function publishFile(path, options3, deps = {}) {
     console.error("publish takes --personal or --org, not both");
     return EXIT.usage;
   }
-  if (options3.theme !== void 0 && !PICTURE_SCHEMES.includes(options3.theme)) {
-    console.error(`publish --theme is one of ${PICTURE_SCHEMES.join(", ")}`);
+  if (options3.scheme !== void 0 && !PICTURE_SCHEMES.includes(options3.scheme)) {
+    console.error(`publish --scheme is one of ${PICTURE_SCHEMES.join(", ")}`);
     return EXIT.usage;
   }
   let units;
@@ -182359,7 +182596,7 @@ async function publishFile(path, options3, deps = {}) {
     return EXIT.usage;
   }
   const settings = sentSettings(found);
-  const theme = options3.theme ?? (found.status === "found" ? found.settings.defaults?.theme : void 0) ?? "light";
+  const theme = options3.scheme ?? (found.status === "found" && found.settings.defaults?.scheme !== void 0 ? singleScheme(found.settings.defaults.scheme) : void 0) ?? "light";
   let mistakes = 0;
   for (const unit3 of units) {
     const parsed = parseDiagram(unit3.source);
@@ -182381,7 +182618,7 @@ async function publishFile(path, options3, deps = {}) {
     const name = nameOf10(path, options3.name, index2, units.length);
     const body2 = {
       source: unit3.source,
-      theme,
+      scheme: theme,
       name,
       ...settings === void 0 ? {} : { settings },
       ...options3.folder === void 0 ? {} : { folder: options3.folder },
@@ -182491,11 +182728,28 @@ var init_read_command = __esm({
 // ../../packages/diagrams/src/cli/run.ts
 import { join as join9 } from "node:path";
 import { parseArgs } from "node:util";
-function asTheme(value) {
-  return THEME_NAMES.find((name) => name === value) ?? "light";
+function asScheme(command, value, allowed, fallback) {
+  if (value === void 0) return fallback;
+  const found = allowed.find((name) => name === value);
+  if (found === void 0) console.error(`${command} --scheme is one of ${allowed.join(", ")}`);
+  return found ?? null;
 }
-function asPictureScheme(value) {
-  return PICTURE_SCHEMES.find((name) => name === value) ?? "light";
+function asColorTheme(command, value) {
+  if (value === void 0) return void 0;
+  if (PICTURE_SCHEMES.includes(value)) {
+    console.error(`--theme names a colour theme now: use --scheme ${value} for the ${value} picture`);
+    return null;
+  }
+  const found = COLOR_THEMES.find((name) => name === value);
+  if (found === void 0) {
+    console.error(`--theme is a colour theme: one of ${COLOR_THEMES.join(", ")}`);
+    return null;
+  }
+  if (command !== "render") {
+    console.error(`${command} takes no --theme: write theme=${found} on the diagram's header`);
+    return null;
+  }
+  return found;
 }
 function readArgs(argv, usage) {
   try {
@@ -182575,14 +182829,19 @@ async function runCli(argv, who = REPOSITORY_CLI) {
       return checkFiles(positionals.slice(1), { config: values.config, org: values.org, reporter: values.format === "github" ? "github" : "text" });
     case "outline":
       return outlineFile(target2, defaults);
-    case "render":
+    case "render": {
+      const scheme = asScheme("render", values.scheme, PICTURE_SCHEMES, defaults?.scheme === void 0 ? "light" : singleScheme(defaults.scheme));
+      const colorTheme = asColorTheme("render", values.theme);
+      if (scheme === null || colorTheme === null) return EXIT.usage;
       return renderFile(
         target2,
         values.out ?? (isViewLink(target2) ? "diagram.svg" : target2.replace(/\.[^.]+$/, ".svg")),
-        asPictureScheme(values.theme ?? defaults?.theme),
+        scheme,
         values["embed-source"] ?? defaults?.embedSource ?? true,
-        defaults
+        defaults,
+        colorTheme
       );
+    }
     case "read":
       return readFile2(target2, values.out);
     case "sync":
@@ -182591,15 +182850,19 @@ async function runCli(argv, who = REPOSITORY_CLI) {
       return importFile(target2, { out: values.out, write: values.write === true, format: values.format === "json" ? "json" : "text", lenient: values.lenient === true });
     case "import-source":
       return importSourceFile(target2, positionals[2], { out: values.out, title: values.title, view: values.view, chart: values.chart, operation: values.operation, tables: values.tables, tags: values.tags, paths: values.paths, groupBy: values["group-by"], varFiles: values["var-file"], root: values.root, format: values.format === "json" ? "json" : "text" });
-    case "export":
-      return exportFile(target2, { format: values.format, image: values.image, out: values.out, theme: asTheme(values.theme), includeSource: values.source !== false });
+    case "export": {
+      const scheme = asScheme("export", values.scheme, THEME_NAMES, "light");
+      if (scheme === null || asColorTheme("export", values.theme) === null) return EXIT.usage;
+      return exportFile(target2, { format: values.format, image: values.image, out: values.out, scheme, includeSource: values.source !== false });
+    }
     case "publish":
+      if (asColorTheme("publish", values.theme) === null) return EXIT.usage;
       return publishFile(target2, {
         org: values.org,
         folder: values.folder,
         name: values.name,
         alias: values.alias,
-        theme: values.theme,
+        scheme: values.scheme,
         personal: values.personal,
         embedSource: values["embed-source"],
         config: values.config
@@ -182615,6 +182878,7 @@ var REPOSITORY_CLI, OPTIONS2;
 var init_run = __esm({
   "../../packages/diagrams/src/cli/run.ts"() {
     "use strict";
+    init_constants();
     init_theme();
     init_check_command();
     init_commands();
@@ -182632,6 +182896,7 @@ var init_run = __esm({
     REPOSITORY_CLI = { bin: "diagram", syncCommand: "pnpm diagram sync" };
     OPTIONS2 = {
       out: { type: "string" },
+      scheme: { type: "string" },
       theme: { type: "string" },
       check: { type: "boolean" },
       assets: { type: "string" },
@@ -182733,7 +182998,7 @@ var init_files2 = __esm({
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // package.json
-var package_default = { version: "0.3.0-beta.1" };
+var package_default = { version: "0.3.0-beta.2" };
 
 // npm/package-config.json
 var package_config_default = {
