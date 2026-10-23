@@ -206457,7 +206457,7 @@ var init_files2 = __esm({
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // package.json
-var package_default = { version: "0.3.0-beta.3" };
+var package_default = { version: "0.3.0" };
 
 // npm/package-config.json
 var package_config_default = {
