@@ -498,7 +498,7 @@ var init_spacing = __esm({
 });
 
 // ../../packages/diagrams/src/constants/flow-look.ts
-var EDGE_SHAPES, DEFAULT_EDGE_SHAPE, FIT_VALUES, DEFAULT_FIT, ALIGN_LIMIT, FLOW_LOOK_SPECS;
+var EDGE_SHAPES, DEFAULT_EDGE_SHAPE, FIT_VALUES, DEFAULT_FIT, STYLE_PART_VALUES, ALIGN_LIMIT, FLOW_LOOK_SPECS;
 var init_flow_look = __esm({
   "../../packages/diagrams/src/constants/flow-look.ts"() {
     "use strict";
@@ -507,6 +507,10 @@ var init_flow_look = __esm({
     DEFAULT_EDGE_SHAPE = "orthogonal";
     FIT_VALUES = ["auto", "wide", "tall", "square"];
     DEFAULT_FIT = "auto";
+    STYLE_PART_VALUES = {
+      spacing: { values: SPACING_VALUES, fallback: "normal" },
+      edges: { values: EDGE_SHAPES, fallback: "orthogonal" }
+    };
     ALIGN_LIMIT = 12;
     FLOW_LOOK_SPECS = [
       {
@@ -6546,7 +6550,9 @@ var init_diagnostics = __esm({
       overrideRefused: "S202",
       overridesMissing: "S203",
       // An enforced default (`defaults.enforced`) written over the header's own value; a warning, so the author sees why the picture differs.
-      settingEnforced: "S204"
+      settingEnforced: "S204",
+      // A header's own value the settings do not allow (`defaults.allowed`), written over with one they do; a warning, so the author sees why.
+      settingNotAllowed: "S205"
     };
     STYLE_HINT_CODES = /* @__PURE__ */ new Set([DIAGNOSTIC_CODES.suggestIcon, DIAGNOSTIC_CODES.suggestGroupType, DIAGNOSTIC_CODES.suggestLineRole]);
   }
@@ -179546,6 +179552,10 @@ var init_schema4 = __esm({
       scheme: external_exports.enum(PICTURE_FILE_SCHEMES).optional().describe("The pictures a diagram gets. auto writes one <name>.svg that holds both schemes and follows the reader's light or dark setting, so GitHub shows it right in either theme. light or dark writes one picture in that scheme. light-and-dark writes <name>.svg and <name>.dark.svg from sync and generate, which a <picture> element shows by GitHub's own theme setting, and the light picture from render and publish. Left out: auto from sync and generate, light from render and publish."),
       embedSource: external_exports.boolean().optional().describe("Write the source into every SVG the command line, the GitHub Action, and the drawing tools save."),
       enforced: external_exports.array(external_exports.enum(SHARED_DEFAULT_OPTIONS)).max(SHARED_DEFAULT_OPTIONS.length).optional().describe(`Defaults written over the header's own value, so a diagram cannot turn them the other way: ["legend"] with "legend": "on" draws the legend whatever the header says, with warning S204 where the header said otherwise. The hosted service fills it from an organisation that requires the legend.`),
+      allowed: external_exports.strictObject({
+        spacing: external_exports.array(external_exports.enum(SPACING_VALUES)).min(1).max(SPACING_VALUES.length).optional(),
+        edges: external_exports.array(external_exports.enum(EDGE_SHAPES)).min(1).max(EDGE_SHAPES.length).optional()
+      }).optional().describe(`The values a diagram may use for spacing= and edges=, such as { "edges": ["orthogonal", "spline"] }. A header or default outside the list is written over with an allowed one, with warning S205; a list of one requires it. The hosted service narrows it further with the organisation's own list.`),
       kinds: external_exports.partialRecord(external_exports.enum(DIAGRAM_KINDS), external_exports.record(optionKey, optionValue)).optional().describe('Header options for one kind, such as { "mindmap": { "layout": "radial" } }. A value the kind refuses is left out with warning S200.')
     }, { error: movedKeysError(MOVED_DEFAULTS) }).meta({ id: "SettingsDefaults", description: "Header options a diagram gets when its header does not set them." });
     SettingsBrandSchema = external_exports.strictObject({
@@ -179631,7 +179641,34 @@ function applyDefaults(source, defaults) {
     current2 = candidate2;
     errors = after;
   }
-  return { source: current2, notes };
+  return { source: withAllowed(current2, defaults, notes), notes };
+}
+function withAllowed(source, defaults, notes) {
+  let current2 = source;
+  for (const part2 of Object.keys(STYLE_PART_VALUES)) {
+    const allowed = defaults.allowed?.[part2];
+    const header = headerOf(current2);
+    if (allowed === void 0 || allowed.length === 0 || header === void 0) continue;
+    const own2 = headerValue(header, part2);
+    const was = own2 !== void 0 && "text" in own2 ? own2.text : STYLE_PART_VALUES[part2].fallback;
+    if (allowed.includes(was)) continue;
+    const wanted2 = defaults[part2];
+    const value = wanted2 !== void 0 && allowed.includes(wanted2) ? wanted2 : allowed[0];
+    const errors = headerErrors(current2, header.line);
+    const next = own2 === void 0 ? withOption(current2, header, part2, value) : withValue(current2, header, own2, value);
+    if (headerErrors(next, header.line) > errors) continue;
+    current2 = next;
+    if (own2 !== void 0) notes.push(notAllowed(part2, was, value, allowed, { line: header.line, column: own2.column, length: own2.length }));
+  }
+  return current2;
+}
+function notAllowed(key, was, value, allowed, at3) {
+  return warningAt(
+    DIAGNOSTIC_CODES.settingNotAllowed,
+    `The settings allow ${key}=${allowed.join(", ")}, so the header's ${key}=${was} was drawn as ${key}=${value}`,
+    at3,
+    `The repository's settings or the organisation allow only ${allowed.join(", ")} for ${key}; write one of those in the header, or ask the organisation's owner.`
+  );
 }
 function meets2(key, was, value) {
   if (was === value) return true;
@@ -179855,12 +179892,28 @@ function withStyleSettings(args, choice3) {
   const settings = typeof given["settings"] === "object" && given["settings"] !== null ? given["settings"] : {};
   const defaults = typeof settings["defaults"] === "object" && settings["defaults"] !== null ? settings["defaults"] : {};
   const added = {};
+  const allowed = {};
   for (const { part: part2, fallback } of STYLE_PARTS) {
-    const value = choice3.org?.[part2] ?? choice3.account?.[part2] ?? null;
-    if (value !== null && value !== fallback && defaults[part2] === void 0) added[part2] = value;
+    const narrowed = narrowedList(defaults["allowed"]?.[part2], choice3.org?.allowed?.[part2]);
+    if (narrowed !== null) allowed[part2] = narrowed;
+    const isAllowed = (value2) => value2 !== null && (narrowed === null || narrowed.includes(value2));
+    const org = choice3.org?.[part2] ?? null;
+    const own2 = typeof defaults[part2] === "string" ? defaults[part2] : null;
+    if (own2 !== null && !isAllowed(own2)) added[part2] = isAllowed(org) ? org : narrowed?.[0] ?? fallback;
+    if (own2 !== null) continue;
+    const value = [org, choice3.account?.[part2] ?? null].find(isAllowed) ?? null;
+    if (value !== null && value !== fallback) added[part2] = value;
   }
+  if (Object.keys(allowed).length > 0) added["allowed"] = { ...defaults["allowed"] ?? {}, ...allowed };
   if (Object.keys(added).length === 0) return args;
   return { ...given, settings: { ...settings, defaults: { ...defaults, ...added } } };
+}
+function narrowedList(own2, org) {
+  const fromFile = Array.isArray(own2) ? own2.filter((value) => typeof value === "string") : null;
+  if (org === void 0 || org.length === 0) return fromFile;
+  if (fromFile === null) return org;
+  const both = org.filter((value) => fromFile.includes(value));
+  return both.length === 0 ? org : both;
 }
 var STYLE_PARTS;
 var init_tool_settings = __esm({
@@ -179944,6 +179997,11 @@ function partOf(answer, values) {
   if (answer === "members") return null;
   return values.find((value) => value === answer);
 }
+function listOf3(answer, values) {
+  if (!Array.isArray(answer)) return void 0;
+  const known3 = values.filter((value) => answer.includes(value));
+  return known3.length === 0 || known3.length === values.length ? void 0 : known3;
+}
 async function fetchOrgStyle(request, fetcher = fetch) {
   const base = (request.apiUrl ?? STYLE_RULES.apiUrl).replace(/\/+$/, "");
   let response;
@@ -179963,7 +180021,10 @@ async function fetchOrgStyle(request, fetcher = fetch) {
   const spacing = partOf(answer.spacing, SPACING_VALUES);
   const edges = partOf(answer.edges, EDGE_SHAPES);
   if (spacing === void 0 || edges === void 0) return err("The API answered with a diagram style this version does not know.");
-  return ok(spacing === null && edges === null ? null : { spacing, edges });
+  const allowed = { spacing: listOf3(answer.allowed?.spacing, SPACING_VALUES), edges: listOf3(answer.allowed?.edges, EDGE_SHAPES) };
+  const narrows = allowed.spacing !== void 0 || allowed.edges !== void 0;
+  if (spacing === null && edges === null && !narrows) return ok(null);
+  return ok({ spacing, edges, ...narrows ? { allowed: { ...allowed.spacing === void 0 ? {} : { spacing: allowed.spacing }, ...allowed.edges === void 0 ? {} : { edges: allowed.edges } } } : {} });
 }
 function withOrgStyleDefaults(defaults, style) {
   if (style === null) return defaults;
@@ -195118,7 +195179,7 @@ function readManifest(text6) {
   let skipped = 0;
   for (const [id, node3] of entries2) {
     const type = stringOf(node3["resource_type"]) ?? id.split(".")[0] ?? "";
-    const depends = isObject3(node3["depends_on"]) ? listOf3(node3["depends_on"]["nodes"]) : [];
+    const depends = isObject3(node3["depends_on"]) ? listOf4(node3["depends_on"]["nodes"]) : [];
     if (type === "test") {
       const target2 = stringOf(node3["attached_node"]) ?? depends.find((dependency) => !dependency.startsWith("macro.")) ?? null;
       if (target2 !== null) tests.set(target2, (tests.get(target2) ?? 0) + 1);
@@ -195150,7 +195211,7 @@ function readManifest(text6) {
   const unresolved = counted3.flatMap((node3) => node3.dependsOn.filter((dependency) => !known3.has(dependency)).map((dependency) => ({ name: `${node3.name} reads ${dependency}`, start: node3.start })));
   return { project: { name: name2, adapter, nodes: counted3, unresolved, dynamic: [], skipped }, problem: null };
 }
-var MAX_NODES2, DRAWN, NOT_DRAWN, isObject3, stringOf, listOf3, folderOf3;
+var MAX_NODES2, DRAWN, NOT_DRAWN, isObject3, stringOf, listOf4, folderOf3;
 var init_manifest = __esm({
   "../../packages/diagrams/src/importers/dbt/manifest.ts"() {
     "use strict";
@@ -195159,7 +195220,7 @@ var init_manifest = __esm({
     NOT_DRAWN = /* @__PURE__ */ new Set(["analysis", "operation", "sql_operation", "rpc", "unit_test", "metric", "semantic_model", "saved_query", "group"]);
     isObject3 = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
     stringOf = (value) => typeof value === "string" && value !== "" ? value : null;
-    listOf3 = (value) => Array.isArray(value) ? value.filter((item2) => typeof item2 === "string") : [];
+    listOf4 = (value) => Array.isArray(value) ? value.filter((item2) => typeof item2 === "string") : [];
     folderOf3 = (path) => path === null || !path.includes("/") ? "" : path.slice(0, path.lastIndexOf("/"));
   }
 });
@@ -197405,7 +197466,7 @@ function readColumn(text6) {
     references: target2 === null ? null : { variable: target2[1] ?? "", key: target2[2] ?? "" }
   };
 }
-function listOf4(text6, name2) {
+function listOf5(text6, name2) {
   const at3 = text6.indexOf(`${name2}:`);
   const open2 = at3 === -1 ? -1 : text6.indexOf("[", at3);
   const close3 = open2 === -1 ? -1 : closeOf(text6, open2);
@@ -197503,10 +197564,10 @@ function readDrizzle(text6, context) {
   };
   for (const table of found) {
     for (const column of table.columns) if (column.references !== null) relate(table, column.key, column.references);
-    for (const call of callsOf(table.extra, "primaryKey")) for (const item2 of listOf4(call, "columns")) for (const column of table.columns) if (column.key === item2.key) column.pk = true;
+    for (const call of callsOf(table.extra, "primaryKey")) for (const item2 of listOf5(call, "columns")) for (const column of table.columns) if (column.key === item2.key) column.pk = true;
     for (const call of callsOf(table.extra, "foreignKey")) {
-      const targets = listOf4(call, "foreignColumns");
-      listOf4(call, "columns").forEach((item2, at3) => {
+      const targets = listOf5(call, "foreignColumns");
+      listOf5(call, "columns").forEach((item2, at3) => {
         const target2 = targets[at3];
         if (target2 !== void 0) relate(table, item2.key, target2);
       });
@@ -200480,7 +200541,7 @@ var init_nginx = __esm({
 function objectOf(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value) ? value : void 0;
 }
-function listOf5(value) {
+function listOf6(value) {
   return Array.isArray(value) ? value : [];
 }
 function textOf8(value) {
@@ -200836,7 +200897,7 @@ function requirementsOf(value) {
   return value.map((entry2) => {
     const map3 = /* @__PURE__ */ new Map();
     for (const [scheme, scopes] of Object.entries(objectOf(entry2) ?? {})) {
-      map3.set(scheme, listOf5(scopes).map(textOf8).filter((scope) => scope !== null && scope !== ""));
+      map3.set(scheme, listOf6(scopes).map(textOf8).filter((scope) => scope !== null && scope !== ""));
     }
     return map3;
   });
@@ -200881,12 +200942,12 @@ function operationsOf(document2) {
     for (const method of METHODS) {
       const operation = objectOf(pathItem[method]);
       if (operation === void 0) continue;
-      const roles = Array.isArray(operation["x-roles"]) ? listOf5(operation["x-roles"]).map(textOf8).filter((role) => role !== null && role !== "") : void 0;
+      const roles = Array.isArray(operation["x-roles"]) ? listOf6(operation["x-roles"]).map(textOf8).filter((role) => role !== null && role !== "") : void 0;
       operations.push({
         method: method.toUpperCase(),
         path,
         operationId: textOf8(operation["operationId"]),
-        tags: listOf5(operation["tags"]).map(textOf8).filter((tag) => tag !== null && tag.trim() !== ""),
+        tags: listOf6(operation["tags"]).map(textOf8).filter((tag) => tag !== null && tag.trim() !== ""),
         summary: textOf8(operation["summary"]) ?? (textOf8(operation["description"]) === null ? null : firstSentence(textOf8(operation["description"]) ?? "")),
         security: requirementsOf(operation["security"]) ?? rootSecurity,
         roles,
@@ -200904,7 +200965,7 @@ function schemesOf(document2) {
 }
 function tagsOf(document2) {
   const tags = /* @__PURE__ */ new Map();
-  for (const entry2 of listOf5(objectOf(document2)?.["tags"])) {
+  for (const entry2 of listOf6(objectOf(document2)?.["tags"])) {
     const name2 = textOf8(objectOf(entry2)?.["name"]);
     const description = textOf8(objectOf(entry2)?.["description"]);
     if (name2 !== null && !tags.has(name2)) tags.set(name2, description === null ? null : firstSentence(description));
@@ -203756,15 +203817,15 @@ function readWorkspaceJson(json2) {
     elements.push(element);
     const id = textOf9(entry2["id"]);
     if (id !== null) keyOfId.set(id, element.key);
-    rawRelationships.push(...listOf6(entry2["relationships"]));
+    rawRelationships.push(...listOf7(entry2["relationships"]));
     return element;
   };
-  for (const person of listOf6(model["people"])) add2(person, "person", null);
-  for (const system of listOf6(model["softwareSystems"])) {
+  for (const person of listOf7(model["people"])) add2(person, "person", null);
+  for (const system of listOf7(model["softwareSystems"])) {
     const parent = add2(system, "system", null);
-    for (const container of listOf6(system["containers"])) {
+    for (const container of listOf7(system["containers"])) {
       const holder = add2(container, "container", parent);
-      for (const component of listOf6(container["components"])) add2(component, "component", holder);
+      for (const component of listOf7(container["components"])) add2(component, "component", holder);
     }
   }
   const relationships = [];
@@ -203783,7 +203844,7 @@ function readWorkspaceJson(json2) {
     ["componentViews", "component", "containerId"]
   ];
   for (const [list, level2, field] of lists) {
-    for (const view of listOf6(viewsJson[list])) {
+    for (const view of listOf7(viewsJson[list])) {
       const scope = keyOfId.get(textOf9(view[field]) ?? "");
       const rank = isObject5(view["automaticLayout"]) ? textOf9(view["automaticLayout"]["rankDirection"]) : null;
       if (scope !== void 0) views.push({ level: level2, scope, title: textOf9(view["title"]), direction: rank === null ? null : /^(?:LeftRight|RightLeft)$/i.test(rank) ? "right" : "down", line: 1 });
@@ -203791,15 +203852,15 @@ function readWorkspaceJson(json2) {
   }
   const configuration = isObject5(viewsJson["configuration"]) ? viewsJson["configuration"] : {};
   const styles = isObject5(configuration["styles"]) ? configuration["styles"] : {};
-  const cylinderTags = listOf6(styles["elements"]).filter((style) => textOf9(style["shape"])?.toLowerCase() === "cylinder").map((style) => textOf9(style["tag"]) ?? "").filter((tag) => tag !== "");
+  const cylinderTags = listOf7(styles["elements"]).filter((style) => textOf9(style["shape"])?.toLowerCase() === "cylinder").map((style) => textOf9(style["tag"]) ?? "").filter((tag) => tag !== "");
   return { name: textOf9(json2["name"]), description: textOf9(json2["description"]), elements, relationships, groups, views, cylinderTags, skipped: [] };
 }
-var isObject5, listOf6, textOf9, DEFAULT_TAGS, tagsOf3;
+var isObject5, listOf7, textOf9, DEFAULT_TAGS, tagsOf3;
 var init_json2 = __esm({
   "../../packages/diagrams/src/importers/structurizr/json.ts"() {
     "use strict";
     isObject5 = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
-    listOf6 = (value) => Array.isArray(value) ? value.filter(isObject5) : [];
+    listOf7 = (value) => Array.isArray(value) ? value.filter(isObject5) : [];
     textOf9 = (value) => typeof value === "string" && value.trim() !== "" ? value : typeof value === "number" ? String(value) : null;
     DEFAULT_TAGS = /* @__PURE__ */ new Set(["element", "person", "software system", "container", "component", "relationship"]);
     tagsOf3 = (value) => (textOf9(value) ?? "").split(",").map((tag) => tag.trim()).filter((tag) => tag !== "" && !DEFAULT_TAGS.has(tag.toLowerCase()));
@@ -208866,7 +208927,7 @@ function readerOptions(options3) {
   if (options3.view !== void 0 && view === void 0) return `--view is one of ${IMPORT_VIEWS.join(", ")}`;
   if (options3.chart !== void 0 && chart === void 0) return `--chart is one of ${IMPORT_CHARTS.join(", ")}`;
   if (options3.groupBy !== void 0 && groupBy === void 0) return `--group-by is one of ${IMPORT_GROUP_BY.join(", ")}`;
-  return { view, chart, operationId: options3.operation, tables: listOf7(options3.tables), tags: listOf7(options3.tags), paths: listOf7(options3.paths), groupBy, varFiles: listOf7(options3.varFiles), root: options3.root };
+  return { view, chart, operationId: options3.operation, tables: listOf8(options3.tables), tags: listOf8(options3.tags), paths: listOf8(options3.paths), groupBy, varFiles: listOf8(options3.varFiles), root: options3.root };
 }
 function folderFiles(root) {
   const out = [];
@@ -208932,7 +208993,7 @@ async function importSourceFile(format, path, options3) {
   }
   return EXIT.ok;
 }
-var SKIPPED_FOLDERS, MAX_FOLDER_DEPTH, isFormat, listOf7;
+var SKIPPED_FOLDERS, MAX_FOLDER_DEPTH, isFormat, listOf8;
 var init_import_source_command = __esm({
   "../../packages/diagrams/src/cli/import-source-command.ts"() {
     "use strict";
@@ -208943,7 +209004,7 @@ var init_import_source_command = __esm({
     SKIPPED_FOLDERS = /* @__PURE__ */ new Set([".git", ".terraform", "node_modules"]);
     MAX_FOLDER_DEPTH = 8;
     isFormat = (word2) => IMPORT_FORMATS.includes(word2);
-    listOf7 = (text6) => text6?.split(",").map((entry2) => entry2.trim()).filter((entry2) => entry2 !== "");
+    listOf8 = (text6) => text6?.split(",").map((entry2) => entry2.trim()).filter((entry2) => entry2 !== "");
   }
 });
 
@@ -209649,7 +209710,7 @@ var init_files2 = __esm({
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // package.json
-var package_default = { version: "0.6.0-beta.1" };
+var package_default = { version: "0.6.0-beta.2" };
 
 // npm/package-config.json
 var package_config_default = {
