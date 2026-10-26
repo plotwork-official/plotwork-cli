@@ -1602,7 +1602,7 @@ var init_view_links = __esm({
     };
     CLI_RELEASE = {
       packageName: "@buun_group/plotwork",
-      version: "0.3.0",
+      version: "0.4.0",
       onNpm: true
     };
     CLI_SCHEME_FLAG_SINCE = "0.3.0";
@@ -209233,7 +209233,7 @@ var init_files2 = __esm({
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // package.json
-var package_default = { version: "0.4.0" };
+var package_default = { version: "0.4.1-beta.1" };
 
 // npm/package-config.json
 var package_config_default = {
