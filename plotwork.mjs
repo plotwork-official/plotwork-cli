@@ -344,7 +344,7 @@ var init_node_stack = __esm({
 });
 
 // ../../packages/diagrams/src/constants/legend.ts
-var LEGEND_VALUES, LEGEND_SHOWN_VALUES, LEGEND_SECTIONS, LEGEND_PART_PRESETS, LEGEND_PART_WORDS, LEGEND_TITLES, LINE_LEGEND_NAMES, LINE_LOOK_NAMES, NODE_TYPE_LEGEND_NAMES, NODE_CHANGE_LEGEND_NAMES;
+var LEGEND_VALUES, LEGEND_SHOWN_VALUES, LEGEND_SECTIONS, LEGEND_PART_PRESETS, LEGEND_PART_WORDS, LEGEND_TITLES, LINE_LEGEND_NAMES, MAIN_PATH_LEGEND_NAME, LINE_LOOK_NAMES, NODE_TYPE_LEGEND_NAMES, NODE_CHANGE_LEGEND_NAMES;
 var init_legend = __esm({
   "../../packages/diagrams/src/constants/legend.ts"() {
     "use strict";
@@ -372,6 +372,7 @@ var init_legend = __esm({
       { line: "dotted", heads: "end", name: "Asynchronous" },
       { line: "solid", heads: "none", name: "Association" }
     ];
+    MAIN_PATH_LEGEND_NAME = "Main path";
     LINE_LOOK_NAMES = { solid: "Line", dashed: "Dashed line", dotted: "Dotted line" };
     NODE_TYPE_LEGEND_NAMES = {
       person: "Person",
@@ -481,6 +482,67 @@ var init_line_options = __esm({
         values: LEGEND_PART_WORDS.join(", "),
         meaning: "Flow only. The legend's parts, a comma list of lines, boxes, icons, groups, changes; all (the default) or basic (no icons).",
         example: 'flow "Platform" legend=on legendparts=lines,boxes'
+      }
+    ];
+  }
+});
+
+// ../../packages/diagrams/src/constants/spacing.ts
+var SPACING_VALUES, DEFAULT_SPACING;
+var init_spacing = __esm({
+  "../../packages/diagrams/src/constants/spacing.ts"() {
+    "use strict";
+    SPACING_VALUES = ["compact", "normal", "roomy"];
+    DEFAULT_SPACING = "normal";
+  }
+});
+
+// ../../packages/diagrams/src/constants/flow-look.ts
+var EDGE_SHAPES, DEFAULT_EDGE_SHAPE, FIT_VALUES, DEFAULT_FIT, ALIGN_LIMIT, FLOW_LOOK_SPECS;
+var init_flow_look = __esm({
+  "../../packages/diagrams/src/constants/flow-look.ts"() {
+    "use strict";
+    init_spacing();
+    EDGE_SHAPES = ["orthogonal", "spline", "straight"];
+    DEFAULT_EDGE_SHAPE = "orthogonal";
+    FIT_VALUES = ["auto", "wide", "tall", "square"];
+    DEFAULT_FIT = "auto";
+    ALIGN_LIMIT = 12;
+    FLOW_LOOK_SPECS = [
+      {
+        key: "spacing",
+        scope: "header",
+        values: SPACING_VALUES.join(", "),
+        meaning: "How far apart the boxes and layers sit: compact for a dense page, roomy for a slide, normal by default. Text and padding stay the same.",
+        example: 'flow "Platform" spacing=roomy'
+      },
+      {
+        key: "edges",
+        scope: "header",
+        values: EDGE_SHAPES.join(", "),
+        meaning: "How lines are drawn: orthogonal (straight runs, rounded corners, the default), spline (one smooth curve through the same route), or straight (slanted runs between the ends).",
+        example: 'flow "Platform" edges=spline'
+      },
+      {
+        key: "fit",
+        scope: "header",
+        values: FIT_VALUES.join(", "),
+        meaning: "The shape the picture is made for, which decides direction=auto: wide always lays it across (slides), tall always down (phones), square takes the way nearer a square. A named direction wins.",
+        example: 'flow "Platform" fit=wide'
+      },
+      {
+        key: "main",
+        scope: "line",
+        values: "on, off",
+        meaning: "Marks the line as part of the main path: drawn heavier, kept as straight as layout can, and named in the legend.",
+        example: 'web -> api : "places order" main=on'
+      },
+      {
+        key: "align",
+        scope: "statement",
+        values: `2 to ${ALIGN_LIMIT} node ids`,
+        meaning: "Keeps the nodes in one rank: one row of a diagram drawn down, one column of a diagram drawn across. A node is in one align statement at most.",
+        example: "align payments, email"
       }
     ];
   }
@@ -1490,8 +1552,11 @@ var init_api_limits = __esm({
   "../../packages/diagrams/src/constants/api-limits.ts"() {
     "use strict";
     API_LIMITS = {
-      /** Longest diagram source, in characters. */
-      maxSourceLength: 5e4,
+      /**
+       * Longest diagram source, in characters. Raised from 50,000 so the whole of a big import fits as one diagram: a Terraform stack of
+       * 600 resources writes about 100,000 characters, and lays out in 2 to 12 seconds of CPU depending on its arrows.
+       */
+      maxSourceLength: 12e4,
       /** Longest icon search query, in characters. */
       maxIconQueryLength: 64,
       /** Most icons one search returns. */
@@ -1937,6 +2002,14 @@ var init_workflow_limits = __esm({
       maxImportLocalFiles: 2e4,
       /** import_source: most diagrams an import too big for one picture is split into; a reader packs more into each before it passes this. */
       maxImportParts: 24,
+      /**
+       * import_source: most arrows the whole of a split import may have to be drawn as one diagram (`combined`, or the source when
+       * `large` is `whole`). Layout time grows with the arrows far more than with the boxes. Whole Terraform stacks measured in Node on a
+       * laptop: 720 boxes and 360 arrows took 3.1 seconds of CPU; 280 boxes and 490 arrows 6.4; 480 boxes and 840 arrows 11.7; 720 boxes
+       * and 1,260 arrows 18. The Engine is about twice as slow as a laptop, so 500 arrows keeps a whole near 13 of its 30 seconds. Past it
+       * the parts are drawn alone and I207 says why. Boxes are held by `LAYOUT_LIMITS` like every flow.
+       */
+      maxImportWholeArrows: 500,
       /** import_source: most boxes in an imported flow (services, resources, jobs, steps); the rest are left out and reported. */
       maxImportNodes: 40,
       /** import_source: most tables in an imported schema. */
@@ -1964,6 +2037,15 @@ var init_workflow_limits = __esm({
       /** sync_markdown: most pictures in one page of files. */
       maxSyncPageSize: 30
     };
+  }
+});
+
+// ../../packages/diagrams/src/constants/series.ts
+var DEFAULT_IMPORT_LARGE;
+var init_series = __esm({
+  "../../packages/diagrams/src/constants/series.ts"() {
+    "use strict";
+    DEFAULT_IMPORT_LARGE = "both";
   }
 });
 
@@ -5257,6 +5339,8 @@ var init_constants = __esm({
     init_line_options();
     init_legend();
     init_line_roles();
+    init_spacing();
+    init_flow_look();
     init_color_themes();
     init_auto_icons();
     init_schema();
@@ -5278,6 +5362,7 @@ var init_constants = __esm({
     init_style_rules();
     init_generate();
     init_workflow_limits();
+    init_series();
     init_cloud();
     init_vendor_icons();
     init_icon_catalog();
@@ -5362,7 +5447,7 @@ var init_color = __esm({
 });
 
 // ../../packages/diagrams/src/theme/metrics.ts
-var FONT_STACKS, TYPE_ROLES, NODE_METRICS, EDGE_METRICS, STEP_METRICS, MOTION_METRICS, GROUP_TAB_HEIGHT, GROUP_TAB_GAP, GROUP_METRICS, SCHEMA_METRICS, SEQUENCE_METRICS, CANVAS_METRICS;
+var FONT_STACKS, TYPE_ROLES, NODE_METRICS, EDGE_METRICS, STEP_METRICS, MOTION_METRICS, GROUP_TAB_HEIGHT, GROUP_TAB_GAP, GROUP_METRICS, SCHEMA_METRICS, SEQUENCE_METRICS, CANVAS_METRICS, FLOW_SPACING;
 var init_metrics = __esm({
   "../../packages/diagrams/src/theme/metrics.ts"() {
     "use strict";
@@ -5426,7 +5511,14 @@ var init_metrics = __esm({
     };
     EDGE_METRICS = {
       strokeWidth: 1.5,
+      /** A line of the main path (`main=on`): heavier, so the eye follows it first; its arrowhead is drawn in the same weight. */
+      mainStrokeWidth: 2.5,
       cornerRadius: 10,
+      /**
+       * The corner radius of a line drawn with `edges=spline`. A corner never takes more than half of either run it joins, so a radius this
+       * large makes each bend as wide as its runs allow and the line one smooth curve through its route.
+       */
+      splineRadius: 400,
       arrowLength: 7,
       arrowHalfWidth: 4.5,
       /** Straight line kept between the last bend and the chevron's rear, so the head never sits on a curve. */
@@ -5577,6 +5669,11 @@ var init_metrics = __esm({
       edgeSpacing: 14,
       /** Width in px that fits a Markdown column without scaling text below readable size. */
       targetWidth: 880
+    };
+    FLOW_SPACING = {
+      compact: { nodeSpacing: 16, layerSpacing: 48, edgeNodeSpacing: 16, groupNodeSpacing: 12 },
+      normal: { nodeSpacing: CANVAS_METRICS.nodeSpacing, layerSpacing: CANVAS_METRICS.layerSpacing, edgeNodeSpacing: CANVAS_METRICS.edgeNodeSpacing, groupNodeSpacing: null },
+      roomy: { nodeSpacing: 48, layerSpacing: 96, edgeNodeSpacing: 28, groupNodeSpacing: 40 }
     };
   }
 });
@@ -6246,6 +6343,9 @@ var init_diagnostics = __esm({
       // An icon= name that is not bundled. A warning since 2026-10-20 (it was error E122): the item draws its default icon, so a missing
       // brand never stops a drawing, and the hint names the closest icons.
       unknownIcon: "W208",
+      // An `align` whose nodes sit in different groups (or one in a group and one outside): a group's frame takes layers of its own, so
+      // layout may not manage one rank for them. The diagram draws; the hint says to move them into one group.
+      alignAcrossGroups: "W209",
       // Style suggestions. W5xx says how a valid diagram would look more finished; like W204 and W205 it is a suggestion, not a problem
       // (`isStyleHint`), so a check that fails on warnings passes it.
       suggestLineRole: "W500",
@@ -6418,6 +6518,7 @@ var init_diagnostics = __esm({
       importChanged: "I203",
       importSplit: "I204",
       importPartial: "I206",
+      importWholeLeftOut: "I207",
       // Style rules (src/rules). R1xx: the rules file cannot be used, and points into it. R2xx: a diagram breaks a rule, and points into the
       // diagram; an error by default, or a warning when the rule says `"level": "warning"`.
       rulesInvalid: "R100",
@@ -37973,8 +38074,8 @@ function roundedHoppedPaths(rawPoints, radius, leads, crossings2, hopRadius, apa
 function roundedPath(rawPoints, radius, leads = NO_LEADS) {
   return roundedHoppedPaths(rawPoints, radius, leads, [], 0, false).line;
 }
-function arrowHead(tip, travel, color) {
-  const point = along(tip, travel, -EDGE_METRICS.strokeWidth / 2);
+function arrowHead(tip, travel, color, strokeWidth) {
+  const point = along(tip, travel, -strokeWidth / 2);
   const base = along(point, travel, -EDGE_METRICS.arrowLength);
   const perpendicular = { x: -travel.y, y: travel.x };
   const left = along(base, perpendicular, EDGE_METRICS.arrowHalfWidth);
@@ -37984,7 +38085,7 @@ function arrowHead(tip, travel, color) {
     d,
     fill: "none",
     stroke: color,
-    "stroke-width": EDGE_METRICS.strokeWidth,
+    "stroke-width": strokeWidth,
     "stroke-linecap": "round",
     "stroke-linejoin": "round"
   });
@@ -38002,19 +38103,21 @@ function paintArrowLine(rawPoints, style) {
   const leads = { start: hasStartHead ? headLead : 0, end: hasEndHead ? headLead : 0 };
   const isHopped = route.length === 2 && Math.abs(first.y - last.y) < 0.01 && (style.hops?.length ?? 0) > 0;
   const crossings2 = style.crossings ?? [];
-  const hopped = isHopped ? hoppedPaths(first, last, style.hops ?? [], style.hopRadius ?? 0, leads, style.line !== "solid") : crossings2.length > 0 ? roundedHoppedPaths(route, EDGE_METRICS.cornerRadius, leads, crossings2, style.hopRadius ?? 0, style.line !== "solid") : null;
-  const stroke = { fill: "none", stroke: style.color, "stroke-width": EDGE_METRICS.strokeWidth, "stroke-linecap": "round", "stroke-linejoin": "round" };
+  const radius = style.cornerRadius ?? EDGE_METRICS.cornerRadius;
+  const strokeWidth = style.strokeWidth ?? EDGE_METRICS.strokeWidth;
+  const hopped = isHopped ? hoppedPaths(first, last, style.hops ?? [], style.hopRadius ?? 0, leads, style.line !== "solid") : crossings2.length > 0 ? roundedHoppedPaths(route, radius, leads, crossings2, style.hopRadius ?? 0, style.line !== "solid") : null;
+  const stroke = { fill: "none", stroke: style.color, "stroke-width": strokeWidth, "stroke-linecap": "round", "stroke-linejoin": "round" };
   const parts = [
     el("path", {
-      d: hopped === null ? roundedPath(route, EDGE_METRICS.cornerRadius, leads) : hopped.line,
+      d: hopped === null ? roundedPath(route, radius, leads) : hopped.line,
       ...stroke,
       "stroke-dasharray": style.line === "dashed" ? EDGE_METRICS.dashPattern : style.line === "dotted" ? EDGE_METRICS.dotPattern : null,
       class: style.isAnimated === true ? motionClass(style.line) : null
     })
   ];
   if (hopped !== null && hopped.arcs !== "") parts.push(el("path", { d: hopped.arcs, ...stroke }));
-  if (hasEndHead) parts.push(arrowHead(last, unit(beforeLast, last), style.color));
-  if (hasStartHead) parts.push(arrowHead(first, unit(second, first), style.color));
+  if (hasEndHead) parts.push(arrowHead(last, unit(beforeLast, last), style.color, strokeWidth));
+  if (hasStartHead) parts.push(arrowHead(first, unit(second, first), style.color, strokeWidth));
   return parts;
 }
 var distance, unit, along, NO_LEADS, MIN_LINE_GAP, TOLERANCE;
@@ -133790,6 +133893,17 @@ var init_symmetry = __esm({
   }
 });
 
+// ../../packages/diagrams/src/layout/flow/spacing.ts
+function flowSpacing(diagram) {
+  return FLOW_SPACING[diagram.spacing ?? "normal"];
+}
+var init_spacing2 = __esm({
+  "../../packages/diagrams/src/layout/flow/spacing.ts"() {
+    "use strict";
+    init_theme();
+  }
+});
+
 // ../../packages/diagrams/src/layout/flow/large-diagram.ts
 function isLargeDiagram(diagram) {
   return diagram.nodes.length >= LARGE_DIAGRAM_NODES;
@@ -133800,7 +133914,7 @@ function isTooWideSideways(diagram, boxes2) {
   let narrowest2 = Infinity;
   for (const box of boxes2.values()) narrowest2 = Math.min(narrowest2, box.width);
   if (!Number.isFinite(narrowest2)) return false;
-  return layers * narrowest2 + (layers - 1) * CANVAS_METRICS.layerSpacing > 2 * CANVAS_METRICS.targetWidth;
+  return layers * narrowest2 + (layers - 1) * flowSpacing(diagram).layerSpacing > 2 * CANVAS_METRICS.targetWidth;
 }
 var LARGE_DIAGRAM_NODES, LARGE_DIAGRAM_OPTIONS;
 var init_large_diagram = __esm({
@@ -133808,6 +133922,7 @@ var init_large_diagram = __esm({
     "use strict";
     init_core();
     init_theme();
+    init_spacing2();
     LARGE_DIAGRAM_NODES = 100;
     LARGE_DIAGRAM_OPTIONS = {
       "elk.layered.thoroughness": "7",
@@ -134057,20 +134172,80 @@ var init_edge_label = __esm({
   }
 });
 
+// ../../packages/diagrams/src/layout/flow/align-ranks.ts
+function isAlignEdge(id) {
+  return id.startsWith(ALIGN_EDGE_PREFIX);
+}
+function reachableFrom(start2, diagram) {
+  const seen = /* @__PURE__ */ new Set([start2]);
+  const queue = [start2];
+  for (let id = queue.shift(); id !== void 0; id = queue.shift()) {
+    for (const edge2 of diagram.edges) {
+      if (edge2.from !== id || seen.has(edge2.to)) continue;
+      seen.add(edge2.to);
+      queue.push(edge2.to);
+    }
+  }
+  return seen;
+}
+function alignEdges(diagram) {
+  if (diagram.aligns === void 0) return [];
+  const ranks = rankNodes(diagram);
+  const hidden = [];
+  diagram.aligns.forEach((align, alignIndex) => {
+    const deepest = Math.max(...align.members.map((member) => ranks.get(member) ?? 0));
+    const target2 = align.members.find((member) => (ranks.get(member) ?? 0) === deepest);
+    if (target2 === void 0) return;
+    const into = diagram.edges.filter((edge2) => edge2.to === target2 && edge2.from !== target2);
+    for (const member of align.members) {
+      if (member === target2 || (ranks.get(member) ?? 0) === deepest) continue;
+      const ahead = reachableFrom(member, diagram);
+      into.forEach((edge2, edgeIndex2) => {
+        if (ahead.has(edge2.from)) return;
+        const height = edgeLabelHeight(edge2);
+        hidden.push({
+          id: `${ALIGN_EDGE_PREFIX}${alignIndex}-${member}-${edgeIndex2}`,
+          sources: [edge2.from],
+          targets: [member],
+          // Only the rank: no pull on where the nodes sit across, so the real lines stay as straight as they were.
+          layoutOptions: { "elk.layered.priority.straightness": "0", "elk.layered.priority.shortness": "0" },
+          // A labelled line is one layer longer, for its label; the copy carries a label as thin as can be, so it asks for the same rank.
+          ...edgeLabelWidth(edge2) === 0 ? {} : { labels: [{ text: " ", width: 1, height, layoutOptions: { "elk.edgeLabels.inline": "true" } }] }
+        });
+      });
+    }
+  });
+  return hidden;
+}
+function withoutAlignEdges(laidOut2) {
+  const edges = laidOut2.edges?.filter((edge2) => !isAlignEdge(edge2.id));
+  return edges === void 0 || edges.length === laidOut2.edges?.length ? laidOut2 : { ...laidOut2, edges };
+}
+var ALIGN_EDGE_PREFIX;
+var init_align_ranks = __esm({
+  "../../packages/diagrams/src/layout/flow/align-ranks.ts"() {
+    "use strict";
+    init_core();
+    init_edge_label();
+    ALIGN_EDGE_PREFIX = "align-";
+  }
+});
+
 // ../../packages/diagrams/src/layout/flow/elk-graph.ts
-function rootOptions(direction, isLarge) {
+function rootOptions(direction, isLarge, spacing, diagram) {
   return {
     "elk.algorithm": "layered",
     "elk.direction": ELK_DIRECTIONS[direction],
-    "elk.edgeRouting": "ORTHOGONAL",
+    // A spline is painted as a curve through the orthogonal route, so only straight lines are routed differently.
+    "elk.edgeRouting": diagram.edgeShape === "straight" ? "POLYLINE" : "ORTHOGONAL",
     "elk.hierarchyHandling": "INCLUDE_CHILDREN",
     "elk.json.edgeCoords": "ROOT",
     "elk.json.shapeCoords": "ROOT",
     "elk.padding": `[top=${CANVAS_METRICS.padding},left=${CANVAS_METRICS.padding},bottom=${CANVAS_METRICS.padding},right=${CANVAS_METRICS.padding}]`,
-    "elk.spacing.nodeNode": String(CANVAS_METRICS.nodeSpacing),
-    "elk.layered.spacing.nodeNodeBetweenLayers": String(CANVAS_METRICS.layerSpacing),
-    "elk.spacing.edgeNode": String(CANVAS_METRICS.edgeNodeSpacing),
-    "elk.layered.spacing.edgeNodeBetweenLayers": String(CANVAS_METRICS.edgeNodeSpacing),
+    "elk.spacing.nodeNode": String(spacing.nodeSpacing),
+    "elk.layered.spacing.nodeNodeBetweenLayers": String(spacing.layerSpacing),
+    "elk.spacing.edgeNode": String(spacing.edgeNodeSpacing),
+    "elk.layered.spacing.edgeNodeBetweenLayers": String(spacing.edgeNodeSpacing),
     "elk.spacing.edgeEdge": String(CANVAS_METRICS.edgeSpacing),
     "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES",
     "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
@@ -134087,7 +134262,7 @@ function nestedOptions(isOrdered) {
     ...isOrdered ? { "elk.layered.considerModelOrder.strategy": "PREFER_EDGES" } : {}
   };
 }
-function frameNode(id, content, direction, padding, isOrdered) {
+function frameNode(id, content, direction, padding, isOrdered, spacing) {
   const tab = sizeGroupTab(content);
   const paddingTop = groupPaddingTop(tab);
   const minWidth = minGroupWidth(tab);
@@ -134100,13 +134275,14 @@ function frameNode(id, content, direction, padding, isOrdered) {
       "elk.padding": `[top=${paddingTop},left=${padding.side},bottom=${padding.bottom},right=${padding.side}]`,
       "elk.nodeSize.constraints": "MINIMUM_SIZE",
       "elk.nodeSize.minimum": isTurned ? `(${minHeight},${minWidth})` : `(${minWidth},${minHeight})`,
-      ...nestedOptions(isOrdered)
+      ...nestedOptions(isOrdered),
+      ...spacing.groupNodeSpacing === null ? {} : { "elk.spacing.nodeNode": String(spacing.groupNodeSpacing) }
     }
   };
 }
-function levelGap(edge2) {
+function levelGap(edge2, spacing) {
   const boxWidth = edgeLabelWidth(edge2);
-  return Math.max(CANVAS_METRICS.nodeSpacing, boxWidth === 0 ? LEVEL_GAP_PLAIN : boxWidth + LEVEL_GAP_MARGIN);
+  return Math.max(spacing.nodeSpacing, boxWidth === 0 ? LEVEL_GAP_PLAIN : boxWidth + LEVEL_GAP_MARGIN);
 }
 function ancestry(id, parents) {
   const chain = [id];
@@ -134121,7 +134297,7 @@ function reserveLevelRoom(diagram, levelEdges, parents, elements) {
     const toChain = ancestry(edge2.to, parents);
     const common = fromChain.find((id) => toChain.includes(id));
     const heads = [common === void 0 ? fromChain[fromChain.length - 1] : fromChain[fromChain.indexOf(common) - 1], common === void 0 ? toChain[toChain.length - 1] : toChain[toChain.indexOf(common) - 1]];
-    for (const head of heads) if (head !== void 0) gaps.set(head, Math.max(gaps.get(head) ?? 0, levelGap(edge2)));
+    for (const head of heads) if (head !== void 0) gaps.set(head, Math.max(gaps.get(head) ?? 0, levelGap(edge2, flowSpacing(diagram))));
   }
   for (const [id, gap] of gaps) {
     const element = elements.get(id);
@@ -134134,10 +134310,11 @@ function edgesInOrder(diagram, order) {
   return order.flatMap((id) => byId.get(id) ?? []);
 }
 function buildElkGraph(diagram, boxes2, direction, isOrdered = true, levelEdges = /* @__PURE__ */ new Set(), edgeOrder = []) {
-  const root = { id: "root", children: [], edges: [], layoutOptions: rootOptions(direction, isLargeDiagram(diagram)) };
-  const groupNodes = new Map(diagram.groups.map((group2) => [group2.id, frameNode(group2.id, group2, direction, GROUP_PADDING, isOrdered)]));
+  const spacing = flowSpacing(diagram);
+  const root = { id: "root", children: [], edges: [], layoutOptions: rootOptions(direction, isLargeDiagram(diagram), spacing, diagram) };
+  const groupNodes = new Map(diagram.groups.map((group2) => [group2.id, frameNode(group2.id, group2, direction, GROUP_PADDING, isOrdered, spacing)]));
   const { contained } = splitOverlays(diagram);
-  const overlayNodes = new Map(contained.map((overlay) => [overlay.id, frameNode(overlay.id, overlay, direction, OVERLAY_PADDING, isOrdered)]));
+  const overlayNodes = new Map(contained.map((overlay) => [overlay.id, frameNode(overlay.id, overlay, direction, OVERLAY_PADDING, isOrdered, spacing)]));
   const overlayOfMember = new Map(contained.flatMap((overlay) => overlay.members.map((member) => [member, overlay.id])));
   const inserted = /* @__PURE__ */ new Set();
   const parents = /* @__PURE__ */ new Map();
@@ -134176,6 +134353,7 @@ function buildElkGraph(diagram, boxes2, direction, isOrdered = true, levelEdges 
       id: edge2.id,
       sources: [edge2.from],
       targets: [edge2.to],
+      ...edge2.isMain === true ? { layoutOptions: MAIN_EDGE_OPTIONS } : {},
       // A numbered edge with no label still gets a box, the size of its badge, so layout leaves room for the badge on its line.
       // ELK places no label whose text is empty, so the box carries the number as its text; `placeEdges` turns it back into no text.
       ...edgeLabelWidth(edge2) === 0 ? {} : {
@@ -134190,22 +134368,29 @@ function buildElkGraph(diagram, boxes2, direction, isOrdered = true, levelEdges 
       }
     });
   }
+  root.edges?.push(...alignEdges(diagram));
   return root;
 }
-var ELK_DIRECTIONS, GROUP_PADDING, OVERLAY_PADDING, LEVEL_GAP_PLAIN, LEVEL_GAP_MARGIN;
+var ELK_DIRECTIONS, MAIN_EDGE_OPTIONS, GROUP_PADDING, OVERLAY_PADDING, LEVEL_GAP_PLAIN, LEVEL_GAP_MARGIN;
 var init_elk_graph = __esm({
   "../../packages/diagrams/src/layout/flow/elk-graph.ts"() {
     "use strict";
     init_theme();
+    init_align_ranks();
     init_edge_label();
     init_large_diagram();
     init_overlays2();
     init_size_group();
+    init_spacing2();
     ELK_DIRECTIONS = {
       right: "RIGHT",
       down: "DOWN",
       left: "LEFT",
       up: "UP"
+    };
+    MAIN_EDGE_OPTIONS = {
+      "elk.layered.priority.straightness": "10",
+      "elk.layered.priority.direction": "10"
     };
     GROUP_PADDING = { side: GROUP_METRICS.paddingSide, bottom: GROUP_METRICS.paddingBottom };
     OVERLAY_PADDING = { side: GROUP_METRICS.overlayPaddingSide, bottom: GROUP_METRICS.overlayPaddingBottom };
@@ -135280,16 +135465,19 @@ var init_paint_role = __esm({
 });
 
 // ../../packages/diagrams/src/render/flow/paint-edge.ts
-function paintEdge(edge2, placed3, theme, crossings2 = []) {
+function paintEdge(edge2, placed3, theme, crossings2 = [], shape = "orthogonal") {
+  const isCurve = shape === "spline";
   const parts = paintArrowLine(placed3.points, {
     color: edge2.role === void 0 ? theme.edge : roleColor(edge2.role, theme),
     line: paintedLine(edge2.line, edge2.role),
     heads: edge2.heads,
     isAnimated: edge2.isAnimated === true,
-    ...crossings2.length === 0 ? {} : { crossings: crossings2, hopRadius: EDGE_METRICS.hopRadius }
+    ...crossings2.length === 0 || isCurve ? {} : { crossings: crossings2, hopRadius: EDGE_METRICS.hopRadius },
+    ...isCurve ? { cornerRadius: EDGE_METRICS.splineRadius } : {},
+    ...edge2.isMain === true ? { strokeWidth: EDGE_METRICS.mainStrokeWidth } : {}
   });
   if (parts.length === 0) return "";
-  return el("g", { "data-edge": edge2.id, "data-from": edge2.from, "data-to": edge2.to, "data-role": edge2.role ?? null }, parts);
+  return el("g", { "data-edge": edge2.id, "data-from": edge2.from, "data-to": edge2.to, "data-role": edge2.role ?? null, "data-main": edge2.isMain === true ? "true" : null }, parts);
 }
 function labelIconColor(icon, theme) {
   const tone = iconTone(icon);
@@ -140117,7 +140305,8 @@ function lineEntries(diagram) {
       const [line5, heads] = key.split(" ");
       return { sample: { kind: "line", line: line5, heads }, name: lineName(line5, heads) };
     }),
-    ...LINE_ROLES.filter((role) => roles.has(role)).map((role) => ({ sample: { kind: "line", line: strokedLine("solid", role), heads: "end", role }, name: LINE_ROLE_SPECS[role].legend }))
+    ...LINE_ROLES.filter((role) => roles.has(role)).map((role) => ({ sample: { kind: "line", line: strokedLine("solid", role), heads: "end", role }, name: LINE_ROLE_SPECS[role].legend })),
+    ...diagram.edges.some((edge2) => edge2.isMain === true) ? [{ sample: { kind: "line", line: "solid", heads: "end", isMain: true }, name: MAIN_PATH_LEGEND_NAME }] : []
   ];
 }
 function boxEntries(diagram) {
@@ -140460,14 +140649,14 @@ function routeAroundTabs2(edge2, tabs, nodes) {
 }
 async function runElk3(diagram, boxes2, direction, level2) {
   const elk = await getElk();
-  if (isLargeDiagram(diagram) && diagram.groups.length > 0) return elk.layout(buildElkGraph(diagram, boxes2, direction, false, level2));
+  if (isLargeDiagram(diagram) && diagram.groups.length > 0) return withoutAlignEdges(await elk.layout(buildElkGraph(diagram, boxes2, direction, false, level2)));
   let isOrdered = true;
   let laidOut2;
   try {
-    laidOut2 = await elk.layout(buildElkGraph(diagram, boxes2, direction, true, level2));
+    laidOut2 = withoutAlignEdges(await elk.layout(buildElkGraph(diagram, boxes2, direction, true, level2)));
   } catch {
     isOrdered = false;
-    laidOut2 = await elk.layout(buildElkGraph(diagram, boxes2, direction, false, level2));
+    laidOut2 = withoutAlignEdges(await elk.layout(buildElkGraph(diagram, boxes2, direction, false, level2)));
   }
   return isLargeDiagram(diagram) ? laidOut2 : untangleFans(laidOut2, { diagram, boxes: boxes2, direction, level: level2, isOrdered });
 }
@@ -140476,7 +140665,7 @@ async function untangleFans(first, input2) {
   if (order === null) return first;
   const elk = await getElk();
   try {
-    const second = await elk.layout(buildElkGraph(input2.diagram, input2.boxes, input2.direction, input2.isOrdered, input2.level, order));
+    const second = withoutAlignEdges(await elk.layout(buildElkGraph(input2.diagram, input2.boxes, input2.direction, input2.isOrdered, input2.level, order)));
     return elkCrossings(second) < elkCrossings(first) ? second : first;
   } catch {
     return first;
@@ -140545,13 +140734,19 @@ async function layoutWith2(diagram, boxes2, direction) {
 async function layoutFlowOnce(diagram) {
   const boxes2 = evenFlowBoxes(diagram, new Map(diagram.nodes.map((node3) => [node3.id, sizeNode(node3)])));
   if (diagram.direction !== "auto") return layoutWith2(diagram, boxes2, diagram.direction);
+  if (diagram.fit === "wide") return layoutWith2(diagram, boxes2, "right");
+  if (diagram.fit === "tall") return layoutWith2(diagram, boxes2, "down");
   if (isTooWideSideways(diagram, boxes2)) return layoutWith2(diagram, boxes2, "down");
   const horizontal = await layoutWith2(diagram, boxes2, "right");
+  if (diagram.fit === "square") {
+    const vertical2 = await layoutWith2(diagram, boxes2, "down");
+    return offSquare(vertical2.size) < offSquare(horizontal.size) ? vertical2 : horizontal;
+  }
   if (horizontal.size.width <= CANVAS_METRICS.targetWidth) return horizontal;
   const vertical = await layoutWith2(diagram, boxes2, "down");
   return vertical.size.width < horizontal.size.width ? vertical : horizontal;
 }
-var edgeIndex, layoutFlow;
+var edgeIndex, offSquare, layoutFlow;
 var init_layout_flow = __esm({
   "../../packages/diagrams/src/layout/flow/layout-flow.ts"() {
     "use strict";
@@ -140559,6 +140754,7 @@ var init_layout_flow = __esm({
     init_theme();
     init_elk_engine();
     init_memo_layout();
+    init_align_ranks();
     init_balance_flow();
     init_end_room();
     init_elk_graph();
@@ -140576,6 +140772,7 @@ var init_layout_flow = __esm({
     init_stub_order();
     init_tab_clearance();
     edgeIndex = (edge2) => Number(edge2.id.slice(1));
+    offSquare = (size) => Math.abs(Math.log(Math.max(1, size.width) / Math.max(1, size.height)));
     layoutFlow = memoLayout(async (diagram) => withLegend(diagram, await layoutFlowOnce(diagram)));
   }
 });
@@ -140600,9 +140797,11 @@ function overlayLine(overlay, memberLabel) {
   return `${kind}: ${overlay.label}${detail}${stack2}, around ${overlay.members.map(memberLabel).join(", ")}`;
 }
 function lineNote(edge2) {
-  if (edge2.role === void 0) return LINE_NOTE[edge2.line];
+  const main2 = edge2.isMain === true ? "main path" : null;
+  if (edge2.role === void 0) return main2 === null ? LINE_NOTE[edge2.line] : ` (${edge2.line === "solid" ? "" : `${edge2.line}, `}${main2})`;
   const role = `${LINE_ROLE_SPECS[edge2.role].words} line`;
-  return edge2.line === "solid" ? ` (${role})` : ` (${edge2.line}, ${role})`;
+  const words = [edge2.line === "solid" ? null : edge2.line, role, main2].filter((word2) => word2 !== null);
+  return ` (${words.join(", ")})`;
 }
 function summarizeFlow(diagram) {
   const title = diagram.meta.title ?? "Flow diagram";
@@ -140962,8 +141161,46 @@ function parseFlowHeader(line5, state) {
   state.motion = readHeaderMotion(options3, state.report);
   state.legend = readLegend(findOption(options3, "legend"), state.report);
   state.legendParts = readLegendParts(findOption(options3, "legendparts"), state.report);
+  state.spacing = readChoice(findOption(options3, "spacing"), SPACING_VALUES, DEFAULT_SPACING, state, "compact packs the boxes closer, roomy spreads them; normal is the default.");
+  state.edgeShape = readChoice(findOption(options3, "edges"), EDGE_SHAPES, DEFAULT_EDGE_SHAPE, state, "spline draws curves, straight draws slanted lines; orthogonal is the default.");
+  state.fit = readChoice(findOption(options3, "fit"), FIT_VALUES, DEFAULT_FIT, state, "wide lays it across for a slide, tall down for a phone, square nearer a square; auto is the default.");
   readIconMode(findOption(options3, "icons"), state);
-  rejectTrailing(cursor, state, 'The header is: flow "Title" direction=auto provider=aws animate=on numbered=on start=1 legend=on legendparts=all icons=auto desc="Plain-language summary"');
+  rejectTrailing(cursor, state, 'The header is: flow "Title" direction=auto fit=auto provider=aws animate=on numbered=on start=1 legend=on legendparts=all spacing=normal edges=orthogonal icons=auto desc="Plain-language summary"');
+}
+function readChoice(option2, values, fallback, state, meaning) {
+  if (option2 === void 0 || option2.value === fallback) return null;
+  const found = values.find((value) => value === option2.value);
+  if (found !== void 0) return found;
+  state.report.push(
+    errorAt(DIAGNOSTIC_CODES.badOptionValue, `Option "${option2.key}" takes ${joinWords([...values], "or")}, found "${option2.value}"`, option2.valueToken, `${didYouMean(option2.value, values)} ${meaning}`)
+  );
+  return null;
+}
+function readMain(option2, state) {
+  if (option2 === void 0 || option2.value === "off") return void 0;
+  if (option2.value === "on") return true;
+  state.report.push(errorAt(DIAGNOSTIC_CODES.badOptionValue, `Option "main" takes on or off, found "${option2.value}"`, option2.valueToken, "main=on draws the line as part of the main path: heavier, and kept straight."));
+  return void 0;
+}
+function parseAlignStatement(cursor, state, line5) {
+  const keyword = cursor.next();
+  const members2 = [];
+  for (let token = cursor.peek(); token !== null; token = cursor.peek()) {
+    if (token.kind === "word") members2.push(token);
+    else if (token.kind !== "comma") break;
+    cursor.next();
+  }
+  rejectTrailing(cursor, state, "Write: align api, worker, cache");
+  if (keyword === null) return;
+  if (members2.length < 2) {
+    state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, "align needs two nodes or more", members2[0] ?? cursor.endPosition(line5), "Name the nodes to keep in one rank: align api, worker"));
+    return;
+  }
+  if (members2.length > ALIGN_LIMIT) {
+    state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, `align names ${members2.length} nodes (limit ${ALIGN_LIMIT})`, members2[ALIGN_LIMIT] ?? keyword, "Split it, or put the nodes in a group, which keeps them together."));
+    return;
+  }
+  state.aligns.push({ members: members2, at: { line: keyword.line, column: keyword.column, length: keyword.length } });
 }
 function parseDescStatement(cursor, state, line5) {
   cursor.next();
@@ -141072,7 +141309,8 @@ function parseEdgeStatement(cursor, state, line5) {
   const spec = ARROW_SPECS[arrow.text];
   const motion = readLineMotion(options3, state.motion, spec.heads, from, state.report);
   const role = readLineRole(findOption(options3, "role"), state.report);
-  state.edges.push({ from: from.text, to: to.text, fromToken: from, toToken: to, label, icon, ...iconOption === void 0 ? {} : { hasOwnIcon: true }, line: spec.line, heads: spec.heads, ...motion, ...role === void 0 ? {} : { role } });
+  const isMain = readMain(findOption(options3, "main"), state);
+  state.edges.push({ from: from.text, to: to.text, fromToken: from, toToken: to, label, icon, ...iconOption === void 0 ? {} : { hasOwnIcon: true }, line: spec.line, heads: spec.heads, ...motion, ...role === void 0 ? {} : { role }, ...isMain === void 0 ? {} : { isMain } });
 }
 function parseOverlayStatement(cursor, state, line5, parent) {
   cursor.next();
@@ -141124,8 +141362,8 @@ var init_flow_statements = __esm({
     init_token_cursor();
     NODE_OPTIONS = ["sub", "icon", "tone", "stack", "change"];
     MOVED_GROUP_OPTIONS = { boundary: "A trust boundary is now a group type: write type=trust-boundary." };
-    EDGE_OPTIONS = ["icon", "role", ...LINE_MOTION_OPTIONS];
-    HEADER_OPTIONS4 = ["direction", "desc", "provider", "legend", "legendparts", "icons", ...HEADER_MOTION_OPTIONS];
+    EDGE_OPTIONS = ["icon", "role", "main", ...LINE_MOTION_OPTIONS];
+    HEADER_OPTIONS4 = ["direction", "desc", "provider", "legend", "legendparts", "spacing", "edges", "fit", "icons", ...HEADER_MOTION_OPTIONS];
     PLAIN_NODE_TYPES = /* @__PURE__ */ new Set(["decision", "terminal", "step"]);
     ROLE_NODE_TYPES = /* @__PURE__ */ new Set(["service", "external"]);
   }
@@ -141212,6 +141450,8 @@ function dispatchStatement(line5, state, scopes) {
     if (opened !== null) scopes.push({ groupId: opened, openedAt: line5 });
   } else if (first.kind === "word" && first.text === "overlay") {
     parseOverlayStatement(cursor, state, line5.line, current2.groupId);
+  } else if (first.kind === "word" && first.text === "align") {
+    parseAlignStatement(cursor, state, line5.line);
   } else if (first.kind === "word" && first.text === "desc") {
     parseDescStatement(cursor, state, line5.line);
   } else if (first.kind === "word") {
@@ -141246,6 +141486,30 @@ function queueArrowIcon(edge2, state) {
   if (typeOf2(edge2.from) === "queue") return EDGE_STYLES.receives.icon;
   return null;
 }
+function withAligns(aligns) {
+  return aligns.length === 0 ? {} : { aligns };
+}
+function resolveAligns(state) {
+  const nodeIds = state.nodes.map((node3) => node3.id);
+  const known3 = new Set(nodeIds);
+  const placed3 = /* @__PURE__ */ new Set();
+  const resolved2 = [];
+  for (const align of state.aligns) {
+    const members2 = [];
+    for (const token of align.members) {
+      if (!known3.has(token.text)) {
+        const declaration = state.declared.get(token.text);
+        const hint2 = declaration?.kind === "group" || declaration?.kind === "overlay" ? `"${token.text}" is ${declaration.kind === "group" ? "a group" : "an overlay"}; align lines up nodes.` : didYouMean(token.text, nodeIds);
+        state.report.push(errorAt(DIAGNOSTIC_CODES.unknownNode, `Unknown node "${token.text}"`, token, hint2));
+      } else if (placed3.has(token.text) || members2.includes(token.text)) {
+        state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, `"${token.text}" is aligned twice`, token, "A node sits in one rank: name it in one align statement, once."));
+      } else members2.push(token.text);
+    }
+    for (const member of members2) placed3.add(member);
+    if (members2.length >= 2) resolved2.push({ members: members2.map(toNodeId), at: align.at });
+  }
+  return resolved2;
+}
 function resolveEdges(state) {
   const nodeIds = state.nodes.map((node3) => node3.id);
   const known3 = new Set(nodeIds);
@@ -141272,7 +141536,8 @@ function resolveEdges(state) {
         heads: edge2.heads,
         ...edge2.isAnimated === void 0 ? {} : { isAnimated: edge2.isAnimated },
         ...edge2.step === void 0 ? {} : { step: edge2.step },
-        ...edge2.role === void 0 ? {} : { role: edge2.role }
+        ...edge2.role === void 0 ? {} : { role: edge2.role },
+        ...edge2.isMain === void 0 ? {} : { isMain: edge2.isMain }
       });
     }
   }
@@ -141287,6 +141552,10 @@ function parseFlow(lines, report4) {
     motion: stillMotion(),
     legend: null,
     legendParts: null,
+    spacing: null,
+    edgeShape: null,
+    fit: null,
+    aligns: [],
     nodes: [],
     groups: [],
     overlays: [],
@@ -141317,7 +141586,11 @@ function parseFlow(lines, report4) {
     overlays: resolveOverlays(state),
     edges: resolveEdges(state),
     ...state.legend === null ? {} : { legend: state.legend },
-    ...state.legendParts === null ? {} : { legendParts: state.legendParts }
+    ...state.legendParts === null ? {} : { legendParts: state.legendParts },
+    ...state.spacing === null ? {} : { spacing: state.spacing },
+    ...state.edgeShape === null ? {} : { edgeShape: state.edgeShape },
+    ...state.fit === null ? {} : { fit: state.fit },
+    ...withAligns(resolveAligns(state))
   };
 }
 var STATEMENT_KEYWORDS2;
@@ -141332,7 +141605,7 @@ var init_flow_parser = __esm({
     init_overlay_resolve();
     init_suggest();
     init_token_cursor();
-    STATEMENT_KEYWORDS2 = ["node", "group", "overlay", "desc"];
+    STATEMENT_KEYWORDS2 = ["node", "group", "overlay", "align", "desc"];
   }
 });
 
@@ -141548,7 +141821,7 @@ var init_paint_overlay = __esm({
 function paintLineSample(sample2, box, theme) {
   const middle2 = box.y + box.height / 2;
   const color = sample2.role === void 0 ? theme.edge : roleColor(sample2.role, theme);
-  return paintArrowLine([{ x: box.x, y: middle2 }, { x: box.x + box.width, y: middle2 }], { color, line: sample2.line, heads: sample2.heads });
+  return paintArrowLine([{ x: box.x, y: middle2 }, { x: box.x + box.width, y: middle2 }], { color, line: sample2.line, heads: sample2.heads, ...sample2.isMain === true ? { strokeWidth: EDGE_METRICS.mainStrokeWidth } : {} });
 }
 function paintBoxSample(sample2, box, theme) {
   const defaults = FLOW_NODE_TYPE_DEFAULTS[sample2.type];
@@ -141687,7 +141960,7 @@ function renderFlowSvg(diagram, layout, theme, options3) {
   const hops = findFlowHops(layout.edges, layout.nodes);
   const edges = layout.edges.flatMap((placed3) => {
     const edge2 = edgeById.get(placed3.id);
-    return edge2 === void 0 ? [] : [paintEdge(edge2, placed3, theme, hops.get(placed3.id))];
+    return edge2 === void 0 ? [] : [paintEdge(edge2, placed3, theme, hops.get(placed3.id), diagram.edgeShape)];
   });
   const nodes = layout.nodes.flatMap((placed3) => {
     const node3 = nodeById.get(placed3.id);
@@ -141906,6 +142179,15 @@ function widthHint(diagram) {
   const fix = sideways ? `Add direction=down to the header line so the diagram grows downwards, ${split}, or shorten labels.` : `It is already as narrow as the layout can draw it, so ${split}, or shorten the longest labels.`;
   return `${fix} On a page wider than ${CANVAS_METRICS.targetWidth}px it draws at full size, so its text stays 12px there.`;
 }
+function alignWarnings(diagram) {
+  const groupOf = new Map(diagram.nodes.map((node3) => [node3.id, node3.group]));
+  return (diagram.aligns ?? []).flatMap((align) => {
+    const groups = new Set(align.members.map((member) => groupOf.get(member) ?? null));
+    if (groups.size <= 1) return [];
+    const where = align.members.map((member) => `${member} ${groupOf.get(member) === null || groupOf.get(member) === void 0 ? "outside any group" : `in ${groupOf.get(member)}`}`).join(", ");
+    return [warningAt(DIAGNOSTIC_CODES.alignAcrossGroups, `align may not hold across groups: ${where}`, align.at, "A group's frame takes layers of its own. Put the nodes in one group, or align nodes that share one.")];
+  });
+}
 function lintFlow(diagram, measure) {
   const general = present([
     densityWarning3(diagram),
@@ -141914,7 +142196,7 @@ function lintFlow(diagram, measure) {
     shortenedWarning(shortenedIds3(diagram)),
     widthWarning(measure.size, widthHint(diagram))
   ]);
-  return [...general, ...overlayWarnings(diagram, measure.overlayCovers), ...suggestGroupTypes(diagram), ...suggestIcons(diagram), ...suggestLineRoles(diagram)];
+  return [...general, ...alignWarnings(diagram), ...overlayWarnings(diagram, measure.overlayCovers), ...suggestGroupTypes(diagram), ...suggestIcons(diagram), ...suggestLineRoles(diagram)];
 }
 var SPLIT_GROUP_NODES;
 var init_lint5 = __esm({
@@ -148460,7 +148742,7 @@ var init_parse_state2 = __esm({
 });
 
 // ../../packages/diagrams/src/kinds/journey/parse-statements.ts
-function readChoice(option2, choices, fallback, state) {
+function readChoice2(option2, choices, fallback, state) {
   if (option2 === void 0) return fallback;
   const chosen = choices.find((choice3) => choice3 === option2.value);
   if (chosen !== void 0) return chosen;
@@ -148477,8 +148759,8 @@ function parseJourneyHeader(line5, state) {
   }
   const options3 = readOptions(cursor, HEADER_OPTIONS6, state.report);
   state.description = findOption(options3, "desc")?.value ?? state.description;
-  state.marks = readChoice(findOption(options3, "marks"), MARKS, "faces", state);
-  state.hasLegend = readChoice(findOption(options3, "legend"), SWITCH, "on", state) === "on";
+  state.marks = readChoice2(findOption(options3, "marks"), MARKS, "faces", state);
+  state.hasLegend = readChoice2(findOption(options3, "legend"), SWITCH, "on", state) === "on";
   rejectTrailing(cursor, state, HEADER_SYNTAX);
 }
 function parseDescStatement2(cursor, state, line5) {
@@ -155930,7 +156212,7 @@ var init_outline13 = __esm({
 });
 
 // ../../packages/diagrams/src/kinds/pie/parse-header.ts
-function readChoice2(option2, choices, what, state) {
+function readChoice3(option2, choices, what, state) {
   const choice3 = choices.find((candidate2) => candidate2 === option2.value);
   if (choice3 !== void 0) return choice3;
   state.report.push(errorAt(DIAGNOSTIC_CODES.badOptionValue, `Unknown ${what} "${option2.value}"`, option2.valueToken, didYouMean(option2.value, choices)));
@@ -155962,11 +156244,11 @@ function parsePieHeader(line5, state) {
     if (option2.key === "desc") state.description = option2.value;
     else if (option2.key === "unit") state.unit = readUnit2(option2, state);
     else if (option2.key === "total") state.total = option2.value.trim() === "" ? null : option2.value.trim();
-    else if (option2.key === "sort") state.sort = readChoice2(option2, PIE_SORTS, "sort order", state) ?? state.sort;
-    else if (option2.key === "values") state.showValues = (readChoice2(option2, SWITCH_VALUES, "switch", state) ?? "on") === "on";
+    else if (option2.key === "sort") state.sort = readChoice3(option2, PIE_SORTS, "sort order", state) ?? state.sort;
+    else if (option2.key === "values") state.showValues = (readChoice3(option2, SWITCH_VALUES, "switch", state) ?? "on") === "on";
     else if (option2.key === "fold") state.fold = readFold(option2, state);
     else if (option2.key === "icons") readIconMode(option2, state);
-    else if (option2.key === "labels") state.labels = readChoice2(option2, PIE_LABELS, "label placement", state) ?? state.labels;
+    else if (option2.key === "labels") state.labels = readChoice3(option2, PIE_LABELS, "label placement", state) ?? state.labels;
   }
   rejectTrailing(cursor, state, HEADER_HINT7);
 }
@@ -161298,7 +161580,7 @@ var init_parse_flow = __esm({
 });
 
 // ../../packages/diagrams/src/kinds/sankey/parse-header.ts
-function readChoice3(option2, choices, what, state) {
+function readChoice4(option2, choices, what, state) {
   const choice3 = choices.find((candidate2) => candidate2 === option2.value);
   if (choice3 !== void 0) return choice3;
   state.report.push(errorAt(DIAGNOSTIC_CODES.badOptionValue, `Unknown ${what} "${option2.value}"`, option2.valueToken, didYouMean(option2.value, choices)));
@@ -161324,10 +161606,10 @@ function parseSankeyHeader(line5, state) {
   for (const option2 of readOptions(cursor, HEADER_OPTIONS14, state.report)) {
     if (option2.key === "desc") state.description = option2.value;
     else if (option2.key === "unit") state.unit = readUnit3(option2, state);
-    else if (option2.key === "values") state.showValues = (readChoice3(option2, SWITCH_VALUES, "switch", state) ?? "on") === "on";
+    else if (option2.key === "values") state.showValues = (readChoice4(option2, SWITCH_VALUES, "switch", state) ?? "on") === "on";
     else if (option2.key === "icons") readIconMode(option2, state);
-    else if (option2.key === "sort") state.sort = readChoice3(option2, SANKEY_SORTS, "sort order", state) ?? state.sort;
-    else state.align = readChoice3(option2, SANKEY_ALIGNS, "alignment", state) ?? state.align;
+    else if (option2.key === "sort") state.sort = readChoice4(option2, SANKEY_SORTS, "sort order", state) ?? state.sort;
+    else state.align = readChoice4(option2, SANKEY_ALIGNS, "alignment", state) ?? state.align;
   }
   rejectTrailing(cursor, state, HEADER_HINT10);
 }
@@ -178170,7 +178452,7 @@ var init_parse_axes = __esm({
 });
 
 // ../../packages/diagrams/src/kinds/xychart/parse-header.ts
-function readChoice4(option2, choices, what, state) {
+function readChoice5(option2, choices, what, state) {
   const choice3 = choices.find((candidate2) => candidate2 === option2.value);
   if (choice3 !== void 0) return choice3;
   state.report.push(errorAt(DIAGNOSTIC_CODES.badOptionValue, `Unknown ${what} "${option2.value}"`, option2.valueToken, didYouMean(option2.value, choices)));
@@ -178186,10 +178468,10 @@ function parseXychartHeader(line5, state) {
   }
   for (const option2 of readOptions(cursor, HEADER_OPTIONS22, state.report)) {
     if (option2.key === "desc") state.description = option2.value;
-    else if (option2.key === "direction") state.direction = readChoice4(option2, DIRECTIONS3, "direction", state) ?? state.direction;
-    else if (option2.key === "stack") state.isStacked = (readChoice4(option2, SWITCH_VALUES, "switch", state) ?? "off") === "on";
+    else if (option2.key === "direction") state.direction = readChoice5(option2, DIRECTIONS3, "direction", state) ?? state.direction;
+    else if (option2.key === "stack") state.isStacked = (readChoice5(option2, SWITCH_VALUES, "switch", state) ?? "off") === "on";
     else if (option2.key === "icons") readIconMode(option2, state);
-    else if (option2.key === "values") state.showValues = (readChoice4(option2, SWITCH_VALUES, "switch", state) ?? "on") === "on";
+    else if (option2.key === "values") state.showValues = (readChoice5(option2, SWITCH_VALUES, "switch", state) ?? "on") === "on";
   }
   rejectTrailing(cursor, state, HEADER_HINT15);
 }
@@ -178250,7 +178532,7 @@ function parseThreshold(cursor, state, line5) {
   rejectTrailing(cursor, state, THRESHOLD_HINT);
   const toneOption = findOption(options3, "tone");
   const breachOption = findOption(options3, "breach");
-  const breach = breachOption === void 0 ? "above" : readChoice4(breachOption, BREACHES, "breach", state) ?? "above";
+  const breach = breachOption === void 0 ? "above" : readChoice5(breachOption, BREACHES, "breach", state) ?? "above";
   if (name2 !== null && value !== null) state.thresholds.push({ label: name2.text, value, tone: toneOption === void 0 ? THRESHOLD_TONE : resolveTone(toneOption, THRESHOLD_TONE, state), breach, at: name2.at });
 }
 function parseNote5(cursor, state, line5) {
@@ -179164,6 +179446,7 @@ var IMPORT_FORMATS, IMPORT_VIEWS, IMPORT_CHARTS, IMPORT_GROUP_BY, NO_STATS;
 var init_types3 = __esm({
   "../../packages/diagrams/src/importers/types.ts"() {
     "use strict";
+    init_series();
     IMPORT_FORMATS = ["sql", "prisma", "drizzle", "openapi", "graphql", "protobuf", "terraform", "terraform-plan", "bicep", "arm", "pulumi", "cloudformation", "cdk", "serverless", "compose", "dockerfile", "kubernetes", "helm", "kustomize", "nginx", "backstage", "structurizr", "asyncapi", "github-actions", "gitlab-ci", "azure-pipelines", "dbt", "workspaces", "drawio", "csv", "json", "tree", "git-log"];
     IMPORT_VIEWS = ["endpoints", "map", "sequence", "git", "timeline", "context", "container", "component"];
     IMPORT_CHARTS = ["auto", "xychart", "pie", "sankey", "treemap", "matrix"];
@@ -179242,7 +179525,7 @@ var init_schema4 = __esm({
     init_schema3();
     init_themes();
     init_sources2();
-    SHARED_DEFAULT_OPTIONS = ["icons", "legend", "legendparts", "direction", "animate", "numbered", "theme"];
+    SHARED_DEFAULT_OPTIONS = ["icons", "legend", "legendparts", "spacing", "edges", "fit", "direction", "animate", "numbered", "theme"];
     optionKey = external_exports.string().regex(/^[a-z][a-z0-9-]*$/, "Write the header option as the header writes it, such as direction or layout").refine((key) => key !== "title", { message: "A title is the diagram's own; it has no default" });
     optionValue = external_exports.union([external_exports.string().min(1).max(SETTINGS_FILE.maxValueLength), external_exports.number(), external_exports.boolean()]);
     MOVED_DEFAULTS = {
@@ -179253,6 +179536,9 @@ var init_schema4 = __esm({
       icons: external_exports.enum(ICON_MODES).optional().describe("icons= on every header that takes it: auto gives an item the icon its label names, off keeps items plain."),
       legend: external_exports.enum(LEGEND_VALUES).optional().describe("legend= on every header that takes it: on (the default) draws the legend of what the picture uses, centred; left or right aligns it; off draws none."),
       legendparts: external_exports.union([external_exports.enum(["all", "basic"]), external_exports.array(external_exports.enum(LEGEND_SECTIONS)).min(1).max(LEGEND_SECTIONS.length)]).optional().describe('legendparts= on every header that takes it: which parts the legend shows, "all", "basic" (every part but the icons), or a list such as ["lines", "boxes"].'),
+      spacing: external_exports.enum(SPACING_VALUES).optional().describe("spacing= on every header that takes it: compact packs the boxes closer, roomy spreads them, normal is the default."),
+      edges: external_exports.enum(EDGE_SHAPES).optional().describe("edges= on every header that takes it: orthogonal (the default), spline for smooth curves, or straight for slanted lines."),
+      fit: external_exports.enum(FIT_VALUES).optional().describe("fit= on every header that takes it: the shape direction=auto lays a picture out for, wide (slides), tall (phones), square, or auto (the default)."),
       direction: external_exports.enum(DIRECTIONS).optional().describe("direction= on every header that takes this value."),
       animate: external_exports.enum(SWITCH_VALUES).optional().describe("animate= on every header that takes it: on moves dashes along every line."),
       numbered: external_exports.enum(SWITCH_VALUES).optional().describe("numbered= on every header that takes it: on numbers every line in the order written."),
@@ -179456,14 +179742,28 @@ var init_read_rules = __esm({
   }
 });
 
-// ../../packages/diagrams/src/rules/fetch-org-rules.ts
-function refusal(status) {
-  if (status === 401) return "The API key was refused. Set PLOTWORK_API_KEY to a key of the organisation.";
-  if (status === 403) return "The key may not read the style rules of this organisation.";
-  if (status === 404) return "No such organisation for this key. An organisation key reads only its own organisation.";
-  if (status === 429) return "Too many requests. Try again in a minute.";
-  return `The API answered ${status}.`;
+// ../../packages/diagrams/src/rules/api-refusal.ts
+function isApiError(body2) {
+  return typeof body2 === "object" && body2 !== null && body2["error"] === true && typeof body2["errorCode"] === "string";
 }
+async function apiRefusal(response, base) {
+  if (response.status === 401) return "The API key was refused. Set PLOTWORK_API_KEY to a key of the organisation.";
+  if (response.status === 403) return "The key may not read this setting of the organisation.";
+  if (response.status === 429) return "Too many requests. Try again in a minute.";
+  if (response.status === 404) {
+    const body2 = await response.json().catch(() => void 0);
+    if (isApiError(body2)) return "No such organisation for this key. An organisation key reads only its own organisation.";
+    return `${base} does not answer like the Plotwork API. Set PLOTWORK_API_URL to the API's address (the REST API, not the MCP server), or leave it unset for the hosted API.`;
+  }
+  return `The API answered ${response.status}.`;
+}
+var init_api_refusal = __esm({
+  "../../packages/diagrams/src/rules/api-refusal.ts"() {
+    "use strict";
+  }
+});
+
+// ../../packages/diagrams/src/rules/fetch-org-rules.ts
 async function fetchOrgRules(request, fetcher = fetch) {
   const base = (request.apiUrl ?? STYLE_RULES.apiUrl).replace(/\/+$/, "");
   const url2 = `${base}/orgs/${encodeURIComponent(request.org)}/style-rules`;
@@ -179473,7 +179773,7 @@ async function fetchOrgRules(request, fetcher = fetch) {
   } catch (error62) {
     return err(`Could not reach ${base}: ${error62 instanceof Error ? error62.message : String(error62)}`);
   }
-  if (response.status !== 200) return err(refusal(response.status));
+  if (response.status !== 200) return err(await apiRefusal(response, base));
   let body2;
   try {
     body2 = await response.json();
@@ -179492,6 +179792,7 @@ var init_fetch_org_rules = __esm({
     init_constants();
     init_core();
     init_read_rules();
+    init_api_refusal();
   }
 });
 
@@ -179548,11 +179849,30 @@ function withLegendSettings(args, choice3) {
   if (fallback !== "off" || defaults["legend"] !== void 0) return args;
   return { ...given, settings: { ...settings, defaults: { ...defaults, legend: fallback } } };
 }
+function withStyleSettings(args, choice3) {
+  if (typeof args !== "object" || args === null || Array.isArray(args)) return args;
+  const given = args;
+  const settings = typeof given["settings"] === "object" && given["settings"] !== null ? given["settings"] : {};
+  const defaults = typeof settings["defaults"] === "object" && settings["defaults"] !== null ? settings["defaults"] : {};
+  const added = {};
+  for (const { part: part2, fallback } of STYLE_PARTS) {
+    const value = choice3.org?.[part2] ?? choice3.account?.[part2] ?? null;
+    if (value !== null && value !== fallback && defaults[part2] === void 0) added[part2] = value;
+  }
+  if (Object.keys(added).length === 0) return args;
+  return { ...given, settings: { ...settings, defaults: { ...defaults, ...added } } };
+}
+var STYLE_PARTS;
 var init_tool_settings = __esm({
   "../../packages/diagrams/src/settings/tool-settings.ts"() {
     "use strict";
+    init_constants();
     init_check_source();
     init_apply_defaults();
+    STYLE_PARTS = [
+      { part: "spacing", fallback: DEFAULT_SPACING },
+      { part: "edges", fallback: DEFAULT_EDGE_SHAPE }
+    ];
   }
 });
 
@@ -179584,12 +179904,6 @@ var init_repair_settings = __esm({
 });
 
 // ../../packages/diagrams/src/settings/org-legend.ts
-function refusal2(status) {
-  if (status === 401) return "The API key was refused. Set PLOTWORK_API_KEY to a key of the organisation.";
-  if (status === 404) return "No such organisation for this key. An organisation key reads only its own organisation.";
-  if (status === 429) return "Too many requests. Try again in a minute.";
-  return `The API answered ${status}.`;
-}
 async function fetchOrgLegend(request, fetcher = fetch) {
   const base = (request.apiUrl ?? STYLE_RULES.apiUrl).replace(/\/+$/, "");
   let response;
@@ -179598,7 +179912,7 @@ async function fetchOrgLegend(request, fetcher = fetch) {
   } catch (error62) {
     return err(`Could not reach ${base}: ${error62 instanceof Error ? error62.message : String(error62)}`);
   }
-  if (response.status !== 200) return err(refusal2(response.status));
+  if (response.status !== 200) return err(await apiRefusal(response, base));
   let body2;
   try {
     body2 = await response.json();
@@ -179621,6 +179935,48 @@ var init_org_legend = __esm({
     init_constants();
     init_core();
     init_tool_settings();
+    init_api_refusal();
+  }
+});
+
+// ../../packages/diagrams/src/settings/org-style.ts
+function partOf(answer, values) {
+  if (answer === "members") return null;
+  return values.find((value) => value === answer);
+}
+async function fetchOrgStyle(request, fetcher = fetch) {
+  const base = (request.apiUrl ?? STYLE_RULES.apiUrl).replace(/\/+$/, "");
+  let response;
+  try {
+    response = await fetcher(`${base}/orgs/${encodeURIComponent(request.org)}/style`, { headers: { "x-api-key": request.apiKey, accept: "application/json" } });
+  } catch (error62) {
+    return err(`Could not reach ${base}: ${error62 instanceof Error ? error62.message : String(error62)}`);
+  }
+  if (response.status !== 200) return err(await apiRefusal(response, base));
+  let body2;
+  try {
+    body2 = await response.json();
+  } catch {
+    return err("The API answered with something that is not JSON.");
+  }
+  const answer = body2 ?? {};
+  const spacing = partOf(answer.spacing, SPACING_VALUES);
+  const edges = partOf(answer.edges, EDGE_SHAPES);
+  if (spacing === void 0 || edges === void 0) return err("The API answered with a diagram style this version does not know.");
+  return ok(spacing === null && edges === null ? null : { spacing, edges });
+}
+function withOrgStyleDefaults(defaults, style) {
+  if (style === null) return defaults;
+  const merged = withStyleSettings({ settings: { defaults: defaults ?? {} } }, { org: style });
+  return merged.settings.defaults;
+}
+var init_org_style = __esm({
+  "../../packages/diagrams/src/settings/org-style.ts"() {
+    "use strict";
+    init_constants();
+    init_core();
+    init_api_refusal();
+    init_tool_settings();
   }
 });
 
@@ -179637,6 +179993,7 @@ var init_settings = __esm({
     init_sources2();
     init_repair_settings();
     init_org_legend();
+    init_org_style();
   }
 });
 
@@ -180967,8 +181324,8 @@ async function readCapped(response, maxBytes) {
   return new TextDecoder().decode(bytes);
 }
 async function fetchDiagramLink(text6, fetchLink = (url2, init) => fetch(url2, { ...init, signal: init.signal })) {
-  const refusal3 = refusalOfLink(text6);
-  if (refusal3 !== null) return REFUSED(refusal3);
+  const refusal = refusalOfLink(text6);
+  if (refusal !== null) return REFUSED(refusal);
   const seconds = READ_LIMITS.timeoutMs / 1e3;
   try {
     const response = await fetchLink(new URL(text6.trim()).href, { redirect: "manual", signal: AbortSignal.timeout(READ_LIMITS.timeoutMs), headers: { accept: "image/svg+xml" } });
@@ -181273,6 +181630,13 @@ var init_render_diagram = __esm({
 });
 
 // ../../packages/diagrams/src/quality/findings.ts
+function spacingOption(spacing, value) {
+  return spacing === null || spacing === value ? null : `spacing=${value}`;
+}
+function orSpacing(fix, spacing, value) {
+  const option2 = spacingOption(spacing, value);
+  return option2 === null ? fix : `${fix}, or add ${option2} to the header line`;
+}
 function turnOption(direction, wantsTaller) {
   if (direction === null) return null;
   const isAcross = direction === "right" || direction === "left";
@@ -181325,7 +181689,7 @@ function labelFinding(m, context) {
   const pair2 = context.measured.labelPair;
   const longer = pair2 === null ? null : [...pair2].filter((label) => label.text !== "").sort((a, b) => b.text.length - a.text.length)[0];
   const fix = longer === void 0 || longer === null ? "shorten the edge labels, or move detail into a note" : `shorten label ${quote2(longer.text)}, or move its detail into sub= or a note`;
-  return { measure: "labelOverlaps", penalty: cap(m.labelOverlaps * 8, 30), hint: `${m.labelOverlaps === 1 ? "Two labels overlap" : `${m.labelOverlaps} labels overlap`}: ${fix}.` };
+  return { measure: "labelOverlaps", penalty: cap(m.labelOverlaps * 8, 30), hint: `${m.labelOverlaps === 1 ? "Two labels overlap" : `${m.labelOverlaps} labels overlap`}: ${orSpacing(fix, context.spacing, "roomy")}.` };
 }
 function textFinding(m, context) {
   if (m.smallestTextPx === 0 || m.smallestTextPx >= BODY_PX - 0.05) return null;
@@ -181334,7 +181698,7 @@ function textFinding(m, context) {
   const turn = m.aspectRatio > 1 ? turnHint(context.direction, true) : null;
   const split = group2 !== null && group2.boxes >= 4 ? `split group ${group2.id} (${group2.boxes} boxes) into its own diagram` : "split the diagram in two";
   const fix = turn === null ? split : `${turn}, or ${split}`;
-  return { measure: "smallestTextPx", penalty, hint: `Text shrinks to ${m.smallestTextPx}px in an 880px column: ${fix}.` };
+  return { measure: "smallestTextPx", penalty, hint: `Text shrinks to ${m.smallestTextPx}px in an 880px column: ${orSpacing(fix, context.spacing, "compact")}.` };
 }
 function shapeFinding(m, context) {
   if (m.aspectRatio === 0) return null;
@@ -181349,7 +181713,7 @@ function sparseFinding(m, context) {
   if (m.boxes < 3 || m.emptySpace <= SPARSE_SHARE) return null;
   const turn = turnHint(context.direction, m.aspectRatio > 1);
   const fix = turn ?? "put the boxes that belong together in one group";
-  return { measure: "emptySpace", penalty: cap((m.emptySpace - SPARSE_SHARE) * 60, 10), hint: `${Math.round(m.emptySpace * 100)}% of the picture is empty: ${fix}.` };
+  return { measure: "emptySpace", penalty: cap((m.emptySpace - SPARSE_SHARE) * 60, 10), hint: `${Math.round(m.emptySpace * 100)}% of the picture is empty: ${orSpacing(fix, context.spacing, "compact")}.` };
 }
 function chartFinding(m) {
   if (m.series > SERIES_LIMIT) {
@@ -181981,6 +182345,10 @@ function directionOf7(diagram) {
   const direction = diagram.direction;
   return typeof direction === "string" ? direction : null;
 }
+function spacingOf(diagram) {
+  if (diagram.kind !== "flow") return null;
+  return diagram.spacing ?? DEFAULT_SPACING;
+}
 function lineOf(score, grade, hints) {
   const head = `Look: ${grade} (${score}/100)`;
   const first = hints[0];
@@ -181991,7 +182359,7 @@ function qualityOf(diagram, svg) {
   const measured = measureScene(scene);
   const own2 = moduleOf(diagram).quality?.(diagram, scene) ?? {};
   const ignore = new Set(own2.ignore ?? []);
-  const findings = [...sharedFindings(measured.measures, { direction: directionOf7(diagram), measured }, ignore), ...own2.findings ?? []].filter((finding2) => finding2.penalty > 0).sort((a, b) => b.penalty - a.penalty || a.measure.localeCompare(b.measure));
+  const findings = [...sharedFindings(measured.measures, { direction: directionOf7(diagram), spacing: spacingOf(diagram), measured }, ignore), ...own2.findings ?? []].filter((finding2) => finding2.penalty > 0).sort((a, b) => b.penalty - a.penalty || a.measure.localeCompare(b.measure));
   const penalty = findings.reduce((total, finding2) => total + finding2.penalty, 0);
   const score = Math.max(0, Math.min(100, Math.round(100 - penalty)));
   const grade = gradeOf(score);
@@ -182006,6 +182374,7 @@ var QUALITY_GRADES, MAX_HINTS, HINT_PENALTY;
 var init_assess = __esm({
   "../../packages/diagrams/src/quality/assess.ts"() {
     "use strict";
+    init_constants();
     init_registry2();
     init_render_diagram();
     init_findings();
@@ -182148,6 +182517,18 @@ var init_classification_stamp = __esm({
     "use strict";
     CLASSIFICATION_ATTRIBUTE = "data-classification";
     ELEMENT_PATTERN = new RegExp(`<metadata ${CLASSIFICATION_ATTRIBUTE}="[^"]*"/>`, "g");
+  }
+});
+
+// ../../packages/diagrams/src/services/combine-series.ts
+var init_combine_series = __esm({
+  "../../packages/diagrams/src/services/combine-series.ts"() {
+    "use strict";
+    init_constants();
+    init_parse_diagram();
+    init_lexer();
+    init_references();
+    init_source_text();
   }
 });
 
@@ -183048,6 +183429,7 @@ var init_services = __esm({
     init_compare_diagrams2();
     init_diagram_id();
     init_classification_stamp();
+    init_combine_series();
     init_to_dto();
     init_prose();
     init_registry2();
@@ -183380,7 +183762,7 @@ function settingsFor(near4, lookup2 = {}, cache = /* @__PURE__ */ new Map()) {
   cache.set(path, read);
   return read;
 }
-async function withOrgLegendFor(found, org, env = process.env, reads = /* @__PURE__ */ new Map(), fetcher) {
+async function withOrgSettingFor(setting, found, org, env, reads, fetcher) {
   if (found.status === "invalid") return found;
   const named2 = org ?? env[STYLE_RULES.env.org] ?? (found.status === "found" ? found.settings.brand?.organization : void 0);
   const credential = env[STYLE_RULES.env.access];
@@ -183388,23 +183770,32 @@ async function withOrgLegendFor(found, org, env = process.env, reads = /* @__PUR
   let read = reads.get(named2);
   if (read === void 0) {
     const apiUrl = env[STYLE_RULES.env.apiUrl];
-    read = fetchOrgLegend({ org: named2, apiKey: credential, ...apiUrl === void 0 || apiUrl === "" ? {} : { apiUrl } }, fetcher);
+    read = setting.read({ org: named2, apiKey: credential, ...apiUrl === void 0 || apiUrl === "" ? {} : { apiUrl } }, fetcher);
     reads.set(named2, read);
     const first = await read;
-    if (!first.ok) console.error(`the legend of ${named2} could not be read, so the settings file decides. ${first.error}`);
+    if (!first.ok) console.error(`the ${setting.what} of ${named2} could not be read, so the settings file decides. ${first.error}`);
   }
   const answer = await read;
   if (!answer.ok || answer.value === null) return found;
   const settings = found.status === "found" ? found.settings : {};
-  const defaults = withOrgLegendDefaults(settings.defaults, answer.value);
-  return { status: "found", settings: { ...settings, ...defaults === void 0 ? {} : { defaults } }, path: found.status === "found" ? found.path : `the legend of ${named2}` };
+  const defaults = setting.merge(settings.defaults, answer.value);
+  return { status: "found", settings: { ...settings, ...defaults === void 0 ? {} : { defaults } }, path: found.status === "found" ? found.path : `the ${setting.what} of ${named2}` };
 }
+function withOrgLegendFor(found, org, env = process.env, reads = /* @__PURE__ */ new Map(), fetcher) {
+  return withOrgSettingFor(LEGEND_SETTING, found, org, env, reads, fetcher);
+}
+function withOrgStyleFor(found, org, env = process.env, reads = /* @__PURE__ */ new Map(), fetcher) {
+  return withOrgSettingFor(STYLE_SETTING, found, org, env, reads, fetcher);
+}
+var LEGEND_SETTING, STYLE_SETTING;
 var init_settings_file = __esm({
   "../../packages/diagrams/src/cli/settings-file.ts"() {
     "use strict";
     init_constants();
     init_core();
     init_settings();
+    LEGEND_SETTING = { what: "legend", read: fetchOrgLegend, merge: withOrgLegendDefaults };
+    STYLE_SETTING = { what: "diagram style", read: fetchOrgStyle, merge: withOrgStyleDefaults };
   }
 });
 
@@ -184809,12 +185200,12 @@ function bundleLabel(edges) {
 function overview(draft, parts, units, provider, writeFlow2) {
   const account = draft.groups.find((group2) => group2.type === "account" && group2.parent === null) ?? null;
   const unitKey = (index2) => `unit:${index2}`;
-  const partOf2 = /* @__PURE__ */ new Map();
-  for (const [index2, part2] of parts.entries()) for (const unit3 of part2) partOf2.set(unit3, index2);
+  const partOf3 = /* @__PURE__ */ new Map();
+  for (const [index2, part2] of parts.entries()) for (const unit3 of part2) partOf3.set(unit3, index2);
   const nodes = units.map((unit3, index2) => {
     const type = unit3.frame?.type ?? null;
     const icon = unit3.frame?.icon ?? (type === null || type === void 0 ? "lucide:boxes" : groupIcon(type, provider));
-    return { key: unitKey(index2), type: "service", label: unit3.name, sub: `${countOf2(unit3.boxes.length, "resource")}, part ${(partOf2.get(unit3) ?? 0) + 2}`, icon, group: account === null ? null : account.key, idHint: unit3.name };
+    return { key: unitKey(index2), type: "service", label: unit3.name, sub: `${countOf2(unit3.boxes.length, "resource")}, part ${(partOf3.get(unit3) ?? 0) + 2}`, icon, group: account === null ? null : account.key, idHint: unit3.name };
   });
   const unitIndex = new Map(units.map((unit3, index2) => [unit3, index2]));
   const unitOfBox = /* @__PURE__ */ new Map();
@@ -184938,7 +185329,7 @@ function writeFlow(draft, report4) {
     "Show every diagram in parts; the first is the source."
   );
   const whole2 = writeOneFlow({ ...draft, cap: Number.POSITIVE_INFINITY }, new ImportReporter());
-  return { ...whole2, source: parts[0]?.source ?? whole2.source, parts, coverage: draft.coverage ?? { noun: draft.noun, total: draft.nodes.length, drawn: draft.nodes.length, summarised: 0 } };
+  return { ...whole2, source: parts[0]?.source ?? whole2.source, parts, combined: { title: draft.title, source: whole2.source }, coverage: draft.coverage ?? { noun: draft.noun, total: draft.nodes.length, drawn: draft.nodes.length, summarised: 0 } };
 }
 function writeOneFlow(draft, report4) {
   const cap2 = draft.cap ?? WORKFLOW_LIMITS.maxImportNodes;
@@ -185373,7 +185764,7 @@ function clusterOrder(tables, relations) {
   const hubs = hubsOf(tables, relations);
   return [...tables.filter((table) => hubs.has(fold(table.key))), ...areasOf(tables, relations).flatMap((area2) => area2.members)];
 }
-function partOf(area2) {
+function partOf2(area2) {
   const names11 = area2.members.map((table) => fold(table.key));
   const firstWord3 = (name2) => name2.split("_")[0] ?? name2;
   const prefix = firstWord3(names11[0] ?? "");
@@ -185384,7 +185775,7 @@ function partOf(area2) {
 }
 function adviseSplit(tables, relations, filtered, report4) {
   if (filtered || tables.length <= LINT_LIMITS.maxSchemaTables) return;
-  const parts = areasOf(tables, relations).filter((area2) => area2.members.length + area2.hubs.length > 1).slice(0, PARTS_SUGGESTED).map(partOf);
+  const parts = areasOf(tables, relations).filter((area2) => area2.members.length + area2.hubs.length > 1).slice(0, PARTS_SUGGESTED).map(partOf2);
   const hint2 = parts.length === 0 ? "Set options.tables to the names of up to six tables, or to a prefix such as users*." : `Set options.tables to one group of tables that share keys at a time, such as ${parts.join(" or ")}.`;
   report4.add(DIAGNOSTIC_CODES.importSplit, tables[LINT_LIMITS.maxSchemaTables]?.span ?? START3, `The schema has ${countOf2(tables.length, "table")}; a picture reads well with up to ${LINT_LIMITS.maxSchemaTables}, so its text will be small.`, hint2);
 }
@@ -185453,8 +185844,8 @@ function splitSchema(draft, report4, writeOne) {
     units = unitsOf3(draft.tables, draft.relations, size);
   }
   if (units.length < 2) return null;
-  const partOf2 = /* @__PURE__ */ new Map();
-  for (const [index2, unit3] of units.entries()) for (const table of unit3.tables) partOf2.set(fold2(table.key), index2);
+  const partOf3 = /* @__PURE__ */ new Map();
+  for (const [index2, unit3] of units.entries()) for (const table of unit3.tables) partOf3.set(fold2(table.key), index2);
   const total = units.length + 1;
   const parts = units.map((unit3, index2) => {
     const own2 = new Set(unit3.tables.map((table) => fold2(table.key)));
@@ -185462,14 +185853,14 @@ function splitSchema(draft, report4, writeOne) {
     const reached = /* @__PURE__ */ new Map();
     for (const relation2 of outgoing) {
       const to = fold2(relation2.toTable);
-      if (own2.has(to) || !partOf2.has(to)) continue;
+      if (own2.has(to) || !partOf3.has(to)) continue;
       reached.set(to, (reached.get(to) ?? /* @__PURE__ */ new Set()).add(relation2.toColumn));
     }
     const byKey = new Map(draft.tables.map((table) => [fold2(table.key), table]));
     const copies = [...reached].map(([key, columns3]) => {
       const table = byKey.get(key);
       const space = schemaOf(table);
-      return { ...table, label: `${space === null || table.label.includes(".") ? "" : `${space}.`}${table.label} (part ${(partOf2.get(key) ?? 0) + 2})`, columns: table.columns.filter((column) => columns3.has(column.name)) };
+      return { ...table, label: `${space === null || table.label.includes(".") ? "" : `${space}.`}${table.label} (part ${(partOf3.get(key) ?? 0) + 2})`, columns: table.columns.filter((column) => columns3.has(column.name)) };
     });
     const title = `${draft.title}: ${unit3.name} (${index2 + 2} of ${total})`;
     const written3 = writeOne({ ...draft, title, tables: [...unit3.tables, ...copies], relations: outgoing, filter: void 0 }, Math.max(size, unit3.tables.length + copies.length));
@@ -185478,8 +185869,8 @@ function splitSchema(draft, report4, writeOne) {
   const nodes = units.map((unit3, index2) => ({ key: `part:${index2}`, type: "database", label: unit3.name, sub: `${countOf2(unit3.tables.length, "table")}, part ${index2 + 2}`, icon: "lucide:table", idHint: unit3.name }));
   const between2 = /* @__PURE__ */ new Map();
   for (const relation2 of draft.relations) {
-    const from = partOf2.get(fold2(relation2.fromTable));
-    const to = partOf2.get(fold2(relation2.toTable));
+    const from = partOf3.get(fold2(relation2.fromTable));
+    const to = partOf3.get(fold2(relation2.toTable));
     if (from === void 0 || to === void 0 || from === to) continue;
     between2.set(`${from}:${to}`, (between2.get(`${from}:${to}`) ?? 0) + 1);
   }
@@ -185547,7 +185938,7 @@ function writeSchema(draft, report4) {
     const split = splitSchema(draft, report4, (part2, size) => writeOneSchema(part2, new ImportReporter(), size, part2.tables.length, 0));
     if (split !== null) {
       const whole2 = writeOneSchema(draft, new ImportReporter(), Number.POSITIVE_INFINITY, allTables, outside2);
-      return { ...whole2, source: split[0]?.source ?? whole2.source, parts: split, coverage: { noun: "tables", total: allTables, drawn: draft.tables.length, summarised: 0 } };
+      return { ...whole2, source: split[0]?.source ?? whole2.source, parts: split, combined: { title: draft.title, source: whole2.source }, coverage: { noun: "tables", total: allTables, drawn: draft.tables.length, summarised: 0 } };
     }
   }
   return writeOneSchema(draft, report4, WORKFLOW_LIMITS.maxImportTables, allTables, outside2);
@@ -187744,7 +188135,7 @@ function drawStack(input2) {
   const renamed2 = (draftOut) => input2.stableName === void 0 ? draftOut : { ...draftOut, ids: renameIds(draftOut.ids ?? {}, input2.stableName), ...draftOut.parts === void 0 ? {} : { parts: draftOut.parts.map((part2) => part2.ids === void 0 ? part2 : { ...part2, ids: renameIds(part2.ids, input2.stableName) }) } };
   if (parts.length === 0) return renamed2(writeFlow(draft, context.report));
   const whole2 = writeFlow({ ...draft, cap: Number.POSITIVE_INFINITY }, new ImportReporter());
-  return renamed2({ ...whole2, source: parts[0]?.source ?? whole2.source, parts });
+  return renamed2({ ...whole2, source: parts[0]?.source ?? whole2.source, parts, combined: { title: draft.title, source: whole2.source } });
 }
 function withChange(item2, change, worded = true) {
   return change === null ? item2 : { ...item2, tone: change.tone, sub: worded ? withParts(item2.sub ?? null, change.word) : item2.sub ?? null };
@@ -199156,8 +199547,8 @@ function helmFrames(manifests) {
     const frames = [];
     const release = releaseOf(manifest);
     const chart = chartLabel(manifest);
-    const partOf2 = manifest.meta.get("app.kubernetes.io/part-of");
-    if (partOf2 !== void 0 && partOf2 !== "" && partOf2 !== release) frames.push({ key: `part-of:${partOf2}`, label: partOf2, sub: "Application", icon: "lucide:boxes", type: "app-tier", idHint: partOf2 });
+    const partOf3 = manifest.meta.get("app.kubernetes.io/part-of");
+    if (partOf3 !== void 0 && partOf3 !== "" && partOf3 !== release) frames.push({ key: `part-of:${partOf3}`, label: partOf3, sub: "Application", icon: "lucide:boxes", type: "app-tier", idHint: partOf3 });
     if (release === null) return frames;
     const several = (charts.get(release)?.size ?? 0) > 1;
     const only = several || chart === null ? null : chart;
@@ -205373,7 +205764,7 @@ var init_plain_icons = __esm({
 
 // ../../packages/diagrams/src/importers/import-source.ts
 function failed(report4) {
-  return { ok: false, kind: null, source: "", diagnostics: report4.diagnostics(), stats: NO_STATS, coverage: null, advice: null, parts: [], ids: {} };
+  return { ok: false, kind: null, source: "", diagnostics: report4.diagnostics(), stats: NO_STATS, coverage: null, advice: null, parts: [], combined: null, ids: {} };
 }
 function normalise2(text6) {
   return text6.replace(/^﻿/, "").replace(/\r\n?/g, "\n");
@@ -205485,7 +205876,29 @@ function importSource(format, input2, title = null, options3 = {}, limits = HOST
   }
   const plain4 = (source) => options3.icons === "off" ? withoutIcons(source) : source;
   const parts = (draft.parts ?? []).map((part2) => ({ ...part2, source: plain4(part2.source) }));
-  return { ok: true, kind: draft.kind, source: plain4(draft.source), diagnostics: all(), stats: draft.stats, coverage, advice: draft.advice, parts, ids: draft.ids ?? {} };
+  const large = options3.large ?? DEFAULT_IMPORT_LARGE;
+  const whole2 = draft.combined === void 0 || parts.length === 0 || large === "parts" ? null : wholeOf({ ...draft.combined, source: plain4(draft.combined.source) }, large === "whole", report4);
+  const result = { ok: true, kind: draft.kind, source: plain4(draft.source), diagnostics: all(), stats: draft.stats, coverage, advice: draft.advice, parts, combined: whole2, ids: draft.ids ?? {} };
+  if (whole2 === null || large !== "whole") return result;
+  const kept4 = result.diagnostics.filter((diagnostic) => diagnostic.code !== DIAGNOSTIC_CODES.importSplit);
+  return { ...result, source: whole2.source, parts: [], combined: null, diagnostics: kept4 };
+}
+function wholeOf(whole2, asked, report4) {
+  const why = whyNotWhole(whole2.source);
+  if (why === null) return whole2;
+  report4.add(DIAGNOSTIC_CODES.importWholeLeftOut, START3, `The whole is not drawn as one diagram${asked ? ", so it is drawn in parts instead" : ""}: ${why}`, "Show the parts; import one part of the file at a time for a single picture of it.");
+  return null;
+}
+function whyNotWhole(source) {
+  if (source.length > API_LIMITS.maxSourceLength) return `its source would be ${source.length} characters, over the ${API_LIMITS.maxSourceLength} one diagram may have.`;
+  const parsed = parseDiagram(source);
+  if (parsed.ok) {
+    const arrows = parsed.value.kind === "flow" ? parsed.value.edges.length : 0;
+    const most = WORKFLOW_LIMITS.maxImportWholeArrows;
+    return arrows > most ? `it would have ${arrows} arrows, and the most one diagram of an import may have is ${most}, so it lays out in time.` : null;
+  }
+  const first = parsed.error[0];
+  return `${first?.message ?? "it does not parse"}.`;
 }
 var MAX_TITLE_LENGTH, LISTED_FILES, PARTIAL_SHARE, PARTIAL_LEAST, HOSTED_IMPORT_LIMITS, LOCAL_IMPORT_LIMITS, SHORTER;
 var init_import_source = __esm({
@@ -206941,20 +207354,20 @@ function checkFolderPath(text6) {
   if (names11.length > FOLDER_MAX_DEPTH) return { ok: false, problem: "too-deep" };
   return { ok: true, path: text6 };
 }
-function folderProblemMessage(refusal3) {
-  switch (refusal3.problem) {
+function folderProblemMessage(refusal) {
+  switch (refusal.problem) {
     case "blank":
       return "A folder path cannot be blank. Use null, or leave the folder out, for the top level.";
     case "empty-name":
       return "A folder name cannot be empty. Write the path as names separated by one slash, with no slash at either end.";
     case "untrimmed":
-      return `A folder name cannot start or end with a space. ${quotedName(refusal3.name)} does.`;
+      return `A folder name cannot start or end with a space. ${quotedName(refusal.name)} does.`;
     case "character":
-      return `${FOLDER_NAME_RULE} ${quotedName(refusal3.name)} has ${quoted5(refusal3.character)}.`;
+      return `${FOLDER_NAME_RULE} ${quotedName(refusal.name)} has ${quoted5(refusal.character)}.`;
     case "double-space":
-      return `A folder name cannot have two spaces together. ${quotedName(refusal3.name)} does.`;
+      return `A folder name cannot have two spaces together. ${quotedName(refusal.name)} does.`;
     case "name-too-long":
-      return `A folder name can have up to ${FOLDER_SEGMENT_MAX_LENGTH} characters. ${quotedName(refusal3.name)} has ${refusal3.name.length}.`;
+      return `A folder name can have up to ${FOLDER_SEGMENT_MAX_LENGTH} characters. ${quotedName(refusal.name)} has ${refusal.name.length}.`;
     case "too-deep":
       return `Folders can go ${FOLDER_MAX_DEPTH} levels deep.`;
   }
@@ -208968,7 +209381,8 @@ ${usage}`);
   }
 }
 async function settingsOf(path, config2, cache, org) {
-  const found = await withOrgLegendFor(settingsFor(path, { explicit: config2 }, cache), org, process.env, LEGEND_READS);
+  const withLegend2 = await withOrgLegendFor(settingsFor(path, { explicit: config2 }, cache), org, process.env, LEGEND_READS);
+  const found = await withOrgStyleFor(withLegend2, org, process.env, STYLE_READS);
   if (found.status !== "invalid") return found;
   console.error(found.message);
   return null;
@@ -209081,7 +209495,7 @@ async function runCli(argv, who = REPOSITORY_CLI, deps = {}) {
       return EXIT.usage;
   }
 }
-var REPOSITORY_CLI, OPTIONS2, LEGEND_READS;
+var REPOSITORY_CLI, OPTIONS2, LEGEND_READS, STYLE_READS;
 var init_run2 = __esm({
   "../../packages/diagrams/src/cli/run.ts"() {
     "use strict";
@@ -209164,6 +209578,7 @@ var init_run2 = __esm({
       help: { type: "boolean", short: "h" }
     };
     LEGEND_READS = /* @__PURE__ */ new Map();
+    STYLE_READS = /* @__PURE__ */ new Map();
   }
 });
 
@@ -209234,7 +209649,7 @@ var init_files2 = __esm({
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // package.json
-var package_default = { version: "0.5.0" };
+var package_default = { version: "0.6.0-beta.1" };
 
 // npm/package-config.json
 var package_config_default = {
