@@ -221,7 +221,7 @@ var GROUP_OPTIONS, GROUP_TYPES, GROUP_TYPE_SPECS, VENDOR_GROUP_ICONS, GROUP_DEFA
 var init_group_types = __esm({
   "../../packages/diagrams/src/constants/group-types.ts"() {
     "use strict";
-    GROUP_OPTIONS = ["type", "provider", "icon", "tone", "sub", "stack"];
+    GROUP_OPTIONS = ["type", "provider", "icon", "tone", "sub", "stack", "note"];
     GROUP_TYPES = [
       "cloud",
       "account",
@@ -7328,8 +7328,8 @@ function fitTab(label, icon, count4, frame) {
 }
 function moveTab(tab, dy) {
   const down = (part2) => ({ ...part2, top: part2.top + dy });
-  const moved5 = (rect) => ({ ...rect, y: rect.y + dy });
-  return { ...tab, rect: moved5(tab.rect), icon: tab.icon === null ? null : { ...tab.icon, center: { ...tab.icon.center, y: tab.icon.center.y + dy } }, name: down(tab.name), pill: tab.pill === null ? null : { rect: moved5(tab.pill.rect), text: down(tab.pill.text) } };
+  const moved6 = (rect) => ({ ...rect, y: rect.y + dy });
+  return { ...tab, rect: moved6(tab.rect), icon: tab.icon === null ? null : { ...tab.icon, center: { ...tab.icon.center, y: tab.icon.center.y + dy } }, name: down(tab.name), pill: tab.pill === null ? null : { rect: moved6(tab.pill.rect), text: down(tab.pill.text) } };
 }
 var clip, oneLine2, chromeOf, widest2, wordsWidth, minimumWidthOf, naturalWidthOf;
 var init_text = __esm({
@@ -35441,9 +35441,9 @@ function readOptions(cursor, allowed, report4, rules = {}) {
     }
     const more = rules.lists?.includes(key.text) === true ? readListTail(cursor) : [];
     if (!allowed.includes(key.text)) {
-      const moved5 = rules.moved?.[key.text];
+      const moved6 = rules.moved?.[key.text];
       report4.push(
-        errorAt(DIAGNOSTIC_CODES.unknownOption, `Unknown option "${key.text}"`, key, moved5 ?? didYouMean(key.text, allowed))
+        errorAt(DIAGNOSTIC_CODES.unknownOption, `Unknown option "${key.text}"`, key, moved6 ?? didYouMean(key.text, allowed))
       );
       continue;
     }
@@ -132982,12 +132982,12 @@ function giveEndRoom(route, minRun, obstacles, labelCenter) {
   const movedEnd = back(bendEnd);
   const swept = boxAround([bendStart, bendEnd, movedStart, movedEnd]);
   if (obstacles.some((obstacle) => touches(swept, obstacle))) return points;
-  const moved5 = [...points.slice(0, count4 - 3), movedStart, movedEnd, end];
+  const moved6 = [...points.slice(0, count4 - 3), movedStart, movedEnd, end];
   if (labelCenter !== null) {
-    const nearest = Math.min(...moved5.slice(1).map((point, index2) => distanceToSegment(labelCenter, moved5[index2], point)));
+    const nearest = Math.min(...moved6.slice(1).map((point, index2) => distanceToSegment(labelCenter, moved6[index2], point)));
     if (nearest > LABEL_TOLERANCE) return points;
   }
-  return moved5;
+  return moved6;
 }
 var MIN_REMAINING_RUN, OBSTACLE_MARGIN, LABEL_TOLERANCE, distance2, unit2;
 var init_end_room = __esm({
@@ -133363,15 +133363,15 @@ function stretchRoute(points, label, fromBy, toBy, isVertical4, channel) {
     if (points.length === 3 && (shifts[1] ?? 0) !== 0 && Math.abs((shifts[1] ?? 0) - toBy) > SAME_LINE3) return null;
     shifts[points.length - 2] = toBy;
   }
-  const moved5 = points.map((point, index3) => shiftPoint(point, shifts[index3] ?? 0, isVertical4));
-  if (label === null) return { points: simplifyRoute(moved5), label: null };
+  const moved6 = points.map((point, index3) => shiftPoint(point, shifts[index3] ?? 0, isVertical4));
+  if (label === null) return { points: simplifyRoute(moved6), label: null };
   const centre2 = { x: label.x + label.width / 2, y: label.y + label.height / 2 };
   const index2 = stretchNearest(points, centre2);
   const [a, b] = [shifts[index2] ?? 0, shifts[index2 + 1] ?? 0];
-  if (Math.abs(a - b) <= SAME_LINE3 / 2) return { points: simplifyRoute(moved5), label: shiftRect(label, a, isVertical4) };
-  const [s0, s1] = [acrossOf(moved5[index2], isVertical4), acrossOf(moved5[index2 + 1], isVertical4)];
+  if (Math.abs(a - b) <= SAME_LINE3 / 2) return { points: simplifyRoute(moved6), label: shiftRect(label, a, isVertical4) };
+  const [s0, s1] = [acrossOf(moved6[index2], isVertical4), acrossOf(moved6[index2 + 1], isVertical4)];
   const middle2 = acrossOf(centre2, isVertical4);
-  if (middle2 > Math.min(s0, s1) && middle2 < Math.max(s0, s1)) return { points: simplifyRoute(moved5), label };
+  if (middle2 > Math.min(s0, s1) && middle2 < Math.max(s0, s1)) return { points: simplifyRoute(moved6), label };
   return null;
 }
 function turnOnce(points, label, shift2, oldTurn, channel) {
@@ -133536,12 +133536,12 @@ function withContents(scene, ids) {
   return out;
 }
 function channelsFor(scene, edge2, movedEnd) {
-  const moved5 = scene.nodes.get(movedEnd)?.rect;
+  const moved6 = scene.nodes.get(movedEnd)?.rect;
   const otherId = movedEnd === edge2.from ? edge2.to : edge2.from;
   const other = scene.nodes.get(otherId)?.rect;
-  if (moved5 === void 0 || other === void 0) return [];
-  const sign = Math.sign(centreAlong(other, scene.isVertical) - centreAlong(moved5, scene.isVertical));
-  const movedSide = scene.isVertical ? sign > 0 ? moved5.y + moved5.height : moved5.y : sign > 0 ? moved5.x + moved5.width : moved5.x;
+  if (moved6 === void 0 || other === void 0) return [];
+  const sign = Math.sign(centreAlong(other, scene.isVertical) - centreAlong(moved6, scene.isVertical));
+  const movedSide = scene.isVertical ? sign > 0 ? moved6.y + moved6.height : moved6.y : sign > 0 ? moved6.x + moved6.width : moved6.x;
   const otherSide2 = scene.isVertical ? sign > 0 ? other.y : other.y + other.height : sign > 0 ? other.x : other.x + other.width;
   const out = [];
   for (let step = 0; step < 4; step += 1) out.push(movedSide + sign * (CANVAS_METRICS.edgeNodeSpacing + step * CANVAS_METRICS.edgeSpacing));
@@ -133553,11 +133553,11 @@ function tryMove(scene, ids, by) {
 }
 function refuseMove(scene, ids, by) {
   if (Math.abs(by) < MIN_MOVE || ids.length === 0) return "too small";
-  const moved5 = withContents(scene, ids);
-  if ([...moved5].some((id) => (scene.nodes.get(id) ?? scene.frames.get(id))?.isFixed === true)) return "fixed";
-  const tops = [...moved5].filter((id) => {
+  const moved6 = withContents(scene, ids);
+  if ([...moved6].some((id) => (scene.nodes.get(id) ?? scene.frames.get(id))?.isFixed === true)) return "fixed";
+  const tops = [...moved6].filter((id) => {
     const parent = parentOf(scene, id);
-    return parent === null || !moved5.has(parent);
+    return parent === null || !moved6.has(parent);
   });
   for (const id of tops) {
     const rect = rectOf(scene, id);
@@ -133567,8 +133567,8 @@ function refuseMove(scene, ids, by) {
     const room = parent === null ? scene.bounds : scene.frames.get(parent);
     if (room === void 0 || !isInside(next, "padding" in room ? innerOf(room) : room)) return `outside its room: ${id}`;
     const ancestors = new Set(framesAround(scene, id));
-    for (const node3 of scene.nodes.values()) if (!moved5.has(node3.id) && overlaps2(next, node3.rect, BOX_GAP)) return `too near ${node3.id}`;
-    for (const frame of scene.frames.values()) if (!moved5.has(frame.id) && !ancestors.has(frame.id) && overlaps2(next, frame.rect, BOX_GAP)) return `too near frame ${frame.id}`;
+    for (const node3 of scene.nodes.values()) if (!moved6.has(node3.id) && overlaps2(next, node3.rect, BOX_GAP)) return `too near ${node3.id}`;
+    for (const frame of scene.frames.values()) if (!moved6.has(frame.id) && !ancestors.has(frame.id) && overlaps2(next, frame.rect, BOX_GAP)) return `too near frame ${frame.id}`;
   }
   const left = budgets.get(scene) ?? Infinity;
   if (left <= 0) return "out of budget";
@@ -133599,15 +133599,15 @@ function refuseMove(scene, ids, by) {
     for (const step of undo.reverse()) step();
     return reason;
   };
-  const touched = scene.edges.filter((edge2) => moved5.has(edge2.from) !== moved5.has(edge2.to));
-  const carried2 = scene.edges.filter((edge2) => moved5.has(edge2.from) && moved5.has(edge2.to));
-  const movedRects = [...moved5].flatMap((id) => rectOf(scene, id) ?? []);
+  const touched = scene.edges.filter((edge2) => moved6.has(edge2.from) !== moved6.has(edge2.to));
+  const carried2 = scene.edges.filter((edge2) => moved6.has(edge2.from) && moved6.has(edge2.to));
+  const movedRects = [...moved6].flatMap((id) => rectOf(scene, id) ?? []);
   const movedLabels = [...touched, ...carried2].flatMap((edge2) => edge2.label ?? []);
   const region = boundsOf([...movedRects, ...movedLabels].flatMap((rect) => [rect, shiftRect(rect, by, scene.isVertical)]));
   const area2 = region === null ? null : corners(region);
-  const still = scene.edges.filter((edge2) => !moved5.has(edge2.from) && !moved5.has(edge2.to) && region !== null && area2 !== null && (mayMeet(edge2.points, area2, MOVE_REACH) || edge2.label !== null && overlaps2(edge2.label, region, MOVE_REACH)));
+  const still = scene.edges.filter((edge2) => !moved6.has(edge2.from) && !moved6.has(edge2.to) && region !== null && area2 !== null && (mayMeet(edge2.points, area2, MOVE_REACH) || edge2.label !== null && overlaps2(edge2.label, region, MOVE_REACH)));
   const oldHits = new Map(touched.map((edge2) => [edge2.id, intrusions(scene, edge2, edge2.points, edge2.label)]));
-  const movers = /* @__PURE__ */ new Set([...moved5, ...[...touched, ...carried2].map((edge2) => `edge:${edge2.id}`)]);
+  const movers = /* @__PURE__ */ new Set([...moved6, ...[...touched, ...carried2].map((edge2) => `edge:${edge2.id}`)]);
   const oldStillHits = new Map(still.map((edge2) => [edge2.id, intrusions(scene, edge2, edge2.points, edge2.label, movers)]));
   const oldRoutes = new Map(scene.edges.map((edge2) => [edge2, edge2.points]));
   const tally2 = (routeOf4) => {
@@ -133622,7 +133622,7 @@ function refuseMove(scene, ids, by) {
     }
     return { crossings: crossings2, runs };
   };
-  for (const id of moved5) commitRect(id);
+  for (const id of moved6) commitRect(id);
   for (const edge2 of carried2) {
     const [oldPoints, oldLabel] = [edge2.points, edge2.label];
     edge2.points = oldPoints.map((point) => scene.isVertical ? { x: point.x + by, y: point.y } : { x: point.x, y: point.y + by });
@@ -133632,8 +133632,8 @@ function refuseMove(scene, ids, by) {
       edge2.label = oldLabel;
     });
   }
-  const plans = [...touched].sort((a, b) => reach(scene, b, moved5) - reach(scene, a, moved5)).map((edge2) => {
-    const plan = { edge: edge2, points: edge2.points, label: edge2.label, fromBy: moved5.has(edge2.from) ? by : 0, toBy: moved5.has(edge2.to) ? by : 0, channels: [null, ...channelsFor(scene, edge2, moved5.has(edge2.from) ? edge2.from : edge2.to)] };
+  const plans = [...touched].sort((a, b) => reach(scene, b, moved6) - reach(scene, a, moved6)).map((edge2) => {
+    const plan = { edge: edge2, points: edge2.points, label: edge2.label, fromBy: moved6.has(edge2.from) ? by : 0, toBy: moved6.has(edge2.to) ? by : 0, channels: [null, ...channelsFor(scene, edge2, moved6.has(edge2.from) ? edge2.from : edge2.to)] };
     undo.push(() => {
       edge2.points = plan.points;
       edge2.label = plan.label;
@@ -133676,9 +133676,9 @@ function refuseMove(scene, ids, by) {
   scores.set(scene, after);
   return null;
 }
-function reach(scene, edge2, moved5) {
-  const end = moved5.has(edge2.from) ? edge2.to : edge2.from;
-  const own2 = moved5.has(edge2.from) ? edge2.from : edge2.to;
+function reach(scene, edge2, moved6) {
+  const end = moved6.has(edge2.from) ? edge2.to : edge2.from;
+  const own2 = moved6.has(edge2.from) ? edge2.from : edge2.to;
   const a = scene.nodes.get(end)?.rect;
   const b = scene.nodes.get(own2)?.rect;
   return a === void 0 || b === void 0 ? 0 : Math.abs(centreAcross(a, scene.isVertical) - centreAcross(b, scene.isVertical));
@@ -133763,8 +133763,8 @@ function balanceScene(scene) {
   let isChanged = false;
   for (let sweep = 0; sweep < MAX_SWEEPS; sweep += 1) {
     const back = scene.alongSign === 1 ? -1 : 1;
-    const moved5 = [centreFrames(scene), centreFans(scene, scene.alongSign), centreFans(scene, back), straightenChains(scene)].some(Boolean);
-    if (!moved5) break;
+    const moved6 = [centreFrames(scene), centreFans(scene, scene.alongSign), centreFans(scene, back), straightenChains(scene)].some(Boolean);
+    if (!moved6) break;
     isChanged = true;
   }
   return mirrorFans(scene) || isChanged;
@@ -134486,8 +134486,8 @@ function clearStretch(route, stretch, tab, nodes) {
   const second = endMove(points, stretch, stretch + 1, x, nodes);
   if (first.kind === "follows" && second.kind === "follows") {
     const landed = [first.node, second.node].filter((node3) => node3 !== null);
-    const moved5 = moveStretch(points, stretch, x, landed, nodes);
-    return moved5 === null ? null : { points: moved5, labelRect: followLabel(route.labelRect, a.x, x, [Math.min(a.y, b.y), Math.max(a.y, b.y)]) };
+    const moved6 = moveStretch(points, stretch, x, landed, nodes);
+    return moved6 === null ? null : { points: moved6, labelRect: followLabel(route.labelRect, a.x, x, [Math.min(a.y, b.y), Math.max(a.y, b.y)]) };
   }
   const [fixed, mover] = first.kind === "stays" ? [first, second] : [second, first];
   if (fixed.kind !== "stays" || !fixed.isRouteEnd || mover.kind !== "follows") return null;
@@ -134713,8 +134713,8 @@ function slideLabel(points, rect, avoid) {
     for (let step = SLIDE_STEP; step <= to - from; step += SLIDE_STEP) {
       for (const target2 of [along4 - step, along4 + step]) {
         if (target2 < low || target2 > high) continue;
-        const moved5 = isVertical4 ? { ...rect, y: target2 - size / 2 } : { ...rect, x: target2 - size / 2 };
-        if (!avoid.some((other) => clashes(moved5, other))) return moved5;
+        const moved6 = isVertical4 ? { ...rect, y: target2 - size / 2 } : { ...rect, x: target2 - size / 2 };
+        if (!avoid.some((other) => clashes(moved6, other))) return moved6;
       }
     }
   }
@@ -136244,10 +136244,10 @@ function settle2(slots, lowest, highest, wantedOf) {
   }
   for (const slot of ordered) if (!slot.isFixed) slot.position = Math.min(highest, Math.max(lowest, slot.position));
 }
-function runsAlongside(moved5, others, axis) {
-  for (let index2 = 0; index2 + 1 < moved5.length; index2 += 1) {
-    const a = moved5[index2];
-    const b = moved5[index2 + 1];
+function runsAlongside(moved6, others, axis) {
+  for (let index2 = 0; index2 + 1 < moved6.length; index2 += 1) {
+    const a = moved6[index2];
+    const b = moved6[index2 + 1];
     for (const other of others) {
       for (let at3 = 0; at3 + 1 < other.points.length; at3 += 1) {
         if (other.skip === "first" && at3 === 0 || other.skip === "last" && at3 + 2 === other.points.length) continue;
@@ -136273,13 +136273,13 @@ function isBlocked(move3, end, position) {
   if (entry2 === void 0 || route === void 0) return false;
   const count4 = entry2.points.length;
   const indexes2 = end.at === "first" ? [0, 1, 2] : [count4 - 1, count4 - 2, count4 - 3];
-  const moved5 = indexes2.flatMap((index2, order) => {
+  const moved6 = indexes2.flatMap((index2, order) => {
     const point = entry2.points[index2];
     return point === void 0 ? [] : [order < 2 ? axis.withCross(point, position) : point];
   });
   const others = [...cards].filter(([id]) => id !== route.first && id !== route.last).map(([, rect]) => rect);
-  if ([...others, ...tabs].some((rect) => lineTouchesRect(moved5, rect, 2))) return true;
-  if (runsAlongside(moved5, work.flatMap((other, index2) => index2 === end.route ? [] : [{ points: other.points, skip: move3.ignored.get(index2) ?? null }]), axis)) return true;
+  if ([...others, ...tabs].some((rect) => lineTouchesRect(moved6, rect, 2))) return true;
+  if (runsAlongside(moved6, work.flatMap((other, index2) => index2 === end.route ? [] : [{ points: other.points, skip: move3.ignored.get(index2) ?? null }]), axis)) return true;
   const [start2, finish] = [entry2.points[indexes2[0]], entry2.points[indexes2[1]]];
   const label = route.label;
   if (label === null || start2 === void 0 || finish === void 0) return false;
@@ -136287,8 +136287,8 @@ function isBlocked(move3, end, position) {
   const sits = Math.abs(axis.cross(centre2) - axis.cross(start2)) <= LABEL_REACH && axis.along(centre2) >= Math.min(axis.along(start2), axis.along(finish)) - LABEL_REACH && axis.along(centre2) <= Math.max(axis.along(start2), axis.along(finish)) + LABEL_REACH;
   if (!sits) return false;
   const shift2 = position - axis.cross(start2);
-  const shifted3 = axis.withCross({ x: label.x, y: label.y }, axis.cross({ x: label.x, y: label.y }) + shift2);
-  return [...others, ...tabs].some((rect) => rectsTouch({ ...label, ...shifted3 }, rect, LABEL_CLEARANCE));
+  const shifted4 = axis.withCross({ x: label.x, y: label.y }, axis.cross({ x: label.x, y: label.y }) + shift2);
+  return [...others, ...tabs].some((rect) => rectsTouch({ ...label, ...shifted4 }, rect, LABEL_CLEARANCE));
 }
 function moveSlot(move3, slot) {
   const { work, axis } = move3;
@@ -136370,8 +136370,8 @@ function snapPlaces(routes, cards, tabs, direction) {
     const a = entry2.points[segment2];
     const b = entry2.points[segment2 + 1];
     const isVerticalSegment = Math.abs(a.x - b.x) < SAME;
-    const moved5 = isVerticalSegment ? { x: a.x - centre2.x, y: 0 } : { x: 0, y: a.y - centre2.y };
-    return { points: dropRedundant(entry2.points), label: { ...label, x: label.x + moved5.x, y: label.y + moved5.y } };
+    const moved6 = isVerticalSegment ? { x: a.x - centre2.x, y: 0 } : { x: 0, y: a.y - centre2.y };
+    return { points: dropRedundant(entry2.points), label: { ...label, x: label.x + moved6.x, y: label.y + moved6.y } };
   });
 }
 var SLOT_GAP, LABEL_REACH, LABEL_CLEARANCE, CORNER, SAME, axisOf, PARALLEL_GAP;
@@ -140507,6 +140507,130 @@ var init_legend2 = __esm({
   }
 });
 
+// ../../packages/diagrams/src/layout/flow/notes.ts
+function crossesRect(y, from, to, rect) {
+  const [a, b] = from < to ? [from, to] : [to, from];
+  return y > rect.y && y < rect.y + rect.height && b > rect.x && a < rect.x + rect.width;
+}
+function crossesSegment(y, from, to, p, q) {
+  const [a, b] = from < to ? [from, to] : [to, from];
+  if (p.x === q.x) return p.x > a && p.x < b && y >= Math.min(p.y, q.y) && y <= Math.max(p.y, q.y);
+  if (p.y === q.y) return Math.abs(p.y - y) < 2 && Math.max(p.x, q.x) > a && Math.min(p.x, q.x) < b;
+  if (y < Math.min(p.y, q.y) || y > Math.max(p.y, q.y)) return false;
+  const x = p.x + (y - p.y) / (q.y - p.y) * (q.x - p.x);
+  return x > a && x < b;
+}
+function clearRun(layout, wanted2, y, from, to) {
+  for (const node3 of layout.nodes) if (node3.id !== wanted2.target && crossesRect(y, from, to, node3.rect)) return false;
+  for (const frame of [...layout.groups, ...layout.overlays]) {
+    if (frame.id === wanted2.target || within(wanted2.rect, frame.rect) || within(frame.rect, wanted2.rect)) continue;
+    if (crossesRect(y, from, to, frame.rect)) return false;
+  }
+  for (const edge2 of layout.edges) {
+    if (edge2.label !== null && crossesRect(y, from, to, edge2.label.rect)) return false;
+    for (let index2 = 1; index2 < edge2.points.length; index2 += 1) {
+      const p = edge2.points[index2 - 1];
+      const q = edge2.points[index2];
+      if (p !== void 0 && q !== void 0 && crossesSegment(y, from, to, p, q)) return false;
+    }
+  }
+  return true;
+}
+function shifted2(layout, dx) {
+  if (dx === 0) return layout;
+  return {
+    ...layout,
+    nodes: layout.nodes.map((node3) => ({ ...node3, rect: moved2(node3.rect, dx) })),
+    groups: layout.groups.map((group2) => ({ ...group2, rect: moved2(group2.rect, dx), tab: { ...group2.tab, rect: moved2(group2.tab.rect, dx) } })),
+    overlays: layout.overlays.map((overlay) => ({ ...overlay, rect: moved2(overlay.rect, dx), tab: { ...overlay.tab, rect: moved2(overlay.tab.rect, dx) } })),
+    edges: layout.edges.map((edge2) => ({
+      ...edge2,
+      points: edge2.points.map((point) => ({ x: point.x + dx, y: point.y })),
+      label: edge2.label === null ? null : { ...edge2.label, rect: moved2(edge2.label.rect, dx) }
+    }))
+  };
+}
+function withNotes(diagram, layout) {
+  const rectOf2 = new Map([...layout.nodes.map((node3) => [node3.id, node3.rect]), ...layout.groups.map((group2) => [group2.id, group2.rect])]);
+  const wanted2 = [];
+  for (const node3 of diagram.nodes) {
+    const rect = rectOf2.get(node3.id);
+    if (node3.note !== void 0 && node3.note.trim() !== "" && rect !== void 0) wanted2.push({ target: node3.id, text: node3.note, rect, isGroup: false });
+  }
+  for (const group2 of diagram.groups) {
+    const rect = rectOf2.get(group2.id);
+    if (group2.note !== void 0 && group2.note.trim() !== "" && rect !== void 0) wanted2.push({ target: group2.id, text: group2.note, rect, isGroup: true });
+  }
+  if (wanted2.length === 0) return layout;
+  const pad = CANVAS_METRICS.padding;
+  const contentLeft = pad;
+  const contentRight = layout.size.width - pad;
+  const lineHeight2 = TYPE_ROLES.sub.lineHeight;
+  const decided = wanted2.map((note) => {
+    const y = note.rect.y + note.rect.height / 2;
+    const leftClear = clearRun(layout, note, y, contentLeft, note.rect.x);
+    const rightClear = clearRun(layout, note, y, note.rect.x + note.rect.width, contentRight);
+    const nearer = note.rect.x + note.rect.width / 2 <= layout.size.width / 2 ? "left" : "right";
+    const side = leftClear === rightClear ? nearer : leftClear ? "left" : "right";
+    const { lines } = fitText(note.text, "sub", NOTE.preferredWidth, NOTE.hardWidth, NOTE.maxLines);
+    const width = Math.ceil(lines.reduce((max, line5) => Math.max(max, measureRole(line5, "sub")), 0));
+    return { ...note, y, side, lines, width, height: lines.length * lineHeight2, leader: side === "left" ? leftClear : rightClear };
+  });
+  const columnText = (side) => decided.filter((note) => note.side === side).reduce((max, note) => Math.max(max, note.width), 0);
+  const leftText = columnText("left");
+  const rightText = columnText("right");
+  const leftColumn = leftText === 0 ? 0 : leftText + NOTE.gap * 2 + NOTE.braceWidth;
+  const rightColumn = rightText === 0 ? 0 : rightText + NOTE.gap * 2 + NOTE.braceWidth;
+  const room = shifted2(layout, leftColumn);
+  const notes = [];
+  let bottom = layout.size.height - pad;
+  for (const side of ["left", "right"]) {
+    let lastBottom = Number.NEGATIVE_INFINITY;
+    const onSide = decided.filter((note) => note.side === side).sort((a, b) => a.y - b.y);
+    for (const note of onSide) {
+      const top = Math.max(note.y - note.height / 2, lastBottom + NOTE.spacing, pad);
+      lastBottom = top + note.height;
+      bottom = Math.max(bottom, lastBottom);
+      const rect = { ...note.rect, x: note.rect.x + leftColumn };
+      const braceX = side === "left" ? pad + leftText + NOTE.gap : leftColumn + contentRight + NOTE.gap;
+      const leader = note.leader && (side === "left" ? rect.x - (braceX + NOTE.braceWidth) > 4 : braceX - (rect.x + rect.width) > 4) ? side === "left" ? { from: { x: braceX + NOTE.braceWidth, y: note.y }, to: { x: rect.x, y: note.y } } : { from: { x: rect.x + rect.width, y: note.y }, to: { x: braceX, y: note.y } } : null;
+      notes.push({
+        target: note.target,
+        side,
+        lines: note.lines,
+        text: { x: side === "left" ? pad + leftText : braceX + NOTE.braceWidth + NOTE.gap, top },
+        brace: { x: braceX, width: NOTE.braceWidth, top: rect.y, bottom: rect.y + rect.height, tipY: note.y },
+        leader
+      });
+    }
+  }
+  return {
+    ...room,
+    size: { width: layout.size.width + leftColumn + rightColumn, height: Math.ceil(bottom + pad) },
+    notes
+  };
+}
+var NOTE, within, moved2;
+var init_notes = __esm({
+  "../../packages/diagrams/src/layout/flow/notes.ts"() {
+    "use strict";
+    init_theme();
+    init_measure();
+    NOTE = {
+      preferredWidth: 180,
+      hardWidth: 240,
+      maxLines: 4,
+      braceWidth: 10,
+      /** Between the text and the brace, and between the brace and the diagram. */
+      gap: 12,
+      /** Between two notes on one side that would otherwise touch. */
+      spacing: 10
+    };
+    within = (inner, outer) => inner.x >= outer.x && inner.y >= outer.y && inner.x + inner.width <= outer.x + outer.width && inner.y + inner.height <= outer.y + outer.height;
+    moved2 = (rect, dx) => ({ ...rect, x: rect.x + dx });
+  }
+});
+
 // ../../packages/diagrams/src/layout/flow/stub-order.ts
 function nodeAt(point, nodes) {
   return nodes.find((node3) => {
@@ -140530,8 +140654,8 @@ function movedRoute(stub, to) {
   const before = turnEnd[stub.axis] - stub.across;
   const after = turnEnd[stub.axis] - to;
   if (Math.sign(before) !== Math.sign(after) || Math.abs(after) < MIN_STRETCH2) return null;
-  const moved5 = stub.route.map((point, index2) => index2 < 2 ? { ...point, [stub.axis]: to } : point);
-  return stub.atStart ? moved5 : moved5.reverse();
+  const moved6 = stub.route.map((point, index2) => index2 < 2 ? { ...point, [stub.axis]: to } : point);
+  return stub.atStart ? moved6 : moved6.reverse();
 }
 function stubBox(a, b) {
   return { x: Math.min(a.x, b.x) - 1, y: Math.min(a.y, b.y) - 1, width: Math.abs(a.x - b.x) + 2, height: Math.abs(a.y - b.y) + 2 };
@@ -140595,13 +140719,13 @@ function orderStubs(edges, nodes, obstacles) {
         const node3 = moving.node;
         const low = moving.axis === "x" ? node3.x : node3.y;
         const high = low + (moving.axis === "x" ? node3.width : node3.height);
-        const moved5 = to >= low + END_INSET2 && to <= high - END_INSET2 ? movedRoute(moving, to) : null;
-        if (moved5 === null || isLabelOnStub(labels2[moving.edge], moving)) return false;
-        const from = moving.atStart ? moved5 : [...moved5].reverse();
+        const moved6 = to >= low + END_INSET2 && to <= high - END_INSET2 ? movedRoute(moving, to) : null;
+        if (moved6 === null || isLabelOnStub(labels2[moving.edge], moving)) return false;
+        const from = moving.atStart ? moved6 : [...moved6].reverse();
         const box = stubBox(from[0], from[1]);
         const blockers = [...nodes.filter((other) => other !== node3), ...obstacles, ...labels2.filter((label, index2) => label !== void 0 && index2 !== moving.edge)];
         if (blockers.some((blocker) => touches3(box, blocker))) return false;
-        next[moving.edge] = moved5;
+        next[moving.edge] = moved6;
         return true;
       });
       const movedEdges = new Set([...plan.keys()].map((moving) => moving.edge));
@@ -140783,13 +140907,14 @@ var init_layout_flow = __esm({
     init_overlays2();
     init_overlay_tab();
     init_legend2();
+    init_notes();
     init_size_group();
     init_size_node();
     init_stub_order();
     init_tab_clearance();
     edgeIndex = (edge2) => Number(edge2.id.slice(1));
     offSquare = (size) => Math.abs(Math.log(Math.max(1, size.width) / Math.max(1, size.height)));
-    layoutFlow = memoLayout(async (diagram) => withLegend(diagram, await layoutFlowOnce(diagram)));
+    layoutFlow = memoLayout(async (diagram) => withLegend(diagram, withNotes(diagram, await layoutFlowOnce(diagram))));
   }
 });
 
@@ -140799,13 +140924,15 @@ function nodeLine(node3) {
   const stack2 = node3.stack.length === 0 ? "" : `, stack: ${markNames(node3.stack)}`;
   const change = node3.change === void 0 ? "" : `, change: ${node3.change}`;
   const part2 = node3.part === void 0 ? "" : `, drawn in full in part ${node3.part}`;
-  return `${node3.label}${detail}, ${node3.type}${stack2}${change}${part2}`;
+  const note = node3.note === void 0 ? "" : `, note: ${node3.note}`;
+  return `${node3.label}${detail}, ${node3.type}${stack2}${change}${part2}${note}`;
 }
 function groupLine(group2) {
   const kind = group2.type === null ? "Group" : GROUP_TYPE_SPECS[group2.type].title;
   const detail = group2.sub === null ? "" : ` (${group2.sub})`;
   const stack2 = group2.stack.length === 0 ? "" : `, stack: ${markNames(group2.stack)}`;
-  return `${kind}: ${group2.label}${detail}${stack2}`;
+  const note = group2.note === void 0 ? "" : `, note: ${group2.note}`;
+  return `${kind}: ${group2.label}${detail}${stack2}${note}`;
 }
 function overlayLine(overlay, memberLabel) {
   const kind = overlay.type === null ? "Overlay" : `${GROUP_TYPE_SPECS[overlay.type].title} overlay`;
@@ -141240,13 +141367,14 @@ function parseNodeStatement(cursor, state, line5, group2) {
   const labelToken2 = cursor.peek();
   const label = readLabel(cursor, state, line5, "label", 'node <id> <type> "Label" icon=<set:name>.');
   const options3 = readOptions(cursor, NODE_OPTIONS, state.report, { lists: ["stack"] });
-  rejectTrailing(cursor, state, 'A node is: node id type "Label" sub="..." icon=lucide:name tone=blue stack=simple:angular,simple:typescript change=update part=2');
+  rejectTrailing(cursor, state, 'A node is: node id type "Label" sub="..." icon=lucide:name tone=blue stack=simple:angular,simple:typescript change=update part=2 note="Owned by the payments team"');
   if (id === null || type === void 0 || label === null) return;
   const defaults = FLOW_NODE_TYPE_DEFAULTS[type];
   const sub = findOption(options3, "sub")?.value ?? null;
   const iconOption = findOption(options3, "icon");
   const change = resolveChange(findOption(options3, "change"), state);
   const part2 = resolvePart(findOption(options3, "part"), state);
+  const note = noteOf(findOption(options3, "note"));
   state.nodes.push({
     id: toNodeId(id.text),
     type,
@@ -141258,9 +141386,14 @@ function parseNodeStatement(cursor, state, line5, group2) {
     stack: resolveStack(findOption(options3, "stack"), state, defaults.shape === "card"),
     ...change === null ? {} : { change },
     ...part2 === null ? {} : { part: part2 },
+    ...note === null ? {} : { note },
     group: group2,
     labelAt: spanOf7(labelToken2)
   });
+}
+function noteOf(option2) {
+  const text6 = option2?.value.trim() ?? "";
+  return text6 === "" ? null : text6;
 }
 function resolvePart(option2, state) {
   if (option2 === void 0) return null;
@@ -141299,6 +141432,7 @@ function parseGroupStatement(cursor, state, line5, parent) {
   rejectTrailing(cursor, state, "Put nodes on the following lines, not after the {.");
   const groupId = toGroupId(id?.text ?? `unnamed-${line5}`);
   const labelAt = spanOf7(labelToken2);
+  const groupNote = noteOf(findOption(options3, "note"));
   if (id === null || label === null || labelAt === null) return groupId;
   state.groups.push({
     id: groupId,
@@ -141307,7 +141441,8 @@ function parseGroupStatement(cursor, state, line5, parent) {
     parent,
     sub: findOption(options3, "sub")?.value ?? null,
     stack: resolveStack(findOption(options3, "stack"), state, true),
-    labelAt
+    labelAt,
+    ...groupNote === null ? {} : { note: groupNote }
   });
   return groupId;
 }
@@ -141386,7 +141521,7 @@ var init_flow_statements = __esm({
     init_statement_helpers();
     init_suggest();
     init_token_cursor();
-    NODE_OPTIONS = ["sub", "icon", "tone", "stack", "change", "part"];
+    NODE_OPTIONS = ["sub", "icon", "tone", "stack", "change", "part", "note"];
     MAX_PART = 999;
     MOVED_GROUP_OPTIONS = { boundary: "A trust boundary is now a group type: write type=trust-boundary." };
     EDGE_OPTIONS = ["icon", "role", "main", ...LINE_MOTION_OPTIONS];
@@ -141962,6 +142097,40 @@ var init_paint_legend = __esm({
   }
 });
 
+// ../../packages/diagrams/src/render/flow/paint-notes.ts
+function bracePath(note) {
+  const { x, width, top, bottom, tipY } = note.brace;
+  const open2 = note.side === "left" ? x + width : x;
+  const tip = note.side === "left" ? x : x + width;
+  const mid = x + width / 2;
+  const curl = Math.max(1, Math.min(6, (bottom - top) / 4, tipY - top, bottom - tipY));
+  return [
+    `M ${open2} ${top}`,
+    `Q ${mid} ${top} ${mid} ${top + curl}`,
+    `L ${mid} ${tipY - curl}`,
+    `Q ${mid} ${tipY} ${tip} ${tipY}`,
+    `Q ${mid} ${tipY} ${mid} ${tipY + curl}`,
+    `L ${mid} ${bottom - curl}`,
+    `Q ${mid} ${bottom} ${open2} ${bottom}`
+  ].join(" ");
+}
+function paintNote2(note, theme) {
+  const parts = [
+    el("path", { d: bracePath(note), fill: "none", stroke: theme.edge, "stroke-width": 1.25, "stroke-linecap": "round", "stroke-linejoin": "round" }),
+    paintTextBlock({ x: note.text.x, top: note.text.top, lines: note.lines, role: "sub", color: theme.inkSecondary, anchor: note.side === "left" ? "end" : "start" })
+  ];
+  if (note.leader !== null) {
+    parts.push(el("line", { x1: note.leader.from.x, y1: note.leader.from.y, x2: note.leader.to.x, y2: note.leader.to.y, stroke: theme.edge, "stroke-width": 1, "stroke-dasharray": "2 3", "stroke-linecap": "round" }));
+  }
+  return el("g", { "data-note": note.target, "data-side": note.side }, parts);
+}
+var init_paint_notes = __esm({
+  "../../packages/diagrams/src/render/flow/paint-notes.ts"() {
+    "use strict";
+    init_svg2();
+  }
+});
+
 // ../../packages/diagrams/src/render/flow/render-flow.ts
 function renderFlowSvg(diagram, layout, theme, options3) {
   const groupById = new Map(diagram.groups.map((group2) => [group2.id, group2]));
@@ -141998,6 +142167,7 @@ function renderFlowSvg(diagram, layout, theme, options3) {
     return paintEdgeLabel(placed3, edge2?.icon ?? null, theme, edge2?.step, edge2?.role);
   });
   const legend2 = layout.legend === void 0 ? [] : [paintLegend2(layout.legend, theme)];
+  const notes = (layout.notes ?? []).map((note) => paintNote2(note, theme));
   return paintDocument(
     {
       size: layout.size,
@@ -142005,7 +142175,7 @@ function renderFlowSvg(diagram, layout, theme, options3) {
       outline: outlineFlow(diagram),
       summary: summarizeFlow(diagram),
       ...diagram.edges.some((edge2) => edge2.isAnimated === true) ? { css: MOTION_CSS } : {},
-      children: [...groups, ...overlays, ...edges, ...groupTabs, ...overlayTabs, ...nodes, ...labels2, ...legend2]
+      children: [...groups, ...overlays, ...edges, ...groupTabs, ...overlayTabs, ...nodes, ...labels2, ...notes, ...legend2]
     },
     theme,
     options3
@@ -142022,6 +142192,7 @@ var init_render_flow = __esm({
     init_paint_node();
     init_paint_overlay();
     init_paint_legend();
+    init_paint_notes();
   }
 });
 
@@ -143912,17 +144083,17 @@ var init_limits3 = __esm({
 
 // ../../packages/diagrams/src/kinds/gantt/dates.ts
 function daysFromCivil(year, month, day) {
-  const shifted3 = month <= 2 ? year - 1 : year;
-  const era = Math.floor(shifted3 / 400);
-  const yearOfEra = shifted3 - era * 400;
+  const shifted4 = month <= 2 ? year - 1 : year;
+  const era = Math.floor(shifted4 / 400);
+  const yearOfEra = shifted4 - era * 400;
   const dayOfYear = Math.floor((153 * (month + (month > 2 ? -3 : 9)) + 2) / 5) + day - 1;
   const dayOfEra = yearOfEra * 365 + Math.floor(yearOfEra / 4) - Math.floor(yearOfEra / 100) + dayOfYear;
   return era * 146097 + dayOfEra - 719468;
 }
 function civilFromDays(epochDay) {
-  const shifted3 = epochDay + 719468;
-  const era = Math.floor(shifted3 / 146097);
-  const dayOfEra = shifted3 - era * 146097;
+  const shifted4 = epochDay + 719468;
+  const era = Math.floor(shifted4 / 146097);
+  const dayOfEra = shifted4 - era * 146097;
   const yearOfEra = Math.floor((dayOfEra - Math.floor(dayOfEra / 1460) + Math.floor(dayOfEra / 36524) - Math.floor(dayOfEra / 146096)) / 365);
   const dayOfYear = dayOfEra - (365 * yearOfEra + Math.floor(yearOfEra / 4) - Math.floor(yearOfEra / 100));
   const monthIndex = Math.floor((5 * dayOfYear + 2) / 153);
@@ -150492,8 +150663,8 @@ function placePorts(plans) {
   }
   for (const plan of plans) {
     const middle2 = (plan.fromX + plan.toX) / 2;
-    const within2 = (at3, side) => middle2 >= rangeOf(at3, side)[0] && middle2 <= rangeOf(at3, side)[1];
-    if (plan.kind === "step" && Math.abs(plan.fromX - plan.toX) <= 10 && within2(plan.from, plan.fromSide) && within2(plan.to, plan.toSide)) [plan.fromX, plan.toX] = [middle2, middle2];
+    const within3 = (at3, side) => middle2 >= rangeOf(at3, side)[0] && middle2 <= rangeOf(at3, side)[1];
+    if (plan.kind === "step" && Math.abs(plan.fromX - plan.toX) <= 10 && within3(plan.from, plan.fromSide) && within3(plan.to, plan.toSide)) [plan.fromX, plan.toX] = [middle2, middle2];
   }
 }
 function nudge(tip) {
@@ -150515,11 +150686,11 @@ function separatePorts(plans) {
       tips.downs.push(...run3.downs);
       byBand.set(run3.band, tips);
     }
-    let moved5 = false;
+    let moved6 = false;
     for (const { ups, downs } of byBand.values()) {
-      for (const up of ups) for (const down of downs) if (up.plan !== down.plan && Math.abs(up.x - down.x) < LAYERS_METRICS.portClear) moved5 = nudge(down) || nudge(up) || moved5;
+      for (const up of ups) for (const down of downs) if (up.plan !== down.plan && Math.abs(up.x - down.x) < LAYERS_METRICS.portClear) moved6 = nudge(down) || nudge(up) || moved6;
     }
-    if (!moved5) return;
+    if (!moved6) return;
   }
 }
 function placeRuns(plan, bounds) {
@@ -153408,7 +153579,7 @@ function arrange(flat8, boxes2, arrangement) {
     size: { width: Math.ceil(extent2.width + CANVAS_METRICS.padding * 2), height: Math.ceil(extent2.height + CANVAS_METRICS.padding * 2) },
     arrangement,
     topics: raw.map((topic) => ({ ...topic, rect: { ...topic.rect, x: topic.rect.x + dx, y: topic.rect.y + dy } })),
-    links: rawLinks.map((link2) => ({ ...link2, start: moved2(link2.start, dx, dy), lead: moved2(link2.lead, dx, dy), c1: moved2(link2.c1, dx, dy), c2: moved2(link2.c2, dx, dy), end: moved2(link2.end, dx, dy) }))
+    links: rawLinks.map((link2) => ({ ...link2, start: moved3(link2.start, dx, dy), lead: moved3(link2.lead, dx, dy), c1: moved3(link2.c1, dx, dy), c2: moved3(link2.c2, dx, dy), end: moved3(link2.end, dx, dy) }))
   };
 }
 function layoutMindmapNow(diagram) {
@@ -153421,7 +153592,7 @@ function layoutMindmapNow(diagram) {
   }
   return arrange(flat8, boxes2, "right");
 }
-var AUTO_RADIAL_MAX_WIDTH, AUTO_RADIAL_MIN_BRANCHES, CURVE_SAMPLES, moved2, layoutMindmap;
+var AUTO_RADIAL_MAX_WIDTH, AUTO_RADIAL_MIN_BRANCHES, CURVE_SAMPLES, moved3, layoutMindmap;
 var init_layout11 = __esm({
   "../../packages/diagrams/src/kinds/mindmap/layout/layout.ts"() {
     "use strict";
@@ -153436,7 +153607,7 @@ var init_layout11 = __esm({
     AUTO_RADIAL_MAX_WIDTH = Math.floor(CANVAS_METRICS.targetWidth / LINT_LIMITS.minTextScale);
     AUTO_RADIAL_MIN_BRANCHES = 2;
     CURVE_SAMPLES = 16;
-    moved2 = (point, dx, dy) => ({ x: point.x + dx, y: point.y + dy });
+    moved3 = (point, dx, dy) => ({ x: point.x + dx, y: point.y + dy });
     layoutMindmap = memoLayout(async (diagram) => layoutMindmapNow(diagram));
   }
 });
@@ -154116,7 +154287,7 @@ function offsetPiece(piece, from, to, sign) {
   const end = normalToward(p3, p2, p1, p0);
   const endNormal = { x: -end.x, y: -end.y };
   const third = (to - from) / 3;
-  return [shifted2(p0, start2, sign * from), shifted2(p1, start2, sign * (from + third)), shifted2(p2, endNormal, sign * (to - third)), shifted2(p3, endNormal, sign * to)];
+  return [shifted3(p0, start2, sign * from), shifted3(p1, start2, sign * (from + third)), shifted3(p2, endNormal, sign * (to - third)), shifted3(p3, endNormal, sign * to)];
 }
 function piecesOf2(link2) {
   const first = link2.startWidth / 2;
@@ -154141,7 +154312,7 @@ function ribbonPath(link2) {
 function paintLink3(link2, child, theme) {
   return el("path", { d: ribbonPath(link2), fill: ribbonColor(theme, child.tone), "data-link-from": link2.from, "data-link-to": link2.to });
 }
-var at, middle, shifted2, between, reversed;
+var at, middle, shifted3, between, reversed;
 var init_paint_link = __esm({
   "../../packages/diagrams/src/kinds/mindmap/render/paint-link.ts"() {
     "use strict";
@@ -154149,7 +154320,7 @@ var init_paint_link = __esm({
     init_colors();
     at = (point) => `${num(point.x)} ${num(point.y)}`;
     middle = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
-    shifted2 = (point, normal, distance4) => ({ x: point.x + normal.x * distance4, y: point.y + normal.y * distance4 });
+    shifted3 = (point, normal, distance4) => ({ x: point.x + normal.x * distance4, y: point.y + normal.y * distance4 });
     between = (a, b, share) => ({ x: a.x + (b.x - a.x) * share, y: a.y + (b.y - a.y) * share });
     reversed = (curve2) => [curve2[3], curve2[2], curve2[1], curve2[0]];
   }
@@ -154541,7 +154712,7 @@ function rulerOf(diagram, left, cell) {
 function endSide(diagram) {
   return diagram.order === "ascending" ? "right" : "left";
 }
-function noteOf(field) {
+function noteOf2(field) {
   return field.sub ?? (field.isVariable ? "variable length" : null);
 }
 function computePacketLayout(diagram) {
@@ -154566,7 +154737,7 @@ function computePacketLayout(diagram) {
     const drafts = runs.filter((run3) => run3.start >= offset && run3.start < offset + bits).map((run3) => {
       const span = spanInRow(run3, diagram, left, cell);
       const field = run3.field === null ? null : diagram.fields[run3.field];
-      const choice3 = field === null ? null : choosePieceText(field.label, noteOf(field), span.width, run3.start === field.start, keyNumber, field.sub === null);
+      const choice3 = field === null ? null : choosePieceText(field.label, noteOf2(field), span.width, run3.start === field.start, keyNumber, field.sub === null);
       return { run: run3, x: span.x, width: span.width, choice: choice3 };
     });
     const height = Math.max(M17.minRowHeight, ...drafts.map((draft) => draft.choice?.height ?? 0));
@@ -157229,15 +157400,15 @@ var init_mermaid_emit5 = __esm({
 // ../../packages/diagrams/src/kinds/quadrant/mermaid-plan.ts
 function clamped(value, axis, point, ctx) {
   if (value >= 0 && value <= 1) return value;
-  const moved5 = value < 0 ? 0 : 1;
+  const moved6 = value < 0 ? 0 : 1;
   ctx.reporter.add(
     DIAGNOSTIC_CODES.mermaidMappedToNearest,
     point.span,
-    `The ${axis} value ${value} of "${point.name}" is outside 0 to 1, so it became ${moved5}.`,
+    `The ${axis} value ${value} of "${point.name}" is outside 0 to 1, so it became ${moved6}.`,
     "Mermaid draws values from 0 to 1. Check the value in the Mermaid, and rescale the numbers if they are on another scale.",
     "out-of-range"
   );
-  return moved5;
+  return moved6;
 }
 function toneOf5(point, ctx) {
   let tone = null;
@@ -158208,7 +158379,7 @@ function partLabels(labels2, count4) {
   for (const label of labels2) {
     const direction = directionOf3(label.index, count4);
     let rect = label.rect;
-    for (let moved5 = 0; moved5 < MOST_NUDGE && placed3.some((other) => touches4(other.rect, rect, 2)); moved5 += NUDGE) {
+    for (let moved6 = 0; moved6 < MOST_NUDGE && placed3.some((other) => touches4(other.rect, rect, 2)); moved6 += NUDGE) {
       rect = { ...rect, x: rect.x + direction.x * NUDGE, y: rect.y + direction.y * NUDGE };
     }
     placed3.push({ ...label, rect });
@@ -158363,17 +158534,17 @@ function computeRadarLayout(diagram) {
     size: { width, height },
     center: offset,
     radius,
-    spokes: directions.map((direction) => moved3({ x: direction.x * radius, y: direction.y * radius }, offset)),
+    spokes: directions.map((direction) => moved4({ x: direction.x * radius, y: direction.y * radius }, offset)),
     rings,
     ringNumbers: ringNumbers.map((number4) => ({ ...number4, x: number4.x + offset.x, top: number4.top + offset.y })),
     labels: labels2.map((label) => ({ ...label, rect: movedRect(label.rect, offset) })),
-    series: series.map((entry2) => ({ ...entry2, points: entry2.points.map((point) => moved3(point, offset)) })),
+    series: series.map((entry2) => ({ ...entry2, points: entry2.points.map((point) => moved4(point, offset)) })),
     values: values.map((number4) => ({ ...number4, x: number4.x + offset.x, top: number4.top + offset.y })),
     legend: legend2.map((item2) => ({ ...item2, x: item2.x + spill })),
     collisions: collisionsOf2(labels2)
   };
 }
-var M28, moved3, movedRect, layoutRadar;
+var M28, moved4, movedRect, layoutRadar;
 var init_layout15 = __esm({
   "../../packages/diagrams/src/kinds/radar/layout.ts"() {
     "use strict";
@@ -158386,7 +158557,7 @@ var init_layout15 = __esm({
     init_metrics16();
     init_scale3();
     M28 = RADAR_METRICS;
-    moved3 = (point, by) => ({ x: point.x + by.x, y: point.y + by.y });
+    moved4 = (point, by) => ({ x: point.x + by.x, y: point.y + by.y });
     movedRect = (rect, by) => ({ ...rect, x: rect.x + by.x, y: rect.y + by.y });
     layoutRadar = memoLayout(async (diagram) => computeRadarLayout(diagram));
   }
@@ -158454,9 +158625,9 @@ function uniqueIds(items2, what, ctx) {
   return kept4;
 }
 function clamped2(value, low, high, curve2, axis, ctx) {
-  const moved5 = value < low ? low : high !== null && value > high ? high : value;
-  if (moved5 !== value) ctx.reporter.add(DIAGNOSTIC_CODES.mermaidMappedToNearest, curve2.span, `The score ${figure2(value)} of "${curve2.id}" on "${axis}" is outside ${figure2(low)} to ${high === null ? "the top" : figure2(high)}, so it became ${figure2(moved5)}.`, "Check the score, or widen the scale with min and max in the Mermaid.", "out-of-range");
-  return moved5;
+  const moved6 = value < low ? low : high !== null && value > high ? high : value;
+  if (moved6 !== value) ctx.reporter.add(DIAGNOSTIC_CODES.mermaidMappedToNearest, curve2.span, `The score ${figure2(value)} of "${curve2.id}" on "${axis}" is outside ${figure2(low)} to ${high === null ? "the top" : figure2(high)}, so it became ${figure2(moved6)}.`, "Check the score, or widen the scale with min and max in the Mermaid.", "out-of-range");
+  return moved6;
 }
 function scoresOf(curve2, axes, axisIds, low, ctx) {
   if (curve2.ordered !== null) {
@@ -165176,7 +165347,7 @@ function buildUnit(card5, notes, direction) {
   return { width, height, card: cardRect2, notes: connectors.sort((a, b) => a.index - b.index), entry: entry2, exit };
 }
 var NOTE_CHROME, isHorizontal2;
-var init_notes = __esm({
+var init_notes2 = __esm({
   "../../packages/diagrams/src/kinds/state/layout/notes.ts"() {
     "use strict";
     init_measure();
@@ -165468,9 +165639,9 @@ async function layoutWith3(diagram, direction) {
     const reached = isUnitLoop ? [...routeOf3(edge2)] : reachNodes(routeOf3(edge2), { ...from, node: nodeById.get(transition.from) }, { ...to, node: nodeById.get(transition.to) });
     const label = pillOf(edge2, prepared.measured.get(transition.id));
     const cleared = clearTabs({ points: reached, labelRect: label?.rect ?? null }, tabRects, nodeRects);
-    const moved5 = label === null || cleared.labelRect === null ? label : { ...label, rect: cleared.labelRect };
-    const center = moved5 === null ? null : { x: moved5.rect.x + moved5.rect.width / 2, y: moved5.rect.y + moved5.rect.height / 2 };
-    return { id: transition.id, points: giveEndRoom(cleared.points, EDGE_METRICS.endRun, nodeRects, center), label: moved5 };
+    const moved6 = label === null || cleared.labelRect === null ? label : { ...label, rect: cleared.labelRect };
+    const center = moved6 === null ? null : { x: moved6.rect.x + moved6.rect.width / 2, y: moved6.rect.y + moved6.rect.height / 2 };
+    return { id: transition.id, points: giveEndRoom(cleared.points, EDGE_METRICS.endRun, nodeRects, center), label: moved6 };
   });
   const shortened = [
     ...diagram.states.filter((node3) => node3.kind === "composite" ? prepared.frames.get(node3.id)?.tab.isShortened === true : prepared.boxes.get(node3.id)?.isShortened === true).map((node3) => node3.id),
@@ -165519,7 +165690,7 @@ var init_layout18 = __esm({
     init_collect();
     init_elk_graph2();
     init_label2();
-    init_notes();
+    init_notes2();
     init_reach();
     init_regions();
     init_size5();
@@ -165643,7 +165814,7 @@ var init_lint21 = __esm({
     init_general_warnings();
     init_graph3();
     init_label2();
-    init_notes();
+    init_notes2();
     init_size5();
     init_limits4();
     placeOf2 = (node3) => node3?.labelAt ?? HEADER;
@@ -170129,8 +170300,8 @@ function pack(placed3, next, gap) {
   });
   next.forEach((extent2, level2) => {
     const taken = placed3[level2];
-    const moved5 = { left: extent2.left + shift2, right: extent2.right + shift2 };
-    placed3[level2] = taken === void 0 ? moved5 : { left: Math.min(taken.left, moved5.left), right: Math.max(taken.right, moved5.right) };
+    const moved6 = { left: extent2.left + shift2, right: extent2.right + shift2 };
+    placed3[level2] = taken === void 0 ? moved6 : { left: Math.min(taken.left, moved6.left), right: Math.max(taken.right, moved6.right) };
   });
   return shift2;
 }
@@ -170207,12 +170378,12 @@ function place2({ diagram, flat: flat8, cards, hang: hang2 }) {
   }
   const bounds = rects.reduce((box, rect) => ({ left: Math.min(box.left, rect.x), top: Math.min(box.top, rect.y), right: Math.max(box.right, rect.x + rect.width), bottom: Math.max(box.bottom, rect.y + rect.height) }), { left: Number.POSITIVE_INFINITY, top: Number.POSITIVE_INFINITY, right: Number.NEGATIVE_INFINITY, bottom: Number.NEGATIVE_INFINITY });
   const shift2 = { x: TREE_METRICS.canvasPadding - bounds.left, y: TREE_METRICS.canvasPadding - bounds.top };
-  const moved5 = rects.map((rect) => ({ x: rect.x + shift2.x, y: rect.y + shift2.y, width: rect.width, height: rect.height }));
+  const moved6 = rects.map((rect) => ({ x: rect.x + shift2.x, y: rect.y + shift2.y, width: rect.width, height: rect.height }));
   return {
     kind: "org",
     size: { width: Math.ceil(bounds.right - bounds.left + 2 * TREE_METRICS.canvasPadding), height: Math.ceil(bounds.bottom - bounds.top + 2 * TREE_METRICS.canvasPadding) },
-    cards: flat8.map((entry2) => cardOf2(entry2, size(entry2.index), moved5[entry2.index], isHung[entry2.index] === true)),
-    links: flat8.flatMap((entry2) => linksOf2(entry2, moved5, isDown, isHanging, isHung)),
+    cards: flat8.map((entry2) => cardOf2(entry2, size(entry2.index), moved6[entry2.index], isHung[entry2.index] === true)),
+    links: flat8.flatMap((entry2) => linksOf2(entry2, moved6, isDown, isHanging, isHung)),
     facts: { cut: flat8.flatMap((entry2) => size(entry2.index).name.isCut || size(entry2.index).note?.isCut === true ? [`"${entry2.path}"`] : []), rows: flat8.length }
   };
 }
@@ -172823,9 +172994,9 @@ function keepKindsTogether(diagram, column) {
     const specific = order.findIndex((actor) => idOf2(actor) === link2.from);
     const general = order.findIndex((actor) => idOf2(actor) === link2.to);
     if (specific === -1 || general === -1) continue;
-    const [moved5] = order.splice(specific, 1);
+    const [moved6] = order.splice(specific, 1);
     const at3 = order.findIndex((actor) => idOf2(actor) === link2.to);
-    order.splice(at3 + 1, 0, moved5);
+    order.splice(at3 + 1, 0, moved6);
   }
   return order;
 }
@@ -173519,7 +173690,7 @@ function readUsecase(ctx) {
     const kindOf3 = KIND_OF2.exec(text6);
     const labelled2 = LABELLED.exec(text6);
     const plain4 = PLAIN.exec(text6);
-    const note = NOTE.exec(text6);
+    const note = NOTE2.exec(text6);
     if (/^direction\s+(TB|TD|BT|LR|RL)$/i.test(text6)) ctx.reporter.add(DIAGNOSTIC_CODES.mermaidDroppedLayoutHint, span, "Dropped the direction. A use case diagram puts the actors beside the systems.", "Nothing. Write side=right on an actor to put it on the right.", "direction");
     else if (/^end$/.test(text6)) {
       if (boundary === null) ctx.reporter.add(DIAGNOSTIC_CODES.mermaidRepairedBlock, span, "An `end` closes no system boundary, so it was left out.", "Remove the extra end.", "unclosed");
@@ -173572,7 +173743,7 @@ function reportMeta(ctx, meta3, owner, key, span) {
   if (/icon\s*:/.test(meta3)) ctx.reporter.add(DIAGNOSTIC_CODES.mermaidIconToken, span, `The icon of "${key}" was dropped. Plotwork icons are a closed set.`, "Set icon= on the actor. Find one with the search_icons tool.", "icon-token");
   if (/business\s*:\s*true/.test(meta3)) ctx.reporter.add(DIAGNOSTIC_CODES.mermaidDroppedMeaning, span, `Dropped the business mark of "${key}".`, "Say it in the name or a note if it matters.", "business");
 }
-var ID4, EDGE_ID, INCLUDE, KIND_OF2, LABELLED, PLAIN, NOTE, META, spanOf41;
+var ID4, EDGE_ID, INCLUDE, KIND_OF2, LABELLED, PLAIN, NOTE2, META, spanOf41;
 var init_read13 = __esm({
   "../../packages/diagrams/src/kinds/usecase/mermaid/read.ts"() {
     "use strict";
@@ -173585,7 +173756,7 @@ var init_read13 = __esm({
     KIND_OF2 = new RegExp(`^(${ID4})\\s+${EDGE_ID}--\\|>\\s*(${ID4})$`);
     LABELLED = new RegExp(`^(${ID4})\\s+${EDGE_ID}--\\s*("[^"]*"|[^"\\s-][^"]*?)\\s*(-{2,}>?)\\s*(${ID4})$`);
     PLAIN = new RegExp(`^(${ID4})\\s*${EDGE_ID}(<-{2,}|-{2,}>|-{2,}o|o-{2,}|-{2,}x|x-{2,}|-{2,})\\s*(${ID4})$`);
-    NOTE = new RegExp(`^note\\s+for\\s+(${ID4})\\s+(.+)$`);
+    NOTE2 = new RegExp(`^note\\s+for\\s+(${ID4})\\s+(.+)$`);
     META = new RegExp(`^(${ID4})@\\{.*\\}$`);
     spanOf41 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
   }
@@ -173929,7 +174100,7 @@ function paintActor(actor, placed3, theme) {
   parts.push(paintTextBlock({ x: cx, top: placed3.labelTop, lines: placed3.labelLines, role: "label", color: theme.ink, anchor: "middle" }));
   return el("g", { "data-node": actor.id, "data-type": actor.type === "person" ? "actor" : "system-actor" }, parts);
 }
-function paintNote2(placed3, theme) {
+function paintNote3(placed3, theme) {
   const { x, y, width, height } = placed3.rect;
   const amber = theme.tones.amber;
   return el("g", { "data-note": placed3.id }, [
@@ -173986,7 +174157,7 @@ function renderUsecaseSvg(diagram, layout, theme, options3) {
       const placed3 = placedActor.get(actor.id);
       return placed3 === void 0 ? [] : [paintActor(actor, placed3, theme)];
     }),
-    ...[...actorNotes, ...layout.notes].map((note) => paintNote2(note, theme)),
+    ...[...actorNotes, ...layout.notes].map((note) => paintNote3(note, theme)),
     ...diagram.systems.map((system, index2) => paintTab6(system, layout.systems[index2], theme)),
     ...diagram.links.map((link2, index2) => paintLabel3(link2, layout.links[index2], theme))
   ];
@@ -174716,10 +174887,10 @@ function computeVennLayout(diagram) {
     ...region,
     rect: region.rect === null ? null : movedRect2(region.rect, dx, dy),
     rows: movedRows(region.rows, dx, dy),
-    badge: region.badge === null ? null : { number: numbers.get(region.key) ?? 0, center: moved4(region.badge.center, dx, dy) }
+    badge: region.badge === null ? null : { number: numbers.get(region.key) ?? 0, center: moved5(region.badge.center, dx, dy) }
   }));
   const setLabels = labels2.map((label) => ({ ...label, rect: movedRect2(label.rect, dx, dy) }));
-  const shiftedKey = key.map((entry2) => ({ ...entry2, rect: movedRect2(entry2.rect, dx, dy), rows: movedRows(entry2.rows, dx, dy), badge: { ...entry2.badge, center: moved4(entry2.badge.center, dx, dy) } }));
+  const shiftedKey = key.map((entry2) => ({ ...entry2, rect: movedRect2(entry2.rect, dx, dy), rows: movedRows(entry2.rows, dx, dy), badge: { ...entry2.badge, center: moved5(entry2.badge.center, dx, dy) } }));
   return {
     size: { width: Math.ceil(all.width + M34.padding * 2), height: Math.ceil(all.height + M34.padding * 2) },
     shapes: shapes2,
@@ -174730,7 +174901,7 @@ function computeVennLayout(diagram) {
     enlarged: geometry.enlarged
   };
 }
-var M34, moved4, movedRect2, movedRows, layoutVenn;
+var M34, moved5, movedRect2, movedRows, layoutVenn;
 var init_layout24 = __esm({
   "../../packages/diagrams/src/kinds/venn/layout.ts"() {
     "use strict";
@@ -174745,7 +174916,7 @@ var init_layout24 = __esm({
     init_metrics24();
     init_regions2();
     M34 = VENN_METRICS;
-    moved4 = (point, dx, dy) => ({ x: point.x + dx, y: point.y + dy });
+    moved5 = (point, dx, dy) => ({ x: point.x + dx, y: point.y + dy });
     movedRect2 = (rect, dx, dy) => ({ ...rect, x: rect.x + dx, y: rect.y + dy });
     movedRows = (rows, dx, dy) => rows.map((row) => ({ ...row, x: row.x + dx, top: row.top + dy }));
     layoutVenn = memoLayout(async (diagram) => computeVennLayout(diagram));
@@ -176302,15 +176473,15 @@ var init_mermaid_emit7 = __esm({
 // ../../packages/diagrams/src/kinds/wardley/mermaid-plan.ts
 function clamped3(value, what, span, ctx) {
   if (value >= 0 && value <= 1) return value;
-  const moved5 = value < 0 ? 0 : 1;
+  const moved6 = value < 0 ? 0 : 1;
   ctx.reporter.add(
     DIAGNOSTIC_CODES.mermaidMappedToNearest,
     span,
-    `The value ${value} of ${what} is outside 0 to 1, so it became ${moved5}.`,
+    `The value ${value} of ${what} is outside 0 to 1, so it became ${moved6}.`,
     "A Wardley map places every part from 0 to 1. Check the value, and rescale the numbers if they are on another scale.",
     "out-of-range"
   );
-  return moved5;
+  return moved6;
 }
 function idsFor(names11) {
   const ids = /* @__PURE__ */ new Map();
@@ -177137,7 +177308,7 @@ function paintMoveLabel(move3, theme) {
   if (label === null) return "";
   return el("g", { "data-move-label": move3.index }, [paintTextBlock({ x: textX2(label), top: label.rect.y, lines: label.lines, role: label.role, color: moveColor(theme), anchor: label.anchor, halo: theme.surfaceGroup })]);
 }
-function paintNote3(note, theme) {
+function paintNote4(note, theme) {
   const label = note.label;
   return el("g", { "data-wardley-note": note.index }, [paintTextBlock({ x: textX2(label), top: label.rect.y, lines: label.lines, role: label.role, color: theme.inkSecondary, anchor: label.anchor, halo: theme.surfaceGroup })]);
 }
@@ -177278,7 +177449,7 @@ function renderWardleySvg(diagram, layout, theme, options3) {
         ...layout.moves.map((move3) => paintMove(move3, theme)),
         ...layout.moves.map((move3) => paintGhost(move3, theme)),
         ...layout.parts.map((placed3) => paintPart(diagram.parts[placed3.index], placed3, theme)),
-        ...layout.notes.map((note) => paintNote3(note, theme)),
+        ...layout.notes.map((note) => paintNote4(note, theme)),
         ...layout.parts.map((placed3) => paintPartLabel(placed3, theme)),
         ...layout.moves.map((move3) => paintMoveLabel(move3, theme)),
         ...layout.links.map((link2) => paintLinkPill(link2, theme)),
@@ -179490,10 +179661,10 @@ var init_types3 = __esm({
 });
 
 // ../../packages/diagrams/src/settings/sources.ts
-function movedKeysError(moved5) {
+function movedKeysError(moved6) {
   return (issue3) => {
     if (issue3.code !== "unrecognized_keys") return void 0;
-    const notes = (issue3.keys ?? []).flatMap((key) => moved5[key] === void 0 ? [] : [moved5[key]]);
+    const notes = (issue3.keys ?? []).flatMap((key) => moved6[key] === void 0 ? [] : [moved6[key]]);
     return notes.length === 0 ? void 0 : notes.join("; ");
   };
 }
@@ -180902,8 +181073,8 @@ function move2(scan, op) {
     if (block.index === found.index || descendantsOf(scan, found.index).includes(block.index)) return refused2(`${op.target} cannot go inside itself.`, "Name a block outside it.");
     if (element.parent === block.index) return refused2(`${op.target} is already in ${op.into}.`, "Nothing to move.");
   }
-  const moved5 = scan.lines.slice(element.start - 1, element.end);
-  const from = indentOf6(moved5[0] ?? "");
+  const moved6 = scan.lines.slice(element.start - 1, element.end);
+  const from = indentOf6(moved6[0] ?? "");
   const rest = scanSource([...scan.lines.slice(0, element.start - 1), ...scan.lines.slice(element.end)].join("\n"));
   let place3;
   if (op.into === null) place3 = placeAtTop(rest);
@@ -180912,10 +181083,10 @@ function move2(scan, op) {
     if (!block.ok) return refused2(block.message, block.hint);
     place3 = placeInside(rest, block.index);
   }
-  const shifted3 = moved5.map((line5) => line5.trim() === "" ? line5 : line5.startsWith(from) ? `${place3.indent}${line5.slice(from.length)}` : line5);
+  const shifted4 = moved6.map((line5) => line5.trim() === "" ? line5 : line5.startsWith(from) ? `${place3.indent}${line5.slice(from.length)}` : line5);
   const lines = [...rest.lines];
-  lines.splice(place3.index, 0, ...shifted3);
-  const placed3 = shifted3.map((_, index2) => place3.index + 1 + index2);
+  lines.splice(place3.index, 0, ...shifted4);
+  const placed3 = shifted4.map((_, index2) => place3.index + 1 + index2);
   return { ok: true, source: lines.join("\n"), lines: placed3, message: `Moved ${op.target} ${op.into === null ? "to the top level" : `into ${op.into}`}, now on ${lineList(placed3)}.` };
 }
 var NODE_STATEMENTS;
@@ -182293,14 +182464,14 @@ function shapeRect(name2, attrs, dx, dy) {
   return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y };
 }
 function shapePoints(name2, attrs, dx, dy) {
-  const moved5 = (points) => points.map((point) => ({ x: point.x + dx, y: point.y + dy }));
-  if (name2 === "path") return moved5(pathPolylines(attrs.get("d") ?? "")[0] ?? []);
-  if (name2 === "line") return moved5([{ x: num2(attrs.get("x1")), y: num2(attrs.get("y1")) }, { x: num2(attrs.get("x2")), y: num2(attrs.get("y2")) }]);
+  const moved6 = (points) => points.map((point) => ({ x: point.x + dx, y: point.y + dy }));
+  if (name2 === "path") return moved6(pathPolylines(attrs.get("d") ?? "")[0] ?? []);
+  if (name2 === "line") return moved6([{ x: num2(attrs.get("x1")), y: num2(attrs.get("y1")) }, { x: num2(attrs.get("x2")), y: num2(attrs.get("y2")) }]);
   if (name2 === "polyline" || name2 === "polygon") {
     const values = (attrs.get("points") ?? "").trim().split(/[\s,]+/).map(Number);
     const points = [];
     for (let index2 = 0; index2 + 1 < values.length; index2 += 2) points.push({ x: values[index2], y: values[index2 + 1] });
-    return moved5(points);
+    return moved6(points);
   }
   return [];
 }
@@ -183477,11 +183648,11 @@ function toQualityDto(report4) {
 }
 async function validateDiagramSource(source) {
   const notes = iconAliasNotes(source);
-  const withNotes = notes.length === 0 ? {} : { notices: notes.map((note) => ({ ...note })) };
+  const withNotes2 = notes.length === 0 ? {} : { notices: notes.map((note) => ({ ...note })) };
   const unknownIcons = [...unknownIconWarnings(source), ...secretWarnings(source)].map(diagnosticToDto);
   const parsed = parseDiagram(source);
   if (!parsed.ok) {
-    return { valid: false, kind: guessKind(source), errors: parsed.error.map(diagnosticToDto), warnings: unknownIcons, summary: null, size: null, ...withNotes };
+    return { valid: false, kind: guessKind(source), errors: parsed.error.map(diagnosticToDto), warnings: unknownIcons, summary: null, size: null, ...withNotes2 };
   }
   const { size, overlayCovers } = await diagramMeasure(parsed.value);
   return {
@@ -183492,7 +183663,7 @@ async function validateDiagramSource(source) {
     summary: summarizeDiagram(parsed.value),
     size,
     quality: toQualityDto(await assessQuality(parsed.value)),
-    ...withNotes
+    ...withNotes2
   };
 }
 var init_validate_diagram = __esm({
@@ -187845,7 +188016,7 @@ var init_module_frames = __esm({
 
 // ../../packages/diagrams/src/importers/terraform/network-layer.ts
 function layerNetworks(plan) {
-  let moved5 = false;
+  let moved6 = false;
   for (const [key, parent] of [...plan.parents]) {
     const resource = plan.resources.get(key.replace(/^(?:frame|anchor):/, ""));
     if (resource === void 0 || NETWORK_TYPE.test(resource.type)) continue;
@@ -187858,9 +188029,9 @@ function layerNetworks(plan) {
     if (target2 === parent) continue;
     if (target2 === void 0) plan.parents.delete(key);
     else plan.parents.set(key, target2);
-    moved5 = true;
+    moved6 = true;
   }
-  return moved5;
+  return moved6;
 }
 var MAX_DEPTH5, NETWORK_FRAMES, NETWORK_TYPE;
 var init_network_layer = __esm({
@@ -191253,8 +191424,8 @@ var init_parse31 = __esm({
       interpolation(start2, end, depth) {
         const split = tokenize3(this.text.slice(start2, end));
         if (split.problem !== null) throw new ReadError(start2 + split.problem.offset, split.problem.message, split.problem.hint);
-        const shifted3 = split.tokens.map((token) => ({ ...token, start: token.start + start2, end: token.end + start2, ...token.pieces === void 0 ? {} : { pieces: token.pieces.map((piece) => piece.kind === "text" ? piece : { ...piece, start: piece.start + start2, end: piece.end + start2 }) } }));
-        const reader = new _BicepReader(this.text, shifted3);
+        const shifted4 = split.tokens.map((token) => ({ ...token, start: token.start + start2, end: token.end + start2, ...token.pieces === void 0 ? {} : { pieces: token.pieces.map((piece) => piece.kind === "text" ? piece : { ...piece, start: piece.start + start2, end: piece.end + start2 }) } }));
+        const reader = new _BicepReader(this.text, shifted4);
         const value = reader.expression(depth + 1);
         return value;
       }
@@ -192614,8 +192785,8 @@ function stepLook(step) {
     const icon = TASK_ICONS[name2] ?? null;
     return { icon: stepIconOf(icon, named2) ?? PIPELINES_MARK, lends: icon === null ? null : { icon, tooling: TOOLING_TASKS.has(name2) }, plumbing: false };
   }
-  const moved5 = PLUMBING_KEYS.find((key) => get(step, key) !== void 0);
-  if (moved5 !== void 0) return { icon: moved5 === "checkout" && text4(get(step, moved5)) === "none" ? null : PLUMBING_TASKS[moved5.toLowerCase()] ?? null, lends: null, plumbing: true };
+  const moved6 = PLUMBING_KEYS.find((key) => get(step, key) !== void 0);
+  if (moved6 !== void 0) return { icon: moved6 === "checkout" && text4(get(step, moved6)) === "none" ? null : PLUMBING_TASKS[moved6.toLowerCase()] ?? null, lends: null, plumbing: true };
   for (const key of ["script", "bash", "pwsh", "powershell"]) {
     const script = text4(get(step, key));
     if (script === null) continue;
@@ -194265,15 +194436,15 @@ function groupsOf(services, networks) {
     if (network !== void 0) home.set(service.name, `network:${network}`);
   }
   for (let pass = 0; pass < services.length; pass += 1) {
-    let moved5 = false;
+    let moved6 = false;
     for (const service of services) {
       const shared = service.sharesNetworkOf === null ? void 0 : home.get(service.sharesNetworkOf);
       if (shared !== void 0 && home.get(service.name) !== shared) {
         home.set(service.name, shared);
-        moved5 = true;
+        moved6 = true;
       }
     }
-    if (!moved5) break;
+    if (!moved6) break;
   }
   const used = networks.filter((network) => [...home.values()].includes(`network:${network}`));
   return { groups: used.map((network) => ({ key: `network:${network}`, label: network, type: "network", idHint: `${network}_net` })), home };
@@ -195427,8 +195598,8 @@ function readProject(joined3, segments) {
   for (const file2 of files) {
     if (nodes.length >= MAX_NODES2) break;
     const path = file2.path;
-    const snapshotFolder = snapshotPaths.find((folder) => within(folder, path));
-    const modelFolder = modelPaths.find((folder) => within(folder, path));
+    const snapshotFolder = snapshotPaths.find((folder) => within2(folder, path));
+    const modelFolder = modelPaths.find((folder) => within2(folder, path));
     if (path.endsWith(".sql") && (snapshotFolder !== void 0 || modelFolder !== void 0)) {
       const read = readJinja(file2.text, file2.start);
       const snapshot = read.snapshot !== null || snapshotFolder !== void 0 && modelFolder === void 0;
@@ -195440,10 +195611,10 @@ function readProject(joined3, segments) {
       calls.set(id, read.calls);
       const own2 = read.calls.find((call) => call.name === "config" && call.kwargs["materialized"] !== void 0)?.kwargs["materialized"];
       nodes.push({ id, kind, name: name2, folder, materialized: snapshot ? null : own2 ?? folderConfig(modelTree, project2, folder === "" ? [] : folder.split("/"), "materialized") ?? "view", dependsOn: [], tests: 0, detail: null, label: null, start: file2.start });
-    } else if (path.endsWith(".csv") && seedPaths.some((folder) => within(folder, path))) {
-      const base = seedPaths.find((folder) => within(folder, path)) ?? "";
+    } else if (path.endsWith(".csv") && seedPaths.some((folder) => within2(folder, path))) {
+      const base = seedPaths.find((folder) => within2(folder, path)) ?? "";
       nodes.push({ id: `seed.${project2}.${stemOf2(path)}`, kind: "seed", name: stemOf2(path), folder: folderOf4(relative5(base, path)), materialized: null, dependsOn: [], tests: 0, detail: null, label: null, start: file2.start });
-    } else if (/\.ya?ml$/.test(path) && file2 !== settingsFile && within(root, path) && !/(^|\/)(?:packages|profiles|selectors|dependencies)\.ya?ml$/.test(path)) {
+    } else if (/\.ya?ml$/.test(path) && file2 !== settingsFile && within2(root, path) && !/(^|\/)(?:packages|profiles|selectors|dependencies)\.ya?ml$/.test(path)) {
       const document2 = yaml(file2);
       for (const source of items(get(document2, "sources"))) {
         const sourceName2 = text4(get(source, "name"));
@@ -195521,7 +195692,7 @@ function lineOffset(text6, line5) {
   for (let index2 = 1; index2 < line5 && offset !== -1; index2 += 1) offset = text6.indexOf("\n", offset) + 1 || -1;
   return Math.max(0, offset);
 }
-var nameOf11, folderOf4, stemOf2, within, relative5;
+var nameOf11, folderOf4, stemOf2, within2, relative5;
 var init_project = __esm({
   "../../packages/diagrams/src/importers/dbt/project.ts"() {
     "use strict";
@@ -195531,7 +195702,7 @@ var init_project = __esm({
     nameOf11 = (path) => path.slice(path.lastIndexOf("/") + 1);
     folderOf4 = (path) => path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
     stemOf2 = (path) => nameOf11(path).replace(/\.[^.]+$/, "");
-    within = (folder, path) => folder === "" || path === folder || path.startsWith(`${folder}/`);
+    within2 = (folder, path) => folder === "" || path === folder || path.startsWith(`${folder}/`);
     relative5 = (folder, path) => folder === "" ? path : path.slice(folder.length + 1);
   }
 });
@@ -195634,9 +195805,9 @@ function readDbt(text6, context) {
       return null;
     }
     const project2 = read2.project;
-    const shifted3 = { ...project2, nodes: project2.nodes.map((node3) => ({ ...node3, start: node3.start + manifest.start })), unresolved: project2.unresolved.map((entry2) => ({ ...entry2, start: entry2.start + manifest.start })) };
+    const shifted4 = { ...project2, nodes: project2.nodes.map((node3) => ({ ...node3, start: node3.start + manifest.start })), unresolved: project2.unresolved.map((entry2) => ({ ...entry2, start: entry2.start + manifest.start })) };
     if (files.length > 1) context.report.add(DIAGNOSTIC_CODES.importChanged, index2.span(manifest.start), `The files hold a manifest, ${cleanText(manifest.path || "manifest.json")}, which is read alone: it holds the whole project resolved.`, "Send the manifest alone, or the project folder without target/.");
-    return drawProject(shifted3, context, index2);
+    return drawProject(shifted4, context, index2);
   }
   const read = readProject(text6, context.files);
   const bad = read.unreadable[0];
@@ -199073,7 +199244,7 @@ function keyFields(directives) {
   }
   return names11;
 }
-function noteOf2(field) {
+function noteOf3(field) {
   const deprecated = field.directives.find((directive) => directive.name === "deprecated");
   const parts = [field.args.length === 0 ? null : `takes ${field.args.join(", ")}`, deprecated === void 0 ? null : `deprecated${deprecated.args.has("reason") ? `: ${deprecated.args.get("reason") ?? ""}` : ""}`];
   const note = parts.filter((part2) => part2 !== null).join("; ");
@@ -199148,7 +199319,7 @@ function readGraphql(text6, context) {
         if (target2 !== null) relations.push({ fromTable: type.name, fromColumn: field.name, toTable: field.base, toColumn: target2, span: lines.span(field.offset, field.length) });
         if (!BUILT_IN.has(field.base) && !scalars.has(field.base) && !merged.has(field.base)) undefinedTypes.push({ name: field.base, offset: field.offset, length: field.length });
         const pk = keys.size > 0 ? keys.has(field.name) : field.name === "id" && field.base === "ID" && field.nonNull;
-        columns3.push({ name: field.name, type: field.type, pk, fk: target2 !== null, note: noteOf2(field) });
+        columns3.push({ name: field.name, type: field.type, pk, fk: target2 !== null, note: noteOf3(field) });
       }
     }
     const root = rootOf.get(type.name);
@@ -200875,7 +201046,7 @@ var init_endpoints = __esm({
 });
 
 // ../../packages/diagrams/src/importers/openapi/map.ts
-function noteOf3(text6) {
+function noteOf4(text6) {
   if (text6 === null) return null;
   const clean = cleanText(text6, "");
   if (clean.length <= MAX_NOTE) return clean === "" ? null : clean;
@@ -200902,12 +201073,12 @@ function treeSource(chunk, title, desc) {
   lines.gap();
   for (const piece of chunk) {
     const prefix = sharedPrefix(piece.operations);
-    const summary2 = noteOf3(piece.section.note);
+    const summary2 = noteOf4(piece.section.note);
     const note = prefix === "" ? summary2 : `${cleanText(prefix, "/")}${summary2 === null ? "" : `: ${summary2}`}`;
     lines.add(`dir ${quote(pieceName(piece))}${options2({ note, icon: "lucide:tag" })} {`);
     for (const operation of piece.operations) {
       const path = prefix === "" ? operation.path : operation.path.slice(prefix.length);
-      lines.add(`file ${quote(`${operation.method} ${cleanText(path, "/")}`)}${options2({ note: noteOf3(operation.summary), icon: "lucide:route" })}`, 1);
+      lines.add(`file ${quote(`${operation.method} ${cleanText(path, "/")}`)}${options2({ note: noteOf4(operation.summary), icon: "lucide:route" })}`, 1);
     }
     lines.add("}");
   }
@@ -201751,7 +201922,7 @@ function typeOf(field) {
   if (field.mapKey !== null) return `map<${field.mapKey}, ${shown(field.type)}>`;
   return field.label === "repeated" ? `${shown(field.type)}[]` : shown(field.type);
 }
-function noteOf4(field, extension) {
+function noteOf5(field, extension) {
   return [`#${field.number}`, field.oneof === null ? null : `oneof ${field.oneof}`, field.label === "required" ? "required" : null, field.deprecated ? "deprecated" : null, extension ? "extension" : null].filter((part2) => part2 !== null).join(", ");
 }
 function filesOf4(text6, context) {
@@ -201837,7 +202008,7 @@ function readProtobuf(text6, context) {
       for (const { field, scope, extension } of [...own2, ...added]) {
         const fk = relate(key, field.name, resolveIn(field.type, scope, file2, field), field);
         if (field.mapKey !== null && !SCALARS.has(field.mapKey)) resolveIn(field.mapKey, definition.fullName, file2, field);
-        columns3.push({ name: field.name, type: typeOf(field), fk, nullable: field.label === "optional", note: cleanText(noteOf4(field, extension)) });
+        columns3.push({ name: field.name, type: typeOf(field), fk, nullable: field.label === "optional", note: cleanText(noteOf5(field, extension)) });
       }
     } else if (definition.kind === "enum") {
       for (const value of definition.values) columns3.push({ name: value.name, type: value.number });
@@ -203975,7 +204146,7 @@ function project(workspace, view) {
     for (let at3 = element.parent === null ? void 0 : byKey.get(element.parent); at3 !== void 0 && out.length < 3; at3 = at3.parent === null ? void 0 : byKey.get(at3.parent)) out.push(at3);
     return out;
   };
-  const within2 = (element, holder) => element.key === holder.key || ancestors(element).some((ancestor) => ancestor.key === holder.key);
+  const within3 = (element, holder) => element.key === holder.key || ancestors(element).some((ancestor) => ancestor.key === holder.key);
   const top = (element) => ancestors(element).pop() ?? element;
   const scope = view.scope;
   const system = top(scope);
@@ -203983,8 +204154,8 @@ function project(workspace, view) {
   const innerKeys = new Set(inner.map((element) => element.key));
   const innerOf2 = (element) => [element, ...ancestors(element)].find((candidate2) => innerKeys.has(candidate2.key)) ?? null;
   const outerOf = (element) => {
-    if (view.level === "component" && within2(element, system) && !within2(element, scope)) return [element, ...ancestors(element)].find((candidate2) => candidate2.kind === "container") ?? null;
-    if (within2(element, system)) return null;
+    if (view.level === "component" && within3(element, system) && !within3(element, scope)) return [element, ...ancestors(element)].find((candidate2) => candidate2.kind === "container") ?? null;
+    if (within3(element, system)) return null;
     return top(element);
   };
   const shown2 = new Map(inner.map((element) => [element.key, element]));
@@ -204048,7 +204219,7 @@ function project(workspace, view) {
   };
   const order = (element) => innerKeys.has(element.key) ? 1 : element.kind === "person" ? 0 : 2;
   const placed3 = [...shown2.values()].sort((a, b) => order(a) - order(b) || workspace.elements.indexOf(a) - workspace.elements.indexOf(b)).map((element) => {
-    const holder = innerKeys.has(element.key) && view.level !== "context" ? scopeBoundary : view.level === "component" && within2(element, system) ? system.key : null;
+    const holder = innerKeys.has(element.key) && view.level !== "context" ? scopeBoundary : view.level === "component" && within3(element, system) ? system.key : null;
     const hidden = hiddenWords(workspace, element);
     return { element, boundary: groupBoundary(element.group, holder), external: element.external || element.kind === "system" && element.key !== system.key && (enterprise ? !inEnterprise(element) : true), hidden: hidden.count, hiddenWords: hidden.words };
   });
@@ -209769,7 +209940,7 @@ var init_files2 = __esm({
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // package.json
-var package_default = { version: "0.7.0-beta.1" };
+var package_default = { version: "0.7.0-beta.2" };
 
 // npm/package-config.json
 var package_config_default = {
