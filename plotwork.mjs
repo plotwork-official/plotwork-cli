@@ -498,7 +498,7 @@ var init_spacing = __esm({
 });
 
 // ../../packages/diagrams/src/constants/flow-look.ts
-var EDGE_SHAPES, DEFAULT_EDGE_SHAPE, FIT_VALUES, DEFAULT_FIT, STYLE_PART_VALUES, ALIGN_LIMIT, FLOW_LOOK_SPECS;
+var EDGE_SHAPES, DEFAULT_EDGE_SHAPE, FIT_VALUES, DEFAULT_FIT, NOTE_PLACEMENTS, DEFAULT_NOTE_PLACEMENT, GROUP_TAB_STYLES, DEFAULT_GROUP_TABS, STYLE_PART_VALUES, ALIGN_LIMIT, FLOW_LOOK_SPECS;
 var init_flow_look = __esm({
   "../../packages/diagrams/src/constants/flow-look.ts"() {
     "use strict";
@@ -507,6 +507,10 @@ var init_flow_look = __esm({
     DEFAULT_EDGE_SHAPE = "orthogonal";
     FIT_VALUES = ["auto", "wide", "tall", "square"];
     DEFAULT_FIT = "auto";
+    NOTE_PLACEMENTS = ["beside", "column"];
+    DEFAULT_NOTE_PLACEMENT = "beside";
+    GROUP_TAB_STYLES = ["plate", "heading"];
+    DEFAULT_GROUP_TABS = "plate";
     STYLE_PART_VALUES = {
       spacing: { values: SPACING_VALUES, fallback: "normal" },
       edges: { values: EDGE_SHAPES, fallback: "orthogonal" }
@@ -533,6 +537,20 @@ var init_flow_look = __esm({
         values: FIT_VALUES.join(", "),
         meaning: "The shape the picture is made for, which decides direction=auto: wide always lays it across (slides), tall always down (phones), square takes the way nearer a square. A named direction wins.",
         example: 'flow "Platform" fit=wide'
+      },
+      {
+        key: "notes",
+        scope: "header",
+        values: NOTE_PLACEMENTS.join(", "),
+        meaning: "Where the notes of boxes and groups (note=) go: beside each one, its brace against the box, where the room is clear (the default), or column, lined up down the outer edge with a dotted leader to each box.",
+        example: 'flow "Platform" notes=column'
+      },
+      {
+        key: "tabs",
+        scope: "header",
+        values: GROUP_TAB_STYLES.join(", "),
+        meaning: "How a group's name is drawn in its corner: plate, a raised tab outlined in the frame's colour (the default), or heading, flat on the frame's own fill.",
+        example: 'flow "Platform" tabs=heading'
       },
       {
         key: "main",
@@ -7391,9 +7409,9 @@ function measureGrid(cells, columns3, labels2) {
         const after = Math.min(a.column + a.span, b.column + b.span) - 1;
         colGaps[after] = Math.max(colGaps[after] ?? 0, width2 + 2 * BLOCK_METRICS.labelRoom);
       }
-      const overlaps11 = a.column < b.column + b.span && b.column < a.column + a.span;
+      const overlaps12 = a.column < b.column + b.span && b.column < a.column + a.span;
       const below = Math.min(a.row, b.row);
-      if (Math.abs(a.row - b.row) === 1 && overlaps11) rowGaps[below] = Math.max(rowGaps[below] ?? 0, BLOCK_METRICS.labelHeight + 2 * BLOCK_METRICS.labelRoom);
+      if (Math.abs(a.row - b.row) === 1 && overlaps12) rowGaps[below] = Math.max(rowGaps[below] ?? 0, BLOCK_METRICS.labelHeight + 2 * BLOCK_METRICS.labelRoom);
     });
   });
   const colWidth = new Array(columns3).fill(BLOCK_METRICS.minColumn);
@@ -7844,10 +7862,10 @@ function gridsOf(diagram) {
 function hasTarget(slot, slots, side) {
   return slots.some((other) => {
     if (other === slot || other.cell.kind === "gap") return false;
-    const overlaps11 = other.column < slot.column + slot.span && slot.column < other.column + other.span;
+    const overlaps12 = other.column < slot.column + slot.span && slot.column < other.column + other.span;
     if (side === "right") return other.row === slot.row && other.column === slot.column + slot.span;
     if (side === "left") return other.row === slot.row && other.column + other.span === slot.column;
-    return overlaps11 && other.row === slot.row + (side === "down" ? 1 : -1);
+    return overlaps12 && other.row === slot.row + (side === "down" ? 1 : -1);
   });
 }
 function gridWarnings(diagram) {
@@ -37508,9 +37526,9 @@ var init_subset = __esm({
       length = 0;
       room(more) {
         if (this.length + more <= this.bytes.length) return;
-        const grown3 = new Uint8Array(Math.max(this.bytes.length * 2, this.length + more));
-        grown3.set(this.bytes.subarray(0, this.length));
-        this.bytes = grown3;
+        const grown4 = new Uint8Array(Math.max(this.bytes.length * 2, this.length + more));
+        grown4.set(this.bytes.subarray(0, this.length));
+        this.bytes = grown4;
       }
       u16(value) {
         this.room(2);
@@ -135587,8 +135605,9 @@ function paintGroup(group2, placed3, theme) {
     })
   ]);
 }
-function paintGroupTab(group2, placed3, theme) {
-  return paintTab2(group2, placed3.tab, placed3.depth, theme, { attribute: "data-group-tab", border: null });
+function paintGroupTab(group2, placed3, theme, style = "plate") {
+  const border = style === "plate" ? groupFrameColors(theme, group2.tone, placed3.depth).border : null;
+  return paintTab2(group2, placed3.tab, placed3.depth, theme, { attribute: "data-group-tab", border });
 }
 function paintTab2(owner, tab, depth, theme, look) {
   const { x, y } = tab.rect;
@@ -136258,9 +136277,9 @@ function runsAlongside(moved6, others, axis) {
         if (!isRun && !isBar) continue;
         const own2 = isRun ? [axis.along(a), axis.along(b)] : [axis.cross(a), axis.cross(b)];
         const theirs = isRun ? [axis.along(c), axis.along(d)] : [axis.cross(c), axis.cross(d)];
-        const overlaps11 = Math.min(...own2) < Math.max(...theirs) - 2 && Math.max(...own2) > Math.min(...theirs) + 2;
+        const overlaps12 = Math.min(...own2) < Math.max(...theirs) - 2 && Math.max(...own2) > Math.min(...theirs) + 2;
         const gap = isRun ? Math.abs(axis.cross(a) - axis.cross(c)) : Math.abs(axis.along(a) - axis.along(c));
-        if (overlaps11 && gap < PARALLEL_GAP) return true;
+        if (overlaps12 && gap < PARALLEL_GAP) return true;
       }
     }
   }
@@ -140222,13 +140241,13 @@ function shifted(layout, dx, dy, size) {
     edges: layout.edges.map((edge2) => moveEdge(edge2, dx, dy))
   };
 }
-function makeRoomFor(layout, grown3) {
-  if (grown3.length === 0) return layout;
+function makeRoomFor(layout, grown4) {
+  if (grown4.length === 0) return layout;
   const margin = CANVAS_METRICS.padding;
-  const left = Math.max(0, margin - Math.min(...grown3.map((frame) => frame.x)));
-  const top = Math.max(0, margin - Math.min(...grown3.map((frame) => frame.y)));
-  const right = Math.max(0, Math.max(...grown3.map((frame) => frame.x + frame.width)) + margin - layout.size.width);
-  const bottom = Math.max(0, Math.max(...grown3.map((frame) => frame.y + frame.height)) + margin - layout.size.height);
+  const left = Math.max(0, margin - Math.min(...grown4.map((frame) => frame.x)));
+  const top = Math.max(0, margin - Math.min(...grown4.map((frame) => frame.y)));
+  const right = Math.max(0, Math.max(...grown4.map((frame) => frame.x + frame.width)) + margin - layout.size.width);
+  const bottom = Math.max(0, Math.max(...grown4.map((frame) => frame.y + frame.height)) + margin - layout.size.height);
   if (left === 0 && top === 0 && right === 0 && bottom === 0) return layout;
   return shifted(layout, left, top, { width: Math.ceil(layout.size.width + left + right), height: Math.ceil(layout.size.height + top + bottom) });
 }
@@ -140508,33 +140527,51 @@ var init_legend2 = __esm({
 });
 
 // ../../packages/diagrams/src/layout/flow/notes.ts
-function crossesRect(y, from, to, rect) {
-  const [a, b] = from < to ? [from, to] : [to, from];
-  return y > rect.y && y < rect.y + rect.height && b > rect.x && a < rect.x + rect.width;
+function segmentMeets(p, q, rect) {
+  const dx = q.x - p.x;
+  const dy = q.y - p.y;
+  let low = 0;
+  let high = 1;
+  const edges = [
+    [-dx, p.x - rect.x],
+    [dx, rect.x + rect.width - p.x],
+    [-dy, p.y - rect.y],
+    [dy, rect.y + rect.height - p.y]
+  ];
+  for (const [step, room] of edges) {
+    if (step === 0) {
+      if (room < 0) return false;
+      continue;
+    }
+    const at3 = room / step;
+    if (step < 0) low = Math.max(low, at3);
+    else high = Math.min(high, at3);
+    if (low > high) return false;
+  }
+  return true;
 }
-function crossesSegment(y, from, to, p, q) {
-  const [a, b] = from < to ? [from, to] : [to, from];
-  if (p.x === q.x) return p.x > a && p.x < b && y >= Math.min(p.y, q.y) && y <= Math.max(p.y, q.y);
-  if (p.y === q.y) return Math.abs(p.y - y) < 2 && Math.max(p.x, q.x) > a && Math.min(p.x, q.x) < b;
-  if (y < Math.min(p.y, q.y) || y > Math.max(p.y, q.y)) return false;
-  const x = p.x + (y - p.y) / (q.y - p.y) * (q.x - p.x);
-  return x > a && x < b;
-}
-function clearRun(layout, wanted2, y, from, to) {
-  for (const node3 of layout.nodes) if (node3.id !== wanted2.target && crossesRect(y, from, to, node3.rect)) return false;
+function clearArea(layout, wanted2, area2) {
+  for (const node3 of layout.nodes) if (node3.id !== wanted2.target && overlaps6(area2, node3.rect)) return false;
   for (const frame of [...layout.groups, ...layout.overlays]) {
-    if (frame.id === wanted2.target || within(wanted2.rect, frame.rect) || within(frame.rect, wanted2.rect)) continue;
-    if (crossesRect(y, from, to, frame.rect)) return false;
+    if (frame.id === wanted2.target || within(frame.rect, wanted2.rect)) continue;
+    if (within(wanted2.rect, frame.rect)) {
+      if (!within(area2, frame.rect) || overlaps6(area2, frame.tab.rect)) return false;
+    } else if (overlaps6(area2, frame.rect)) return false;
   }
   for (const edge2 of layout.edges) {
-    if (edge2.label !== null && crossesRect(y, from, to, edge2.label.rect)) return false;
+    if (edge2.label !== null && overlaps6(area2, edge2.label.rect)) return false;
     for (let index2 = 1; index2 < edge2.points.length; index2 += 1) {
       const p = edge2.points[index2 - 1];
       const q = edge2.points[index2];
-      if (p !== void 0 && q !== void 0 && crossesSegment(y, from, to, p, q)) return false;
+      if (p !== void 0 && q !== void 0 && segmentMeets(p, q, area2)) return false;
     }
   }
   return true;
+}
+function clearRun(layout, wanted2, y, from, to) {
+  const left = Math.min(from, to);
+  const right = Math.max(from, to);
+  return right - left <= 0 || clearArea(layout, wanted2, { x: left, y: y - 0.5, width: right - left, height: 1 });
 }
 function shifted2(layout, dx) {
   if (dx === 0) return layout;
@@ -140550,55 +140587,91 @@ function shifted2(layout, dx) {
     }))
   };
 }
+function besideOf(note, side) {
+  const span = spanOf7(note);
+  const top = Math.min(note.rect.y, note.y - note.height / 2);
+  const bottom = Math.max(note.rect.y + note.rect.height, note.y + note.height / 2);
+  const braceX = side === "left" ? note.rect.x - NOTE.gap - NOTE.braceWidth : note.rect.x + note.rect.width + NOTE.gap;
+  const textX3 = side === "left" ? braceX - NOTE.gap : braceX + NOTE.braceWidth + NOTE.gap;
+  const area2 = { x: side === "left" ? note.rect.x - span : note.rect.x + note.rect.width, y: top, width: span, height: bottom - top };
+  return {
+    area: area2,
+    placed: {
+      target: note.target,
+      side,
+      lines: note.lines,
+      text: { x: textX3, top: note.y - note.height / 2 },
+      brace: { x: braceX, width: NOTE.braceWidth, top: note.rect.y, bottom: note.rect.y + note.rect.height, tipY: note.y },
+      leader: null
+    }
+  };
+}
 function withNotes(diagram, layout) {
   const rectOf2 = new Map([...layout.nodes.map((node3) => [node3.id, node3.rect]), ...layout.groups.map((group2) => [group2.id, group2.rect])]);
   const wanted2 = [];
-  for (const node3 of diagram.nodes) {
-    const rect = rectOf2.get(node3.id);
-    if (node3.note !== void 0 && node3.note.trim() !== "" && rect !== void 0) wanted2.push({ target: node3.id, text: node3.note, rect, isGroup: false });
-  }
-  for (const group2 of diagram.groups) {
-    const rect = rectOf2.get(group2.id);
-    if (group2.note !== void 0 && group2.note.trim() !== "" && rect !== void 0) wanted2.push({ target: group2.id, text: group2.note, rect, isGroup: true });
+  for (const owner of [...diagram.nodes, ...diagram.groups]) {
+    const rect = rectOf2.get(owner.id);
+    if (owner.note !== void 0 && owner.note.trim() !== "" && rect !== void 0) wanted2.push({ target: owner.id, text: owner.note, rect });
   }
   if (wanted2.length === 0) return layout;
   const pad = CANVAS_METRICS.padding;
-  const contentLeft = pad;
-  const contentRight = layout.size.width - pad;
   const lineHeight2 = TYPE_ROLES.sub.lineHeight;
-  const decided = wanted2.map((note) => {
-    const y = note.rect.y + note.rect.height / 2;
-    const leftClear = clearRun(layout, note, y, contentLeft, note.rect.x);
-    const rightClear = clearRun(layout, note, y, note.rect.x + note.rect.width, contentRight);
-    const nearer = note.rect.x + note.rect.width / 2 <= layout.size.width / 2 ? "left" : "right";
-    const side = leftClear === rightClear ? nearer : leftClear ? "left" : "right";
+  const fitted = wanted2.map((note) => {
     const { lines } = fitText(note.text, "sub", NOTE.preferredWidth, NOTE.hardWidth, NOTE.maxLines);
     const width = Math.ceil(lines.reduce((max, line5) => Math.max(max, measureRole(line5, "sub")), 0));
-    return { ...note, y, side, lines, width, height: lines.length * lineHeight2, leader: side === "left" ? leftClear : rightClear };
+    const nearer = note.rect.x + note.rect.width / 2 <= layout.size.width / 2 ? "left" : "right";
+    return { ...note, y: note.rect.y + note.rect.height / 2, lines, width, height: lines.length * lineHeight2, nearer };
+  }).sort((a, b) => a.y - b.y || a.rect.x - b.rect.x);
+  const beside = [];
+  const besideAreas = [];
+  const inColumn = [];
+  for (const note of fitted) {
+    const sides = note.nearer === "left" ? ["left", "right"] : ["right", "left"];
+    const found = diagram.notePlacement === "column" ? void 0 : sides.map((side) => besideOf(note, side)).find(({ area: area2 }) => clearArea(layout, note, grown2(area2, NOTE.spacing / 2)) && !besideAreas.some((taken) => overlaps6(grown2(area2, NOTE.spacing / 2), taken)));
+    if (found === void 0) inColumn.push(note);
+    else {
+      beside.push(found.placed);
+      besideAreas.push(found.area);
+    }
+  }
+  const contentLeft = pad;
+  const contentRight = layout.size.width - pad;
+  const columned = inColumn.map((note) => {
+    const leftClear = clearRun(layout, note, note.y, contentLeft, note.rect.x);
+    const rightClear = clearRun(layout, note, note.y, note.rect.x + note.rect.width, contentRight);
+    const side = leftClear === rightClear ? note.nearer : leftClear ? "left" : "right";
+    return { ...note, side, leader: side === "left" ? leftClear : rightClear };
   });
-  const columnText = (side) => decided.filter((note) => note.side === side).reduce((max, note) => Math.max(max, note.width), 0);
+  const columnText = (side) => columned.filter((note) => note.side === side).reduce((max, note) => Math.max(max, note.width), 0);
   const leftText = columnText("left");
   const rightText = columnText("right");
   const leftColumn = leftText === 0 ? 0 : leftText + NOTE.gap * 2 + NOTE.braceWidth;
   const rightColumn = rightText === 0 ? 0 : rightText + NOTE.gap * 2 + NOTE.braceWidth;
-  const room = shifted2(layout, leftColumn);
-  const notes = [];
-  let bottom = layout.size.height - pad;
+  const besideLeft = Math.max(0, ...besideAreas.map((area2) => contentLeft - area2.x));
+  const besideRight = Math.max(0, ...besideAreas.map((area2) => area2.x + area2.width - contentRight));
+  const shift2 = leftColumn + besideLeft;
+  const room = shifted2(layout, shift2);
+  const notes = beside.map((note) => ({
+    ...note,
+    text: { ...note.text, x: note.text.x + shift2 },
+    brace: { ...note.brace, x: note.brace.x + shift2 }
+  }));
+  let bottom = Math.max(layout.size.height - pad, ...besideAreas.map((area2) => area2.y + area2.height));
   for (const side of ["left", "right"]) {
     let lastBottom = Number.NEGATIVE_INFINITY;
-    const onSide = decided.filter((note) => note.side === side).sort((a, b) => a.y - b.y);
-    for (const note of onSide) {
+    for (const note of columned.filter((entry2) => entry2.side === side)) {
       const top = Math.max(note.y - note.height / 2, lastBottom + NOTE.spacing, pad);
       lastBottom = top + note.height;
       bottom = Math.max(bottom, lastBottom);
-      const rect = { ...note.rect, x: note.rect.x + leftColumn };
-      const braceX = side === "left" ? pad + leftText + NOTE.gap : leftColumn + contentRight + NOTE.gap;
-      const leader = note.leader && (side === "left" ? rect.x - (braceX + NOTE.braceWidth) > 4 : braceX - (rect.x + rect.width) > 4) ? side === "left" ? { from: { x: braceX + NOTE.braceWidth, y: note.y }, to: { x: rect.x, y: note.y } } : { from: { x: rect.x + rect.width, y: note.y }, to: { x: braceX, y: note.y } } : null;
+      const rect = moved2(note.rect, shift2);
+      const braceX = side === "left" ? pad + leftText + NOTE.gap : shift2 + contentRight + besideRight + NOTE.gap;
+      const reach3 = side === "left" ? rect.x - (braceX + NOTE.braceWidth) : braceX - (rect.x + rect.width);
+      const leader = !note.leader || reach3 <= 4 ? null : side === "left" ? { from: { x: braceX + NOTE.braceWidth, y: note.y }, to: { x: rect.x, y: note.y } } : { from: { x: rect.x + rect.width, y: note.y }, to: { x: braceX, y: note.y } };
       notes.push({
         target: note.target,
         side,
         lines: note.lines,
-        text: { x: side === "left" ? pad + leftText : braceX + NOTE.braceWidth + NOTE.gap, top },
+        text: { x: side === "left" ? braceX - NOTE.gap : braceX + NOTE.braceWidth + NOTE.gap, top },
         brace: { x: braceX, width: NOTE.braceWidth, top: rect.y, bottom: rect.y + rect.height, tipY: note.y },
         leader
       });
@@ -140606,11 +140679,11 @@ function withNotes(diagram, layout) {
   }
   return {
     ...room,
-    size: { width: layout.size.width + leftColumn + rightColumn, height: Math.ceil(bottom + pad) },
+    size: { width: Math.ceil(layout.size.width + shift2 + besideRight + rightColumn), height: Math.ceil(bottom + pad) },
     notes
   };
 }
-var NOTE, within, moved2;
+var NOTE, within, overlaps6, grown2, moved2, spanOf7;
 var init_notes = __esm({
   "../../packages/diagrams/src/layout/flow/notes.ts"() {
     "use strict";
@@ -140621,13 +140694,16 @@ var init_notes = __esm({
       hardWidth: 240,
       maxLines: 4,
       braceWidth: 10,
-      /** Between the text and the brace, and between the brace and the diagram. */
+      /** Between the text and the brace, and between the brace and the box or the diagram. */
       gap: 12,
-      /** Between two notes on one side that would otherwise touch. */
+      /** Between two notes, and the room a note beside a box keeps from anything else. */
       spacing: 10
     };
     within = (inner, outer) => inner.x >= outer.x && inner.y >= outer.y && inner.x + inner.width <= outer.x + outer.width && inner.y + inner.height <= outer.y + outer.height;
+    overlaps6 = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+    grown2 = (rect, by) => ({ x: rect.x - by, y: rect.y - by, width: rect.width + by * 2, height: rect.height + by * 2 });
     moved2 = (rect, dx) => ({ ...rect, x: rect.x + dx });
+    spanOf7 = (note) => note.width + NOTE.gap * 2 + NOTE.braceWidth;
   }
 });
 
@@ -140817,19 +140893,19 @@ function spanOverlays(diagram, frames, shapes2, labels2) {
   const groupFrames = shapes2.groups.map((group2) => group2.rect);
   const overlays = [];
   const covers = [];
-  const grown3 = [];
+  const grown4 = [];
   for (const overlay of splitOverlays(diagram).spanning) {
     const tab = frames.tabs.get(overlay.id);
     const memberRects = overlay.members.flatMap((member) => rects.get(member) ?? []);
     if (tab === void 0 || memberRects.length === 0) continue;
     const obstacles = [...shapes2.groups.map((group2) => group2.tab.rect), ...shapes2.overlays.map((placed4) => placed4.tab.rect), ...overlays.map((placed4) => placed4.tab.rect), ...shapes2.nodes.map((node3) => node3.rect), ...labels2];
     const fitted = fitOverlay(memberRects, tab, obstacles, groupFrames);
-    if (fitted.isGrown) grown3.push(fitted.frame);
+    if (fitted.isGrown) grown4.push(fitted.frame);
     const placed3 = placeTab(fitted.frame, tab);
     overlays.push({ id: overlay.id, rect: fitted.frame, tab: { ...placed3, rect: fitted.tab, isFlush: fitted.isFlush }, isSpanning: true });
     covers.push(...findCovers(diagram, overlay, fitted.frame, nodeRects));
   }
-  return { overlays, covers, grown: grown3 };
+  return { overlays, covers, grown: grown4 };
 }
 function placeLevelEdges(diagram, level2, nodes, direction) {
   const routing = { direction, nodes: new Map(nodes.map((node3) => [node3.id, node3.rect])), detours: 0 };
@@ -141277,7 +141353,7 @@ var init_stack_option = __esm({
 });
 
 // ../../packages/diagrams/src/parse/flow-statements.ts
-function spanOf7(token) {
+function spanOf8(token) {
   return token?.kind === "string" ? { line: token.line, column: token.column, length: token.length } : null;
 }
 function resolveDirection(option2, state) {
@@ -141308,8 +141384,10 @@ function parseFlowHeader(line5, state) {
   state.spacing = readChoice(findOption(options3, "spacing"), SPACING_VALUES, DEFAULT_SPACING, state, "compact packs the boxes closer, roomy spreads them; normal is the default.");
   state.edgeShape = readChoice(findOption(options3, "edges"), EDGE_SHAPES, DEFAULT_EDGE_SHAPE, state, "spline draws curves, straight draws slanted lines; orthogonal is the default.");
   state.fit = readChoice(findOption(options3, "fit"), FIT_VALUES, DEFAULT_FIT, state, "wide lays it across for a slide, tall down for a phone, square nearer a square; auto is the default.");
+  state.notePlacement = readChoice(findOption(options3, "notes"), NOTE_PLACEMENTS, DEFAULT_NOTE_PLACEMENT, state, "beside puts each note against its box where there is room; column lines them up down the outer edge.");
+  state.groupTabs = readChoice(findOption(options3, "tabs"), GROUP_TAB_STYLES, DEFAULT_GROUP_TABS, state, "plate draws a group's name on a raised outlined tab; heading sets it flat into the frame.");
   readIconMode(findOption(options3, "icons"), state);
-  rejectTrailing(cursor, state, 'The header is: flow "Title" direction=auto fit=auto provider=aws animate=on numbered=on start=1 legend=on legendparts=all spacing=normal edges=orthogonal icons=auto desc="Plain-language summary"');
+  rejectTrailing(cursor, state, 'The header is: flow "Title" direction=auto fit=auto notes=beside tabs=plate provider=aws animate=on numbered=on start=1 legend=on legendparts=all spacing=normal edges=orthogonal icons=auto desc="Plain-language summary"');
 }
 function readChoice(option2, values, fallback, state, meaning) {
   if (option2 === void 0 || option2.value === fallback) return null;
@@ -141388,7 +141466,7 @@ function parseNodeStatement(cursor, state, line5, group2) {
     ...part2 === null ? {} : { part: part2 },
     ...note === null ? {} : { note },
     group: group2,
-    labelAt: spanOf7(labelToken2)
+    labelAt: spanOf8(labelToken2)
   });
 }
 function noteOf(option2) {
@@ -141431,7 +141509,7 @@ function parseGroupStatement(cursor, state, line5, parent) {
   }
   rejectTrailing(cursor, state, "Put nodes on the following lines, not after the {.");
   const groupId = toGroupId(id?.text ?? `unnamed-${line5}`);
-  const labelAt = spanOf7(labelToken2);
+  const labelAt = spanOf8(labelToken2);
   const groupNote = noteOf(findOption(options3, "note"));
   if (id === null || label === null || labelAt === null) return groupId;
   state.groups.push({
@@ -141481,7 +141559,7 @@ function parseOverlayStatement(cursor, state, line5, parent) {
   const options3 = readOptions(cursor, OVERLAY_OPTIONS, state.report, { lists: ["stack", "members"] });
   rejectTrailing(cursor, state, 'An overlay is: overlay id "Name" members=node-a,node-b type=scale-group');
   const membersOption = findOption(options3, "members");
-  const labelAt = spanOf7(labelToken2);
+  const labelAt = spanOf8(labelToken2);
   if (membersOption === void 0) {
     if (id !== null && label !== null) {
       state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, "An overlay needs members=", labelToken2 ?? cursor.endPosition(line5), 'Name what it frames: overlay web-set "Web servers" members=web-1,web-2,web-3'));
@@ -141525,7 +141603,7 @@ var init_flow_statements = __esm({
     MAX_PART = 999;
     MOVED_GROUP_OPTIONS = { boundary: "A trust boundary is now a group type: write type=trust-boundary." };
     EDGE_OPTIONS = ["icon", "role", "main", ...LINE_MOTION_OPTIONS];
-    HEADER_OPTIONS4 = ["direction", "desc", "provider", "legend", "legendparts", "spacing", "edges", "fit", "icons", ...HEADER_MOTION_OPTIONS];
+    HEADER_OPTIONS4 = ["direction", "desc", "provider", "legend", "legendparts", "spacing", "edges", "fit", "notes", "tabs", "icons", ...HEADER_MOTION_OPTIONS];
     PLAIN_NODE_TYPES = /* @__PURE__ */ new Set(["decision", "terminal", "step"]);
     ROLE_NODE_TYPES = /* @__PURE__ */ new Set(["service", "external"]);
   }
@@ -141717,6 +141795,8 @@ function parseFlow(lines, report4) {
     spacing: null,
     edgeShape: null,
     fit: null,
+    notePlacement: null,
+    groupTabs: null,
     aligns: [],
     nodes: [],
     groups: [],
@@ -141752,6 +141832,8 @@ function parseFlow(lines, report4) {
     ...state.spacing === null ? {} : { spacing: state.spacing },
     ...state.edgeShape === null ? {} : { edgeShape: state.edgeShape },
     ...state.fit === null ? {} : { fit: state.fit },
+    ...state.notePlacement === null ? {} : { notePlacement: state.notePlacement },
+    ...state.groupTabs === null ? {} : { groupTabs: state.groupTabs },
     ...withAligns(resolveAligns(state))
   };
 }
@@ -141787,7 +141869,7 @@ function runsOf2(edges) {
   }
   return { horizontal, vertical };
 }
-function overlaps6(a, b, margin) {
+function overlaps7(a, b, margin) {
   return a.x - margin < b.x + b.width && a.x + a.width + margin > b.x && a.y - margin < b.y + b.height && a.y + a.height + margin > b.y;
 }
 function findFlowHops(edges, nodes) {
@@ -141812,7 +141894,7 @@ function findFlowHops(edges, nodes) {
       const key = `${run3.edge}|${run3.y.toFixed(2)}|${x.toFixed(2)}`;
       if (seen.has(key)) continue;
       const arc = { x: x - radius, y: run3.y - radius, width: radius * 2, height: radius };
-      if (obstacles.some((obstacle) => overlaps6(arc, obstacle, BREATHING))) continue;
+      if (obstacles.some((obstacle) => overlaps7(arc, obstacle, BREATHING))) continue;
       const isCrowded = vertical.some((side) => side !== other && Math.abs(side.x - x) >= SAME_LINE5 && Math.abs(side.x - x) < radius * 2 + BREATHING && run3.y > side.low && run3.y < side.high);
       if (isCrowded) continue;
       const isTrunk = horizontal.some((side) => side.edge !== run3.edge && Math.abs(side.y - run3.y) < BREATHING && x > side.low && x < side.high);
@@ -142142,7 +142224,7 @@ function renderFlowSvg(diagram, layout, theme, options3) {
   });
   const groupTabs = [...layout.groups].sort((a, b) => a.depth - b.depth).flatMap((placed3) => {
     const group2 = groupById.get(placed3.id);
-    return group2 === void 0 ? [] : [paintGroupTab(group2, placed3, theme)];
+    return group2 === void 0 ? [] : [paintGroupTab(group2, placed3, theme, diagram.groupTabs ?? "plate")];
   });
   const overlayById = new Map(diagram.overlays.map((overlay) => [overlay.id, overlay]));
   const overlays = layout.overlays.flatMap((placed3) => {
@@ -142736,7 +142818,7 @@ var init_flow_builder = __esm({
 });
 
 // ../../packages/diagrams/src/import/sequence-lex.ts
-function spanOf8(statement) {
+function spanOf9(statement) {
   return { line: statement.line, column: statement.column, length: Math.max(1, statement.text.length) };
 }
 function endsEntity(text6, index2) {
@@ -142796,7 +142878,7 @@ var init_sequence_lex = __esm({
 // ../../packages/diagrams/src/import/sequence-message.ts
 function parseMessage(state, ctx, statement) {
   const text6 = statement.text;
-  const span = spanOf8(statement);
+  const span = spanOf9(statement);
   const colon = text6.indexOf(":");
   const limit = colon === -1 ? text6.length : colon;
   let at3 = 0;
@@ -142828,7 +142910,7 @@ function parseMessage(state, ctx, statement) {
   state.add({ kind: "message", from, to, label, token: arrow.plotwork, span }, span);
 }
 function parseNote2(state, ctx, statement, rest) {
-  const span = spanOf8(statement);
+  const span = spanOf9(statement);
   const side = splitKeyword(rest);
   const position = NOTE_SIDES.find((candidate2) => candidate2 === side.word);
   let target2 = side.rest;
@@ -142878,7 +142960,7 @@ function parseArchitecture(ctx) {
   }
   return reader.finish();
 }
-var ID3, DECLARATION, JUNCTION, EDGE, ALIGN, ICON_TYPES, spanOf9, ArchitectureReader;
+var ID3, DECLARATION, JUNCTION, EDGE, ALIGN, ICON_TYPES, spanOf10, ArchitectureReader;
 var init_architecture = __esm({
   "../../packages/diagrams/src/import/architecture.ts"() {
     "use strict";
@@ -142903,7 +142985,7 @@ var init_architecture = __esm({
       [/(^|[:-])(internet|cloud)$/, "external"],
       [/(^|[:-])(server|ec2|compute|container|docker|kubernetes|k8s)/, "service"]
     ];
-    spanOf9 = (line5) => {
+    spanOf10 = (line5) => {
       const lead = line5.text.length - line5.text.trimStart().length;
       return { line: line5.number, column: lead + 1, length: Math.max(1, line5.text.trim().length) };
     };
@@ -142945,7 +143027,7 @@ var init_architecture = __esm({
       }
       statement(line5) {
         const text6 = line5.text.trim();
-        const span = spanOf9(line5);
+        const span = spanOf10(line5);
         const declared3 = DECLARATION.exec(text6);
         if (declared3 !== null) {
           const [, word2, key = "", icon, title, parent] = declared3;
@@ -145053,7 +145135,7 @@ function readExcludes(rest, reader, statement, ctx) {
   }
   const left = [...weekdays, ...unread];
   if (left.length > 0) {
-    ctx.reporter.add(DIAGNOSTIC_CODES.mermaidGanttExcludes, spanOf10(statement), `Dropped from \`excludes\`: ${left.join(", ")}. Plotwork skips weekends (Saturday and Sunday) and the days listed by date.`, "Use weekends=skip for weekends and holidays=2026-04-03 for single days. Another day of the week has no Plotwork form.", "excludes");
+    ctx.reporter.add(DIAGNOSTIC_CODES.mermaidGanttExcludes, spanOf11(statement), `Dropped from \`excludes\`: ${left.join(", ")}. Plotwork skips weekends (Saturday and Sunday) and the days listed by date.`, "Use weekends=skip for weekends and holidays=2026-04-03 for single days. Another day of the week has no Plotwork form.", "excludes");
   }
   return { weekends, days };
 }
@@ -145062,7 +145144,7 @@ function readSettings(statements2, ctx) {
   const text6 = format === void 0 ? DEFAULT_DATE_FORMAT : splitWord(format.text).rest || DEFAULT_DATE_FORMAT;
   const compiled = compileDateFormat(text6);
   if (!isReader(compiled)) {
-    const span = format === void 0 ? { line: ctx.prepared.header?.line ?? 1, column: 1, length: 1 } : spanOf10(format);
+    const span = format === void 0 ? { line: ctx.prepared.header?.line ?? 1, column: 1, length: 1 } : spanOf11(format);
     if (compiled.problem === "time") {
       ctx.reporter.add(DIAGNOSTIC_CODES.mermaidGanttTime, span, `The \`dateFormat\` "${text6}" holds a time of day (${compiled.token}), and Plotwork schedules in whole days.`, "Redraw the plan in days, or keep this chart as Mermaid in its own mermaid fence.");
     } else {
@@ -145077,7 +145159,7 @@ function readSettings(statements2, ctx) {
   const holidays = [];
   for (const statement of statements2) {
     const { word: word2, rest } = splitWord(statement.text);
-    const span = spanOf10(statement);
+    const span = spanOf11(statement);
     if (word2 === "title") title = rest === "" ? null : rest;
     else if (word2 === "inclusiveEndDates") isEndInclusive = true;
     else if (word2 === "axisFormat") ctx.reporter.add(DIAGNOSTIC_CODES.mermaidGanttAxisFormat, span, `Dropped \`axisFormat\` (${rest}). Plotwork writes the labels of the axis itself, from its step.`, "Set unit= on the header to choose the step of the axis: day, week, month, quarter, or year.", "axisFormat");
@@ -145101,7 +145183,7 @@ function readSettings(statements2, ctx) {
   }
   return { reader: compiled, isEndInclusive, skipsWeekends, holidays: [...new Set(holidays)].sort((a, b) => a - b), unit: unit3, title };
 }
-var SETTING_WORDS, WEEKDAYS, spanOf10, TICK_INTERVAL;
+var SETTING_WORDS, WEEKDAYS, spanOf11, TICK_INTERVAL;
 var init_mermaid_settings = __esm({
   "../../packages/diagrams/src/kinds/gantt/mermaid-settings.ts"() {
     "use strict";
@@ -145109,7 +145191,7 @@ var init_mermaid_settings = __esm({
     init_mermaid_dates();
     SETTING_WORDS = /* @__PURE__ */ new Set(["title", "dateFormat", "axisFormat", "tickInterval", "todayMarker", "excludes", "includes", "inclusiveEndDates", "topAxis", "weekday", "weekend", "click", "displayMode"]);
     WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-    spanOf10 = (statement) => ({ line: statement.line, column: statement.column, length: Math.max(1, statement.text.length) });
+    spanOf11 = (statement) => ({ line: statement.line, column: statement.column, length: Math.max(1, statement.text.length) });
     TICK_INTERVAL = /^([1-9][0-9]*)(millisecond|second|minute|hour|day|week|month)$/;
   }
 });
@@ -145304,15 +145386,15 @@ function parseMermaidGantt(ctx) {
     if (SETTING_WORDS.has(word2)) continue;
     if (word2 === "section") {
       if (sections.length >= IMPORT_LIMITS.maxNodes) {
-        ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf11(statement), `The chart has more than ${IMPORT_LIMITS.maxNodes} sections.`, "Split it into several diagrams, then convert each.");
+        ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf12(statement), `The chart has more than ${IMPORT_LIMITS.maxNodes} sections.`, "Split it into several diagrams, then convert each.");
         return null;
       }
-      const span = spanOf11(statement);
+      const span = spanOf12(statement);
       sections.push({ name: describeLabel(ctx.reporter, rest, span, { allowSub: false }).label || "Section", span });
       continue;
     }
     if (tasks.length >= IMPORT_LIMITS.maxNodes) {
-      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf11(statement), `The chart has more than ${IMPORT_LIMITS.maxNodes} tasks.`, "Split it into several diagrams, then convert each.");
+      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf12(statement), `The chart has more than ${IMPORT_LIMITS.maxNodes} tasks.`, "Split it into several diagrams, then convert each.");
       return null;
     }
     const task = readTask(statement, sections.length - 1, settings.reader, ctx);
@@ -145334,7 +145416,7 @@ function parseMermaidGantt(ctx) {
     windows
   };
 }
-var spanOf11;
+var spanOf12;
 var init_mermaid_read = __esm({
   "../../packages/diagrams/src/kinds/gantt/mermaid-read.ts"() {
     "use strict";
@@ -145345,7 +145427,7 @@ var init_mermaid_read = __esm({
     init_mermaid_settings();
     init_mermaid_task();
     init_mermaid_windows();
-    spanOf11 = (statement) => ({ line: statement.line, column: statement.column, length: Math.max(1, statement.text.length) });
+    spanOf12 = (statement) => ({ line: statement.line, column: statement.column, length: Math.max(1, statement.text.length) });
   }
 });
 
@@ -145371,7 +145453,7 @@ var init_mermaid6 = __esm({
 });
 
 // ../../packages/diagrams/src/kinds/gantt/outline.ts
-function spanOf12(items2) {
+function spanOf13(items2) {
   if (items2.length === 0) return null;
   const firsts = items2.map((item2) => item2.kind === "task" ? item2.start : item2.day);
   const lasts = items2.map((item2) => item2.kind === "task" ? item2.endsBefore - 1 : item2.day);
@@ -145386,7 +145468,7 @@ function summarizeGantt(diagram) {
   const named2 = diagram.sections.filter((section) => section.label !== null).length;
   const parts = [...tasks > 0 || milestones === 0 ? [countOf(tasks, "task")] : [], ...milestones > 0 ? [countOf(milestones, "milestone")] : []];
   const sections = named2 > 0 ? ` in ${countOf(named2, "section")}` : "";
-  const span = spanOf12(items2);
+  const span = spanOf13(items2);
   const range = span === null ? "" : `, from ${formatIsoDate(span.first)} to ${formatIsoDate(span.last)}`;
   return `${title}: ${parts.join(" and ")}${sections}${range}.${description}`;
 }
@@ -145416,7 +145498,7 @@ function outlineGantt(diagram) {
   const labelOf6 = (id) => labels2.get(id) ?? id;
   const lines = [summarizeGantt(diagram)];
   for (const section of diagram.sections) {
-    const span = spanOf12(section.items);
+    const span = spanOf13(section.items);
     if (section.label !== null) lines.push(`Section ${section.label}${span === null ? "" : ` (${formatIsoDate(span.first)} to ${formatIsoDate(span.last)})`}:`);
     lines.push(...section.items.map((item2) => describeItem(item2, labelOf6)));
   }
@@ -145625,7 +145707,7 @@ function parseSectionStatement(cursor, state, line5) {
     state.report.push(errorAt(DIAGNOSTIC_CODES.ganttNestedSection, "A section cannot sit inside another section", word2, "Close the open section with } first, then start this one."));
   } else {
     const toneOption = findOption(options3, "tone");
-    state.sections.push({ label: label ?? "", tone: toneOption === void 0 ? null : resolveTone(toneOption, "neutral", state), at: spanOf13(word2), items: [] });
+    state.sections.push({ label: label ?? "", tone: toneOption === void 0 ? null : resolveTone(toneOption, "neutral", state), at: spanOf14(word2), items: [] });
   }
   state.open.push(brace);
 }
@@ -145669,7 +145751,7 @@ function parseTaskStatement(cursor, state, line5) {
     end,
     duration: duration3,
     after: readAfter(afterOption),
-    statement: spanOf13(word2)
+    statement: spanOf14(word2)
   };
   if (!hasConflict) currentSection(state).items.push(item2);
 }
@@ -145702,11 +145784,11 @@ function parseMilestoneStatement(cursor, state, line5) {
     end: null,
     duration: null,
     after: readAfter(afterOption),
-    statement: spanOf13(word2)
+    statement: spanOf14(word2)
   };
   if (!hasConflict) currentSection(state).items.push(item2);
 }
-var TASK_HINT, MILESTONE_HINT, SECTION_HINT, spanOf13;
+var TASK_HINT, MILESTONE_HINT, SECTION_HINT, spanOf14;
 var init_parse_items = __esm({
   "../../packages/diagrams/src/kinds/gantt/parse-items.ts"() {
     "use strict";
@@ -145719,7 +145801,7 @@ var init_parse_items = __esm({
     TASK_HINT = 'A task is: task id "Label" start=2026-01-05 duration=10d status=done, or task id "Label" after=other duration=2w';
     MILESTONE_HINT = 'A milestone is: milestone id "Label" at=2026-03-02, or milestone id "Label" after=task';
     SECTION_HINT = 'A section is: section "Name" tone=violet { with its tasks inside, and } on its own line';
-    spanOf13 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf14 = (token) => ({ line: token.line, column: token.column, length: token.length });
   }
 });
 
@@ -148663,7 +148745,7 @@ function readActors(ctx, text6, span) {
   return { names: names11.filter((name2) => name2 !== ""), hasEmptyName: names11.some((name2) => name2 === "") };
 }
 function readTask2(ctx, line5, text6) {
-  const span = spanOf14(line5, text6);
+  const span = spanOf15(line5, text6);
   const colon = text6.indexOf(":");
   const name2 = colon === -1 ? "" : describeLabel(ctx.reporter, text6.slice(0, colon), span, { allowSub: false }).label;
   if (colon === -1 || name2 === "") {
@@ -148692,10 +148774,10 @@ function parseJourneyMermaid(ctx) {
     const title = TITLE.exec(text6);
     const section = SECTION.exec(text6);
     if (title !== null) {
-      const label = describeLabel(ctx.reporter, title[1] ?? "", spanOf14(line5, text6), { allowSub: false }).label;
+      const label = describeLabel(ctx.reporter, title[1] ?? "", spanOf15(line5, text6), { allowSub: false }).label;
       if (ctx.prepared.meta.title === null && label !== "") ctx.prepared.meta.title = label;
     } else if (section !== null) {
-      current2 = { label: describeLabel(ctx.reporter, section[1] ?? "", spanOf14(line5, text6), { allowSub: false }).label || null, tasks: [], span: spanOf14(line5, text6) };
+      current2 = { label: describeLabel(ctx.reporter, section[1] ?? "", spanOf15(line5, text6), { allowSub: false }).label || null, tasks: [], span: spanOf15(line5, text6) };
       sections.push(current2);
     } else {
       const task = readTask2(ctx, line5, text6);
@@ -148708,13 +148790,13 @@ function parseJourneyMermaid(ctx) {
       tasks += 1;
     }
     if (tasks > JOURNEY_LIMITS.maxTasks || sections.length > JOURNEY_LIMITS.maxSections) {
-      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf14(line5, text6), `The journey has more than ${JOURNEY_LIMITS.maxTasks} tasks or ${JOURNEY_LIMITS.maxSections} stages, the most Plotwork draws.`, "Split it into one journey for each stage, then convert each.");
+      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf15(line5, text6), `The journey has more than ${JOURNEY_LIMITS.maxTasks} tasks or ${JOURNEY_LIMITS.maxSections} stages, the most Plotwork draws.`, "Split it into one journey for each stage, then convert each.");
       return null;
     }
   }
   return { kind: "journey", meta: ctx.prepared.meta, sections };
 }
-var TITLE, SECTION, spanOf14;
+var TITLE, SECTION, spanOf15;
 var init_mermaid_parse2 = __esm({
   "../../packages/diagrams/src/kinds/journey/mermaid-parse.ts"() {
     "use strict";
@@ -148724,7 +148806,7 @@ var init_mermaid_parse2 = __esm({
     init_metrics9();
     TITLE = /^title\s+(.*)$/i;
     SECTION = /^section\s+(.*)$/i;
-    spanOf14 = (line5, text6) => ({ line: line5.number, column: line5.text.indexOf(text6) + 1 || 1, length: Math.max(1, text6.length) });
+    spanOf15 = (line5, text6) => ({ line: line5.number, column: line5.text.indexOf(text6) + 1 || 1, length: Math.max(1, text6.length) });
   }
 });
 
@@ -148986,16 +149068,16 @@ function parseActorStatement(cursor, state, line5) {
   rejectTrailing(cursor, state, ACTOR_SYNTAX);
   if (name2 === null) return;
   if (state.open !== null) {
-    state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, "An actor is declared outside any section", spanOf15(name2), "Move it above the first section, with the other actors."));
+    state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, "An actor is declared outside any section", spanOf16(name2), "Move it above the first section, with the other actors."));
     return;
   }
   const previous = state.declaredByKey.get(actorKey(name2.text));
   if (previous !== void 0) {
-    state.report.push(errorAt(DIAGNOSTIC_CODES.duplicateId, `The actor "${cleanName(name2.text)}" is already declared on line ${previous.at.line}`, spanOf15(name2), "Declare each actor once."));
+    state.report.push(errorAt(DIAGNOSTIC_CODES.duplicateId, `The actor "${cleanName(name2.text)}" is already declared on line ${previous.at.line}`, spanOf16(name2), "Declare each actor once."));
     return;
   }
   const tone = findOption(options3, "tone");
-  const declared3 = { name: cleanName(name2.text), tone: tone === void 0 ? null : resolveTone(tone, "neutral", state), at: spanOf15(name2) };
+  const declared3 = { name: cleanName(name2.text), tone: tone === void 0 ? null : resolveTone(tone, "neutral", state), at: spanOf16(name2) };
   state.declaredActors.push(declared3);
   state.declaredByKey.set(actorKey(name2.text), declared3);
 }
@@ -149014,7 +149096,7 @@ function parseSectionOpen(cursor, state, line5) {
   }
   rejectTrailing(cursor, state, "Put the tasks on the following lines, not after the {.");
   if (name2 === null) return;
-  const section = { label: cleanName(name2.text), tone: resolveTone(findOption(options3, "tone"), "neutral", state), labelAt: spanOf15(name2), tasks: [] };
+  const section = { label: cleanName(name2.text), tone: resolveTone(findOption(options3, "tone"), "neutral", state), labelAt: spanOf16(name2), tasks: [] };
   state.sections.push(section);
   state.implicit = null;
   state.open = { section, opener: line5 };
@@ -149035,7 +149117,7 @@ function parseClose(line5, state) {
   }
   state.open = null;
 }
-var HEADER_OPTIONS6, MARKS, SWITCH, HEADER_SYNTAX, SECTION_SYNTAX, ACTOR_SYNTAX, spanOf15;
+var HEADER_OPTIONS6, MARKS, SWITCH, HEADER_SYNTAX, SECTION_SYNTAX, ACTOR_SYNTAX, spanOf16;
 var init_parse_statements3 = __esm({
   "../../packages/diagrams/src/kinds/journey/parse-statements.ts"() {
     "use strict";
@@ -149051,7 +149133,7 @@ var init_parse_statements3 = __esm({
     HEADER_SYNTAX = 'The header is: journey "Title" desc="Plain-language summary" marks=faces legend=on';
     SECTION_SYNTAX = 'A section is: section "Stage name" tone=blue {  with its tasks on the lines below and a } to close it';
     ACTOR_SYNTAX = 'An actor is: actor "Customer" tone=blue';
-    spanOf15 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf16 = (token) => ({ line: token.line, column: token.column, length: token.length });
   }
 });
 
@@ -150010,7 +150092,7 @@ function unquoted(raw) {
   return text6.length >= 2 && (quote3 === '"' || quote3 === "'" || quote3 === "`") && text6.endsWith(quote3) ? text6.slice(1, -1) : text6;
 }
 function readNode(ctx, line5) {
-  const span = spanOf16(line5);
+  const span = spanOf17(line5);
   const text6 = line5.text.trim();
   const shaped = SHAPED.exec(text6)?.groups;
   const at3 = text6.indexOf("@{");
@@ -150042,7 +150124,7 @@ function readKanban(ctx) {
   for (const line5 of body2) {
     const isColumn = indentOf2(line5) <= columnIndent;
     if (isColumn && columns3.length >= KANBAN_LIMITS.maxColumns || !isColumn && tasks >= KANBAN_LIMITS.maxCards) {
-      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf16(line5), `The board has more than ${KANBAN_LIMITS.maxColumns} columns or ${KANBAN_LIMITS.maxCards} tasks.`, "Split it into one board for each team or release, then convert each.");
+      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf17(line5), `The board has more than ${KANBAN_LIMITS.maxColumns} columns or ${KANBAN_LIMITS.maxCards} tasks.`, "Split it into one board for each team or release, then convert each.");
       break;
     }
     const node3 = readNode(ctx, line5);
@@ -150057,7 +150139,7 @@ function readKanban(ctx) {
   }
   return { columns: columns3 };
 }
-var indentOf2, spanOf16, SHAPED;
+var indentOf2, spanOf17, SHAPED;
 var init_read5 = __esm({
   "../../packages/diagrams/src/kinds/kanban/mermaid/read.ts"() {
     "use strict";
@@ -150066,7 +150148,7 @@ var init_read5 = __esm({
     init_text2();
     init_constants6();
     indentOf2 = (line5) => line5.text.length - line5.text.trimStart().length;
-    spanOf16 = (line5) => ({ line: line5.number, column: indentOf2(line5) + 1, length: Math.max(1, line5.text.trim().length) });
+    spanOf17 = (line5) => ({ line: line5.number, column: indentOf2(line5) + 1, length: Math.max(1, line5.text.trim().length) });
     SHAPED = /^(?<id>[^\s[\](){}@]*)\s*(?:\[(?<square>[^\]]*)\]|\((?<round>[^)]*)\)|\{(?<curly>[^}]*)\})\s*(?<rest>.*)$/;
   }
 });
@@ -150174,7 +150256,7 @@ function parseColumn(cursor, state, line5) {
   const tone = toneOption === void 0 ? null : resolveTone(toneOption, "neutral", state);
   const limit = readLimit(findOption(options3, "limit"), state);
   const name2 = title ?? id?.text ?? "";
-  state.open = { id: id?.text ?? "", title: name2, tone: tone === "neutral" ? null : tone, icon: resolveIcon(findOption(options3, "icon"), null, state), limit, cards: [], at: spanOf17(id ?? keyword), brace, isKept: id !== null && !(titleToken?.kind === "string" && title === null) };
+  state.open = { id: id?.text ?? "", title: name2, tone: tone === "neutral" ? null : tone, icon: resolveIcon(findOption(options3, "icon"), null, state), limit, cards: [], at: spanOf18(id ?? keyword), brace, isKept: id !== null && !(titleToken?.kind === "string" && title === null) };
 }
 function closeColumn(line5, state) {
   const brace = line5.tokens[0];
@@ -150234,11 +150316,11 @@ function parseCard(cursor, state, line5) {
     tags: readTags2(findOption(options3, "tags")),
     tone: tone === "neutral" ? null : tone,
     icon: resolveIcon(findOption(options3, "icon"), null, state),
-    at: spanOf17(id)
+    at: spanOf18(id)
   };
   open2.cards.push(card5);
 }
-var HEADER_HINT3, COLUMN_HINT, CARD_HINT, spanOf17, textOrNull;
+var HEADER_HINT3, COLUMN_HINT, CARD_HINT, spanOf18, textOrNull;
 var init_parse_statements4 = __esm({
   "../../packages/diagrams/src/kinds/kanban/parse-statements.ts"() {
     "use strict";
@@ -150251,7 +150333,7 @@ var init_parse_statements4 = __esm({
     HEADER_HINT3 = 'The header is: kanban "Title" desc="Plain-language summary"';
     COLUMN_HINT = 'A column is: column doing "In progress" tone=blue icon=lucide:loader limit=3 {, its cards inside, and } on its own line';
     CARD_HINT = 'A card is: card api "Add the export endpoint" owner="Ben" ticket="REL-204" priority=high tags="api, export"';
-    spanOf17 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf18 = (token) => ({ line: token.line, column: token.column, length: token.length });
     textOrNull = (value) => {
       const text6 = value?.replace(/\s+/g, " ").trim() ?? "";
       return text6 === "" ? null : text6;
@@ -151117,7 +151199,7 @@ function parseContainer(cursor, state, line5) {
     tone: resolveTone(findOption(options3, "tone"), kind === "aside" ? ASIDE_TONE : LAYER_TONES[state.layers.length % LAYER_TONES.length] ?? "neutral", state),
     icon: resolveIcon(findOption(options3, "icon"), null, state),
     blocks: [],
-    labelAt: labelToken2 === null ? spanOf18(word2) : spanOf18(labelToken2),
+    labelAt: labelToken2 === null ? spanOf19(word2) : spanOf19(labelToken2),
     brace,
     isNested
   });
@@ -151148,7 +151230,7 @@ function parseBlock2(cursor, state, line5) {
     tone: resolveTone(findOption(options3, "tone"), container.tone, state),
     icon: resolveAutoIcon(findOption(options3, "icon"), null, state, { texts: [label, sub ?? null], roles: true }),
     span,
-    labelAt: spanOf18(labelToken2)
+    labelAt: spanOf19(labelToken2)
   });
 }
 function parseLink2(cursor, state, line5) {
@@ -151215,7 +151297,7 @@ function parseLayers(lines, report4) {
   if (first !== void 0 && state.layers.length === 0 && !report4.some((diagnostic) => diagnostic.severity === "error")) syntax2(state, "The diagram has no layers", first, 'Add a layer with blocks, for example: layer "Services" {, block api "API", and }.');
   return { kind: "layers", meta: { title: state.title, description: state.description }, direction: state.direction, showCounts: state.showCounts, layers: state.layers, asides: state.asides, links };
 }
-var BODY_HINT5, spanOf18, syntax2;
+var BODY_HINT5, spanOf19, syntax2;
 var init_parse11 = __esm({
   "../../packages/diagrams/src/kinds/layers/parse.ts"() {
     "use strict";
@@ -151228,7 +151310,7 @@ var init_parse11 = __esm({
     init_token_cursor();
     init_constants2();
     BODY_HINT5 = 'A body line is: layer "Name" tone=blue {, aside "Name" {, block id "Label", a link such as a -> b : "label", or }.';
-    spanOf18 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf19 = (token) => ({ line: token.line, column: token.column, length: token.length });
     syntax2 = (state, message2, at3, hint2) => void state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, message2, at3, hint2));
   }
 });
@@ -152029,11 +152111,11 @@ function newState4(report4) {
     report: report4
   };
 }
-var spanOf19;
+var spanOf20;
 var init_state5 = __esm({
   "../../packages/diagrams/src/kinds/matrix/state.ts"() {
     "use strict";
-    spanOf19 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf20 = (token) => ({ line: token.line, column: token.column, length: token.length });
   }
 });
 
@@ -152069,7 +152151,7 @@ function parseColumns(cursor, state, line5) {
     else if (earlier !== void 0) state.report.push(errorAt(DIAGNOSTIC_CODES.duplicateId, `A column named "${label}" is already on line ${earlier}`, name2, "Give each column its own name: the outline and the totals tell columns apart by it."));
     else {
       state.columnLines.set(label, name2.line);
-      state.columns.push({ label, icon, weight, at: spanOf19(name2) });
+      state.columns.push({ label, icon, weight, at: spanOf20(name2) });
     }
   }
   if (count4 === 0) state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, 'Expected at least one quoted column name after "columns"', cursor.endPosition(line5), COLUMNS_HINT));
@@ -152173,7 +152255,7 @@ function parseLegend(cursor, state, line5) {
     if (value === void 0) continue;
     if (text6 === "") state.report.push(errorAt(DIAGNOSTIC_CODES.badOptionValue, `${value}= needs the words for the mark`, option2.valueToken, LEGEND_HINT));
     else if (state.legend.some((entry2) => entry2.value === value)) state.report.push(errorAt(DIAGNOSTIC_CODES.duplicateId, `The legend names ${value} twice`, option2.keyToken, "Name each mark once."));
-    else state.legend.push({ value, text: text6, at: spanOf19(option2.keyToken) });
+    else state.legend.push({ value, text: text6, at: spanOf20(option2.keyToken) });
   }
   rejectTrailing(cursor, state, LEGEND_HINT);
 }
@@ -152202,24 +152284,24 @@ function scoreHint(value) {
 }
 function readRaci(token, state) {
   const text6 = token.text;
-  if (token.kind === "word" && text6 === "na") return { kind: "status", value: "na", at: spanOf19(token) };
+  if (token.kind === "word" && text6 === "na") return { kind: "status", value: "na", at: spanOf20(token) };
   const roles = raciRoles(text6);
-  if (roles !== null) return { kind: "raci", roles, at: spanOf19(token) };
+  if (roles !== null) return { kind: "raci", roles, at: spanOf20(token) };
   state.report.push(errorAt(DIAGNOSTIC_CODES.badOptionValue, `"${text6}" is not a RACI cell`, token, RACI_CELL_HINT));
   return null;
 }
 function readTableCell(token, state) {
   if (token.kind === "string") {
-    if (token.text.trim() !== "") return { kind: "text", text: token.text.trim(), at: spanOf19(token) };
+    if (token.text.trim() !== "") return { kind: "text", text: token.text.trim(), at: spanOf20(token) };
     state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, "A cell needs some text", token, "Write na for a cell with nothing to say."));
     return null;
   }
   const text6 = token.text;
   const status = STATUS_WORDS.find((word2) => word2 === text6);
-  if (status !== void 0) return { kind: "status", value: status, at: spanOf19(token) };
+  if (status !== void 0) return { kind: "status", value: status, at: spanOf20(token) };
   if (/^\d+$/.test(text6)) {
     const value = Number(text6);
-    if (value <= SCORE_MAX) return { kind: "score", value, at: spanOf19(token) };
+    if (value <= SCORE_MAX) return { kind: "score", value, at: spanOf20(token) };
     state.report.push(errorAt(DIAGNOSTIC_CODES.badOptionValue, `A score of ${value} is outside 0 to ${SCORE_MAX}`, token, scoreHint(value)));
     return null;
   }
@@ -152322,7 +152404,7 @@ function parseRow(cursor, state, line5) {
   else if (earlier !== void 0) state.report.push(errorAt(DIAGNOSTIC_CODES.duplicateId, `A row named "${label}" is already on line ${earlier}`, name2, "Give each row its own name: recommend and the outline find a row by it."));
   else {
     state.rowLines.set(label, name2.line);
-    state.rows.push({ label, sub: sub === "" ? null : sub, icon, tone, cells: read.cells, at: spanOf19(name2) });
+    state.rows.push({ label, sub: sub === "" ? null : sub, icon, tone, cells: read.cells, at: spanOf20(name2) });
   }
 }
 var ROW_HINT;
@@ -152367,7 +152449,7 @@ function parseItem(cursor, state, line5) {
   else if (earlier !== void 0) state.report.push(errorAt(DIAGNOSTIC_CODES.duplicateId, `An item named "${label}" is already on line ${earlier}`, name2, "Give each item its own label: the outline tells items apart by it."));
   else if (typeof likelihood === "number" && typeof impact === "number") {
     state.itemLines.set(label, name2.line);
-    state.items.push({ label, likelihood, impact, icon, at: spanOf19(name2) });
+    state.items.push({ label, likelihood, impact, icon, at: spanOf20(name2) });
   }
 }
 function parseLevels(cursor, state, line5) {
@@ -153226,7 +153308,7 @@ function siblingGap(parentDepth, direction) {
   const gap = parentDepth === 0 ? SPACING.rootSiblingGap : SPACING.siblingGap;
   return direction === "right" ? gap : gap + 8;
 }
-function spanOf20(contour) {
+function spanOf21(contour) {
   return Math.max(...contour.high) - Math.min(...contour.low);
 }
 function packRow(children, contours, gap) {
@@ -153304,7 +153386,7 @@ var init_pack = __esm({
 
 // ../../packages/diagrams/src/kinds/mindmap/layout/balanced.ts
 function splitPoint(branches, packing) {
-  const spans = branches.map((branch) => spanOf20(packing.contours[branch]));
+  const spans = branches.map((branch) => spanOf21(packing.contours[branch]));
   const stack2 = (from, to) => spans.slice(from, to).reduce((total, span) => total + span + SPACING.rootSiblingGap, 0);
   let best = 1;
   let bestMiss = Number.POSITIVE_INFINITY;
@@ -153512,8 +153594,8 @@ function placeTidy(topics2, boxes2, direction) {
   const rootSize = growthSize(boxes2[0], direction);
   const centres = topics2.map((topic, index2) => {
     const size = growthSize(boxes2[index2], direction);
-    const grown3 = topic.depth === 0 ? rootSize / 2 : rootSize + distances[topic.depth] + size / 2;
-    return direction === "right" ? { x: grown3, y: stacked[index2] } : { x: stacked[index2], y: grown3 };
+    const grown4 = topic.depth === 0 ? rootSize / 2 : rootSize + distances[topic.depth] + size / 2;
+    return direction === "right" ? { x: grown4, y: stacked[index2] } : { x: stacked[index2], y: grown4 };
   });
   return { centres, directions: centres.map(() => null) };
 }
@@ -153870,7 +153952,7 @@ function readMindmap(ctx) {
   let latest = null;
   const open2 = [];
   for (const line5 of body2) {
-    const span = spanOf21(line5);
+    const span = spanOf22(line5);
     const text6 = line5.text.trim();
     const iconName = iconNameOf(text6);
     if (iconName !== null || text6.startsWith(":::")) {
@@ -153932,7 +154014,7 @@ function readMindmap(ctx) {
   }
   return { root, count: count4 };
 }
-var isProblem, spanOf21, indentOf3;
+var isProblem, spanOf22, indentOf3;
 var init_read6 = __esm({
   "../../packages/diagrams/src/kinds/mindmap/mermaid/read.ts"() {
     "use strict";
@@ -153943,7 +154025,7 @@ var init_read6 = __esm({
     init_constants8();
     init_mapping2();
     isProblem = (parts) => "problem" in parts;
-    spanOf21 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
+    spanOf22 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
     indentOf3 = (line5) => line5.text.length - line5.text.trimStart().length;
   }
 });
@@ -154044,7 +154126,7 @@ function readHead(cursor, state, line5, keyword) {
   }
   const token = cursor.next();
   let label = PLACEHOLDER_LABEL;
-  const labelAt = token === null ? cursor.endPosition(line5) : spanOf22(token);
+  const labelAt = token === null ? cursor.endPosition(line5) : spanOf23(token);
   if (token?.kind === "string") {
     label = token.text;
     if (label.trim() === "") {
@@ -154073,7 +154155,7 @@ function parentOf2(state, keyword) {
   if (state.root === null) {
     state.report.push(errorAt(DIAGNOSTIC_CODES.mindmapMissingRoot, "A topic needs the root before it", keyword, ROOT_HINT));
     state.isRootMissingReported = true;
-    state.root = { label: state.title ?? PLACEHOLDER_LABEL, tone: null, icon: null, shape: null, labelAt: spanOf22(keyword), children: [] };
+    state.root = { label: state.title ?? PLACEHOLDER_LABEL, tone: null, icon: null, shape: null, labelAt: spanOf23(keyword), children: [] };
   }
   return state.root;
 }
@@ -154148,7 +154230,7 @@ function unknownStatementHint3(word2, hasArrow) {
   const mermaid = suggest(word2, keywords) === null && !hasArrow ? " A Mermaid mind map is converted with convert_mermaid." : "";
   return `${didYouMean(word2, keywords)} ${form}${mermaid}`;
 }
-var HEADER_HINT5, ROOT_HINT, spanOf22, PLACEHOLDER_LABEL, MOST_UNCLOSED_REPORTED;
+var HEADER_HINT5, ROOT_HINT, spanOf23, PLACEHOLDER_LABEL, MOST_UNCLOSED_REPORTED;
 var init_statements = __esm({
   "../../packages/diagrams/src/kinds/mindmap/parse/statements.ts"() {
     "use strict";
@@ -154161,7 +154243,7 @@ var init_statements = __esm({
     init_constants8();
     HEADER_HINT5 = 'The header is: mindmap "Title" layout=radial icons=auto desc="Plain-language summary"';
     ROOT_HINT = 'Write the central idea first, under the header: root "Central idea"';
-    spanOf22 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf23 = (token) => ({ line: token.line, column: token.column, length: token.length });
     PLACEHOLDER_LABEL = "";
     MOST_UNCLOSED_REPORTED = 8;
   }
@@ -154957,7 +155039,7 @@ function unquoted2(raw) {
   return text6.length >= 2 && (quote3 === '"' || quote3 === "'") && text6.endsWith(quote3) ? text6.slice(1, -1) : text6;
 }
 function readBlock2(ctx, line5, next) {
-  const span = spanOf23(line5);
+  const span = spanOf24(line5);
   const text6 = line5.text.trim();
   const groups = BLOCK.exec(text6)?.groups;
   if (groups === void 0) {
@@ -154993,11 +155075,11 @@ function readPacket(ctx) {
   for (const line5 of body2) {
     const text6 = line5.text.trim();
     if (/^title(?:\s|$)/.test(text6)) {
-      if (ctx.prepared.meta.title === null) ctx.prepared.meta.title = describeLabel(ctx.reporter, text6.slice(5).trim(), spanOf23(line5), { allowSub: false }).label || null;
+      if (ctx.prepared.meta.title === null) ctx.prepared.meta.title = describeLabel(ctx.reporter, text6.slice(5).trim(), spanOf24(line5), { allowSub: false }).label || null;
       continue;
     }
     if (blocks2.length >= PACKET_LIMITS.maxFields) {
-      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf23(line5), `The packet has more than ${PACKET_LIMITS.maxFields} blocks.`, "Split it into one diagram per header or part, then convert each.");
+      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf24(line5), `The packet has more than ${PACKET_LIMITS.maxFields} blocks.`, "Split it into one diagram per header or part, then convert each.");
       break;
     }
     const block = readBlock2(ctx, line5, next);
@@ -155011,7 +155093,7 @@ function readPacket(ctx) {
   }
   return { blocks: blocks2 };
 }
-var spanOf23, BLOCK;
+var spanOf24, BLOCK;
 var init_read7 = __esm({
   "../../packages/diagrams/src/kinds/packet/mermaid/read.ts"() {
     "use strict";
@@ -155019,7 +155101,7 @@ var init_read7 = __esm({
     init_context();
     init_text2();
     init_constants9();
-    spanOf23 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
+    spanOf24 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
     BLOCK = /^(?:(?<plus>\+)\s*(?<count>\d+)|(?<start>\d+)\s*(?:-\s*(?<end>\d+))?)\s*:\s*(?<label>.*)$/;
   }
 });
@@ -155083,7 +155165,7 @@ function readFieldLabel(cursor, state, line5, hint2) {
     state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, "A field needs a name", token, 'Write the name in the quotes: field 0-15 "Source port"'));
     return null;
   }
-  return { text: token.text.trim(), at: spanOf24(token) };
+  return { text: token.text.trim(), at: spanOf25(token) };
 }
 function overlapOf(fields, start2, end) {
   return fields.find((field) => field.start <= end && start2 <= field.end);
@@ -155139,7 +155221,7 @@ function parseNext(cursor, state, line5) {
   const bits = count4 === null ? null : { start: state.cursor, end: state.cursor + count4 - 1 };
   finishField(cursor, state, keyword, bits, label, NEXT_HINT);
 }
-var FIELD_HINT, NEXT_HINT, WHOLE, RANGE, spanOf24;
+var FIELD_HINT, NEXT_HINT, WHOLE, RANGE, spanOf25;
 var init_parse_field = __esm({
   "../../packages/diagrams/src/kinds/packet/parse-field.ts"() {
     "use strict";
@@ -155152,7 +155234,7 @@ var init_parse_field = __esm({
     NEXT_HINT = 'A field after the one before it is: next 16 "Window", which takes the next 16 bits.';
     WHOLE = /^\d+$/;
     RANGE = /^(\d+)(?:-(\d+))?$/;
-    spanOf24 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf25 = (token) => ({ line: token.line, column: token.column, length: token.length });
   }
 });
 
@@ -156272,7 +156354,7 @@ function readHeaderRest2(ctx) {
   return { showData: show !== null, line: { number: header.line, text: `${" ".repeat(Math.max(0, header.restColumn - 1))}${afterShow}` } };
 }
 function readSlice(ctx, line5, text6, match) {
-  const span = spanOf25(line5, text6);
+  const span = spanOf26(line5, text6);
   const number4 = (match[2] ?? "").trim();
   if (/^-\d/.test(number4)) {
     reportUnreadable(ctx, span, `The negative value ${number4.slice(0, 20)}`, "A pie chart shares a whole, so a value cannot go below zero. Mermaid refuses it too: leave it out, or draw a bar chart.");
@@ -156301,10 +156383,10 @@ function parsePieMermaid(ctx) {
     if (/^showData$/i.test(text6)) {
       showData = true;
     } else if (title !== null) {
-      const label = describeLabel(ctx.reporter, title[1] ?? "", spanOf25(line5, text6), { allowSub: false }).label;
+      const label = describeLabel(ctx.reporter, title[1] ?? "", spanOf26(line5, text6), { allowSub: false }).label;
       if (ctx.prepared.meta.title === null && label !== "") ctx.prepared.meta.title = label;
     } else if (data === null) {
-      reportUnreadable(ctx, spanOf25(line5, text6), `The line "${text6.slice(0, 40)}"`, 'A slice is written "Label" : 42, with the label in double quotes, a colon, and a number.');
+      reportUnreadable(ctx, spanOf26(line5, text6), `The line "${text6.slice(0, 40)}"`, 'A slice is written "Label" : 42, with the label in double quotes, a colon, and a number.');
     } else {
       const slice = readSlice(ctx, line5, text6, data);
       if (slice === null) continue;
@@ -156316,13 +156398,13 @@ function parsePieMermaid(ctx) {
       slices.push(slice);
     }
     if (slices.length > PIE_LIMITS.maxSlices) {
-      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf25(line5, text6), `The pie chart has more than ${PIE_LIMITS.maxSlices} slices, the most Plotwork draws.`, "Group the small slices into a few categories, then convert the chart.");
+      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf26(line5, text6), `The pie chart has more than ${PIE_LIMITS.maxSlices} slices, the most Plotwork draws.`, "Group the small slices into a few categories, then convert the chart.");
       return null;
     }
   }
   return { showData, slices };
 }
-var TITLE2, DATA, NUMBER3, spanOf25;
+var TITLE2, DATA, NUMBER3, spanOf26;
 var init_mermaid_parse3 = __esm({
   "../../packages/diagrams/src/kinds/pie/mermaid-parse.ts"() {
     "use strict";
@@ -156334,7 +156416,7 @@ var init_mermaid_parse3 = __esm({
     TITLE2 = /^title\s+(.*)$/i;
     DATA = /^"([^"]*)"\s*:\s*(.*)$/;
     NUMBER3 = /^\d+(?:\.\d+)?$/;
-    spanOf25 = (line5, text6) => ({ line: line5.number, column: line5.text.indexOf(text6) + 1 || 1, length: Math.max(1, text6.length) });
+    spanOf26 = (line5, text6) => ({ line: line5.number, column: line5.text.indexOf(text6) + 1 || 1, length: Math.max(1, text6.length) });
   }
 });
 
@@ -157040,7 +157122,7 @@ var init_layout_axes = __esm({
 function around(center, half) {
   return { x: center.x - half, y: center.y - half, width: half * 2, height: half * 2 };
 }
-function overlaps7(a, b, margin = 0) {
+function overlaps8(a, b, margin = 0) {
   return a.x < b.x + b.width + margin && b.x < a.x + a.width + margin && a.y < b.y + b.height + margin && b.y < a.y + a.height + margin;
 }
 function isWithin(inner, outer, inset2 = 0) {
@@ -157081,11 +157163,11 @@ function candidatesFor2(request, gap) {
 }
 function isFree(rect, request, world, placed3, mayLeaveZone) {
   const isInZone = isWithin(rect, request.zone, M21.edgeInset);
-  const reachesAcross = mayLeaveZone && isWithin(rect, world.plot, M21.edgeInset) && overlaps7(rect, request.zone);
+  const reachesAcross = mayLeaveZone && isWithin(rect, world.plot, M21.edgeInset) && overlaps8(rect, request.zone);
   if (!isInZone && !reachesAcross) return false;
-  if (world.chips.some((chip2, index2) => index2 !== request.index && overlaps7(rect, chip2, M21.keepOff - 1))) return false;
-  if (world.tabs.some((tab) => overlaps7(rect, tab, M21.keepOff))) return false;
-  return !placed3.some((other) => overlaps7(rect, other, M21.keepOff));
+  if (world.chips.some((chip2, index2) => index2 !== request.index && overlaps8(rect, chip2, M21.keepOff - 1))) return false;
+  if (world.tabs.some((tab) => overlaps8(rect, tab, M21.keepOff))) return false;
+  return !placed3.some((other) => overlaps8(rect, other, M21.keepOff));
 }
 function placeLabels3(requests, world) {
   const freeCount = (request) => candidatesFor2(request, M21.labelGap).filter((candidate2) => isFree(candidate2.rect, request, world, [], false)).length;
@@ -157097,7 +157179,7 @@ function placeLabels3(requests, world) {
     for (const attempt of ATTEMPTS) {
       const found = candidatesFor2(request, attempt.gap).find((candidate2) => isFree(candidate2.rect, request, world, placed3, attempt.mayLeaveZone));
       if (found === void 0) continue;
-      const hasHalo = world.lines.some((line5) => overlaps7(found.rect, line5, M21.keepOff));
+      const hasHalo = world.lines.some((line5) => overlaps8(found.rect, line5, M21.keepOff));
       label = { lines: request.lines, rect: found.rect, anchor: found.anchor, hasHalo, isShortened: request.isShortened };
       placed3.push(found.rect);
       break;
@@ -157133,7 +157215,7 @@ function sizeZoneTab(zone, zoneWidth) {
 }
 function placeZoneTab(zone, size, chips) {
   const rectAt = (offset2) => ({ x: zone.x + offset2, y: zone.y, width: size.width, height: GROUP_METRICS.tabHeight });
-  const underTab = (rect) => chips.flatMap((chip2, index2) => overlaps7(rect, chip2, M22.tabClearance) ? [index2] : []);
+  const underTab = (rect) => chips.flatMap((chip2, index2) => overlaps8(rect, chip2, M22.tabClearance) ? [index2] : []);
   const byLeft = [...chips.keys()].sort((a, b) => (chips[a]?.x ?? 0) - (chips[b]?.x ?? 0));
   let offset = 0;
   for (let attempt = 0; attempt <= chips.length; attempt += 1) {
@@ -157183,8 +157265,8 @@ var init_zones = __esm({
 
 // ../../packages/diagrams/src/kinds/quadrant/layout.ts
 function plotWidthFor(pointCount2) {
-  const grown3 = M23.plotWidth + M23.growPerPoint * Math.max(0, pointCount2 - M23.growAfter);
-  return evenFloor(Math.min(M23.maxPlotWidth, grown3));
+  const grown4 = M23.plotWidth + M23.growPerPoint * Math.max(0, pointCount2 - M23.growAfter);
+  return evenFloor(Math.min(M23.maxPlotWidth, grown4));
 }
 function centerOfPoint(point, plot) {
   const width = plot.width - M23.pointInset * 2;
@@ -157206,7 +157288,7 @@ function collisionsOf(chips) {
   const pairs = [];
   chips.forEach((chip2, first) => {
     for (let second = first + 1; second < chips.length; second += 1) {
-      if (overlaps7(chip2, chips[second], 2)) pairs.push([first, second]);
+      if (overlaps8(chip2, chips[second], 2)) pairs.push([first, second]);
     }
   });
   return pairs;
@@ -157491,7 +157573,7 @@ function readAxis(ctx, text6, span, word2) {
   return axis;
 }
 function readLine3(ctx, line5, state) {
-  const span = spanOf26(line5);
+  const span = spanOf27(line5);
   const text6 = line5.text.trim();
   const position = positionOfNumber(text6);
   if (/^title(?:\s|$)/.test(text6)) {
@@ -157539,14 +157621,14 @@ function readQuadrant(ctx) {
   const state = { xAxis: null, yAxis: null, zones: [], points: [] };
   for (const line5 of body2) {
     if (state.points.length >= QUADRANT_LIMITS.maxPoints) {
-      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf26(line5), `The chart has more than ${QUADRANT_LIMITS.maxPoints} points.`, "Split it into one chart for each theme or team, then convert each.");
+      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf27(line5), `The chart has more than ${QUADRANT_LIMITS.maxPoints} points.`, "Split it into one chart for each theme or team, then convert each.");
       break;
     }
     readLine3(ctx, line5, state);
   }
   return state;
 }
-var spanOf26, POINT;
+var spanOf27, POINT;
 var init_mermaid_read2 = __esm({
   "../../packages/diagrams/src/kinds/quadrant/mermaid-read.ts"() {
     "use strict";
@@ -157554,7 +157636,7 @@ var init_mermaid_read2 = __esm({
     init_context();
     init_text2();
     init_constants11();
-    spanOf26 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
+    spanOf27 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
     POINT = /^(?<name>.+?)\s*(?<classes>(?::::[\w-]+)*)\s*:\s*\[\s*(?<x>[^,\]]*?)\s*,\s*(?<y>[^\]]*?)\s*\]\s*(?<style>.*)$/;
   }
 });
@@ -157700,7 +157782,7 @@ function readPointLabel(cursor, state, line5) {
     state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, "A point needs some text", token, 'Write the item in the quotes: point "Dark mode" x=0.2 y=0.8'));
     return null;
   }
-  return { text: text6, at: spanOf27(token) };
+  return { text: text6, at: spanOf28(token) };
 }
 function parsePoint(cursor, state, line5) {
   state.pointStatements += 1;
@@ -157740,7 +157822,7 @@ function parsePoint(cursor, state, line5) {
   const point = { label: label.text, x, y, tone, icon, at: label.at };
   state.points.push(point);
 }
-var POINT_HINT, NUMBER5, spanOf27;
+var POINT_HINT, NUMBER5, spanOf28;
 var init_parse_point = __esm({
   "../../packages/diagrams/src/kinds/quadrant/parse-point.ts"() {
     "use strict";
@@ -157751,7 +157833,7 @@ var init_parse_point = __esm({
     init_constants11();
     POINT_HINT = 'A point is: point "Dark mode" x=0.2 y=0.8 tone=blue icon=lucide:moon. x runs across and y runs up, both from 0 to 1.';
     NUMBER5 = /^\d+(?:\.\d+)?$/;
-    spanOf27 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf28 = (token) => ({ line: token.line, column: token.column, length: token.length });
   }
 });
 
@@ -158766,7 +158848,7 @@ function readRadar(ctx) {
   const curves = [];
   const settings = { min: null, max: null, grid: null, ticks: null, showLegend: null };
   for (const line5 of body2) {
-    const span = spanOf28(line5);
+    const span = spanOf29(line5);
     const text6 = line5.text.trim();
     if (axes.length + curves.length > MOST_ITEMS) {
       ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, span, `The chart has more than ${MOST_ITEMS} axes and curves.`, "Split it into charts of a few items each, then convert each.");
@@ -158780,7 +158862,7 @@ function readRadar(ctx) {
   }
   return { axes, curves, settings };
 }
-var spanOf28, MOST_ITEMS, AXIS_ITEM, CURVE_ITEM, NUMBER6;
+var spanOf29, MOST_ITEMS, AXIS_ITEM, CURVE_ITEM, NUMBER6;
 var init_read8 = __esm({
   "../../packages/diagrams/src/kinds/radar/mermaid/read.ts"() {
     "use strict";
@@ -158788,7 +158870,7 @@ var init_read8 = __esm({
     init_context();
     init_text2();
     init_constants12();
-    spanOf28 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
+    spanOf29 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
     MOST_ITEMS = (RADAR_LIMITS.maxAxes + RADAR_LIMITS.maxSeries) * 4;
     AXIS_ITEM = /^(?<id>[^\s[\]{},"]+)\s*(?:\[\s*"(?<label>[^"]*)"\s*\])?$/;
     CURVE_ITEM = /^(?<id>[^\s[\]{},"]+)\s*(?:\[\s*"(?<label>[^"]*)"\s*\])?\s*\{(?<values>[^{}]*)\}$/;
@@ -158962,7 +159044,7 @@ function parseAxis2(cursor, state, line5) {
     return;
   }
   state.axisLines.set(id.text, id.line);
-  state.axes.push({ id: id.text, label, icon, better: better ?? "up", at: spanOf29(id) });
+  state.axes.push({ id: id.text, label, icon, better: better ?? "up", at: spanOf30(id) });
 }
 function readScore2(token, state, cursor, line5) {
   if ((token?.kind === "word" || token?.kind === "string") && SCORE.test(token.text.trim())) return { value: Number(token.text.trim()), token };
@@ -159026,9 +159108,9 @@ function parseSeries(cursor, state, line5) {
     return;
   }
   state.seriesLines.set(id.text, id.line);
-  state.pending.push({ id: id.text, label, tone, at: spanOf29(id), idToken: id, ...scores2 });
+  state.pending.push({ id: id.text, label, tone, at: spanOf30(id), idToken: id, ...scores2 });
 }
-var AXIS_HINT2, SERIES_HINT, spanOf29;
+var AXIS_HINT2, SERIES_HINT, spanOf30;
 var init_parse_statements6 = __esm({
   "../../packages/diagrams/src/kinds/radar/parse-statements.ts"() {
     "use strict";
@@ -159039,7 +159121,7 @@ var init_parse_statements6 = __esm({
     init_constants12();
     AXIS_HINT2 = 'An axis is: axis price "Price" better=down icon=lucide:coins. The label is optional; the id is used when it is left out.';
     SERIES_HINT = 'A series is: series pg "PostgreSQL" tone=blue : 3, 5, 3, 2, in the order of the axes, or : scale=3, query=5 by axis id.';
-    spanOf29 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf30 = (token) => ({ line: token.line, column: token.column, length: token.length });
   }
 });
 
@@ -160183,7 +160265,7 @@ function readRequirement(ctx) {
   const ir = { blocks: [], relations: [], direction: null };
   let open2 = null;
   for (const line5 of body2) {
-    const span = spanOf30(line5);
+    const span = spanOf31(line5);
     const text6 = line5.text.trim();
     if (open2 !== null) {
       if (text6 === "}") {
@@ -160248,7 +160330,7 @@ function readRequirement(ctx) {
   if (open2 !== null) ctx.reporter.add(DIAGNOSTIC_CODES.mermaidRepairedBlock, open2.span, `The block of "${open2.name}" was never closed, so it was closed at the end.`, "Add } on its own line after its fields.", "repaired");
   return ir;
 }
-var REQUIREMENT_WORDS, NAME2, OPEN2, FORWARD, BACKWARD, CLASS_ON, unquote3, spanOf30;
+var REQUIREMENT_WORDS, NAME2, OPEN2, FORWARD, BACKWARD, CLASS_ON, unquote3, spanOf31;
 var init_read9 = __esm({
   "../../packages/diagrams/src/kinds/requirement/mermaid/read.ts"() {
     "use strict";
@@ -160265,7 +160347,7 @@ var init_read9 = __esm({
       const trimmed4 = text6.trim();
       return trimmed4.length >= 2 && trimmed4.startsWith('"') && trimmed4.endsWith('"') ? trimmed4.slice(1, -1) : trimmed4;
     };
-    spanOf30 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
+    spanOf31 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
   }
 });
 
@@ -160332,7 +160414,7 @@ function fail(p, message2, at3, hint2, code = DIAGNOSTIC_CODES.syntax) {
 function choice(p, option2, choices) {
   if (option2 === void 0) return null;
   const found = choices.find((candidate2) => candidate2 === option2.value.toLowerCase());
-  if (found === void 0) fail(p, `Option "${option2.key}" takes ${choices.join(", ")}, found "${option2.value}"`, spanOf31(option2.valueToken), didYouMean(option2.value, choices), DIAGNOSTIC_CODES.badOptionValue);
+  if (found === void 0) fail(p, `Option "${option2.key}" takes ${choices.join(", ")}, found "${option2.value}"`, spanOf32(option2.valueToken), didYouMean(option2.value, choices), DIAGNOSTIC_CODES.badOptionValue);
   return found ?? null;
 }
 function textOf5(option2) {
@@ -160351,7 +160433,7 @@ function parseHeader6(line5, p) {
   const direction = findOption(options3, "direction");
   if (direction !== void 0) {
     const found = REQUIREMENT_DIRECTIONS.find((candidate2) => candidate2 === direction.value);
-    if (found === void 0) fail(p, `Unknown direction "${direction.value}"`, spanOf31(direction.valueToken), `${didYouMean(direction.value, REQUIREMENT_DIRECTIONS)} A requirement diagram reads down (requirements at the top) or right (requirements on the left).`, DIAGNOSTIC_CODES.unknownDirection);
+    if (found === void 0) fail(p, `Unknown direction "${direction.value}"`, spanOf32(direction.valueToken), `${didYouMean(direction.value, REQUIREMENT_DIRECTIONS)} A requirement diagram reads down (requirements at the top) or right (requirements on the left).`, DIAGNOSTIC_CODES.unknownDirection);
     else p.direction = found;
   }
   p.description = findOption(options3, "desc")?.value ?? p.description;
@@ -160376,7 +160458,7 @@ function parseNeed(cursor, p, line5) {
     ref: textOf5(findOption(options3, "ref")),
     text: textOf5(findOption(options3, "text")),
     tone: resolveTone(findOption(options3, "tone"), TYPE_LOOKS[type].tone, p),
-    labelAt: labelToken2?.kind === "string" ? spanOf31(labelToken2) : spanOf31(id)
+    labelAt: labelToken2?.kind === "string" ? spanOf32(labelToken2) : spanOf32(id)
   });
 }
 function parseElement2(cursor, p, line5) {
@@ -160395,21 +160477,21 @@ function parseElement2(cursor, p, line5) {
     doc: textOf5(findOption(options3, "doc")),
     tone: resolveTone(findOption(options3, "tone"), "neutral", p),
     icon: resolveAutoIcon(findOption(options3, "icon"), ELEMENT_ICON, p, { texts: [label, type], roles: true }),
-    labelAt: labelToken2?.kind === "string" ? spanOf31(labelToken2) : spanOf31(id)
+    labelAt: labelToken2?.kind === "string" ? spanOf32(labelToken2) : spanOf32(id)
   });
 }
 function parseRelation(cursor, p, line5) {
   const [from, arrow, to] = [cursor.next(), cursor.next(), cursor.next()];
   if (from?.kind !== "word" || arrow?.kind !== "arrow") return;
   const hint2 = `A relation is: ${RELATION_FORM}, where the word after the colon is one of ${RELATION_TYPES.join(", ")}.`;
-  if (arrow.text !== "->") return fail(p, `A relation is drawn with ->, not ${arrow.text}`, spanOf31(arrow), `${hint2} The relation word says how it is drawn.`);
-  if (to?.kind !== "word") return fail(p, "Expected an id after the arrow", to === null ? cursor.endPosition(line5.line) : spanOf31(to), hint2);
+  if (arrow.text !== "->") return fail(p, `A relation is drawn with ->, not ${arrow.text}`, spanOf32(arrow), `${hint2} The relation word says how it is drawn.`);
+  if (to?.kind !== "word") return fail(p, "Expected an id after the arrow", to === null ? cursor.endPosition(line5.line) : spanOf32(to), hint2);
   const colon = cursor.next();
-  if (colon?.kind !== "colon") return fail(p, "A relation needs its kind after a colon", colon === null ? cursor.endPosition(line5.line) : spanOf31(colon), hint2);
+  if (colon?.kind !== "colon") return fail(p, "A relation needs its kind after a colon", colon === null ? cursor.endPosition(line5.line) : spanOf32(colon), hint2);
   const word2 = cursor.next();
-  if (word2 === null || word2.kind !== "word" && word2.kind !== "string") return fail(p, "Expected the kind of the relation after the colon", word2 === null ? cursor.endPosition(line5.line) : spanOf31(word2), hint2);
+  if (word2 === null || word2.kind !== "word" && word2.kind !== "string") return fail(p, "Expected the kind of the relation after the colon", word2 === null ? cursor.endPosition(line5.line) : spanOf32(word2), hint2);
   const type = RELATION_TYPES.find((candidate2) => candidate2 === word2.text.toLowerCase());
-  if (type === void 0) return fail(p, `Unknown relation "${word2.text}"`, spanOf31(word2), `${didYouMean(word2.text, RELATION_TYPES)} ${hint2}`, DIAGNOSTIC_CODES.badOptionValue);
+  if (type === void 0) return fail(p, `Unknown relation "${word2.text}"`, spanOf32(word2), `${didYouMean(word2.text, RELATION_TYPES)} ${hint2}`, DIAGNOSTIC_CODES.badOptionValue);
   rejectTrailing(cursor, p, "Write one relation per line; a chain like a -> b -> c is not read.");
   p.pending.push({ from, to, type, at: spanOfLine5(line5) });
 }
@@ -160423,11 +160505,11 @@ function resolveRelations(p) {
     for (const end of missing) {
       const guess = suggested < SUGGESTIONS2 ? `${didYouMean(end.text, names11)} ` : "";
       suggested += 1;
-      fail(p, `Unknown requirement or element "${end.text}"`, spanOf31(end), `${guess}Declare it first: need ${end.text} "Name", or element ${end.text} "Name"`, DIAGNOSTIC_CODES.unknownNode);
+      fail(p, `Unknown requirement or element "${end.text}"`, spanOf32(end), `${guess}Declare it first: need ${end.text} "Name", or element ${end.text} "Name"`, DIAGNOSTIC_CODES.unknownNode);
     }
     if (missing.length > 0) continue;
     if (pending.from.text === pending.to.text) {
-      fail(p, `"${pending.from.text}" cannot relate to itself`, spanOf31(pending.to), "A relation joins two different requirements or elements.");
+      fail(p, `"${pending.from.text}" cannot relate to itself`, spanOf32(pending.to), "A relation joins two different requirements or elements.");
       continue;
     }
     resolved2.push({ id: `r${resolved2.length}`, from: pending.from.text, to: pending.to.text, type: pending.type, at: pending.at });
@@ -160437,7 +160519,7 @@ function resolveRelations(p) {
 function dispatch14(line5, p) {
   const cursor = new TokenCursor(line5.tokens);
   const first = line5.tokens[0];
-  if (first.kind !== "word") return fail(p, "A statement must start with a keyword or an id", spanOf31(first), `Write a requirement, an element, or a relation such as: ${RELATION_FORM}`);
+  if (first.kind !== "word") return fail(p, "A statement must start with a keyword or an id", spanOf32(first), `Write a requirement, an element, or a relation such as: ${RELATION_FORM}`);
   if (line5.tokens[1]?.kind === "arrow") return parseRelation(cursor, p, line5);
   if (first.text === "need") return parseNeed(cursor, p, line5);
   if (first.text === "element") return parseElement2(cursor, p, line5);
@@ -160447,11 +160529,11 @@ function dispatch14(line5, p) {
     return rejectTrailing(cursor, p, 'Write: desc "One or two sentences about the requirements"');
   }
   const brace = line5.tokens.find((token) => token.kind === "lbrace");
-  if (brace !== void 0) return fail(p, "A requirement diagram has no blocks", spanOf31(brace), `Write each requirement on one line, with its fields as options: ${NEED_FORM}`);
+  if (brace !== void 0) return fail(p, "A requirement diagram has no blocks", spanOf32(brace), `Write each requirement on one line, with its fields as options: ${NEED_FORM}`);
   if (NEED_SYNONYMS.has(first.text.toLowerCase())) {
-    return fail(p, `Unknown statement "${first.text}"`, spanOf31(first), `A requirement is written with need, and its kind with type=: ${NEED_FORM}`, DIAGNOSTIC_CODES.unknownStatement);
+    return fail(p, `Unknown statement "${first.text}"`, spanOf32(first), `A requirement is written with need, and its kind with type=: ${NEED_FORM}`, DIAGNOSTIC_CODES.unknownStatement);
   }
-  fail(p, `Unknown statement "${first.text}"`, spanOf31(first), `${didYouMean(first.text, REQUIREMENT_STATEMENT_WORDS)} A relation looks like: ${RELATION_FORM}`, DIAGNOSTIC_CODES.unknownStatement);
+  fail(p, `Unknown statement "${first.text}"`, spanOf32(first), `${didYouMean(first.text, REQUIREMENT_STATEMENT_WORDS)} A relation looks like: ${RELATION_FORM}`, DIAGNOSTIC_CODES.unknownStatement);
 }
 function parseRequirement(lines, diagnostics) {
   const p = { title: null, description: null, direction: "down", needs: [], elements: [], pending: [], report: diagnostics, declared: /* @__PURE__ */ new Map() };
@@ -160460,7 +160542,7 @@ function parseRequirement(lines, diagnostics) {
   for (const line5 of body2) dispatch14(line5, p);
   return { kind: "requirement", meta: { title: p.title, description: p.description }, direction: p.direction, needs: p.needs, elements: p.elements, relations: resolveRelations(p) };
 }
-var SUGGESTIONS2, NEED_SYNONYMS, NEED_FORM, ELEMENT_FORM, RELATION_FORM, spanOf31;
+var SUGGESTIONS2, NEED_SYNONYMS, NEED_FORM, ELEMENT_FORM, RELATION_FORM, spanOf32;
 var init_parse17 = __esm({
   "../../packages/diagrams/src/kinds/requirement/parse.ts"() {
     "use strict";
@@ -160476,7 +160558,7 @@ var init_parse17 = __esm({
     NEED_FORM = 'need card "Accept card payments" type=functional risk=high verify=test ref="REQ-001" text="The checkout shall accept cards."';
     ELEMENT_FORM = 'element stripe "Stripe Elements" type="Library" doc="docs/payments.md"';
     RELATION_FORM = "stripe -> card : satisfies";
-    spanOf31 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf32 = (token) => ({ line: token.line, column: token.column, length: token.length });
   }
 });
 
@@ -161526,7 +161608,7 @@ function sumText(a, b) {
   return text6.includes("e") ? (a + b).toFixed(9).replace(/\.?0+$/, "") : text6;
 }
 function readFlow(ctx, line5, text6) {
-  const span = spanOf32(line5, text6);
+  const span = spanOf33(line5, text6);
   const fields = splitFields(text6);
   if (fields?.length !== 3) {
     reportUnreadable(ctx, span, `The line "${text6.slice(0, 40)}"`, "A flow is written Source,Target,Value, with a name that has a comma in double quotes.");
@@ -161579,13 +161661,13 @@ function readSankeyMermaid(ctx) {
     const flow = readFlow(ctx, line5, text6);
     if (flow !== null) addFlow(ctx, flows, flow);
     if (flows.length > SANKEY_LIMITS.maxFlows || new Set(flows.flatMap((known3) => [known3.from, known3.to])).size > SANKEY_LIMITS.maxNodes) {
-      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf32(line5, text6), `The sankey has more than ${SANKEY_LIMITS.maxNodes} nodes or ${SANKEY_LIMITS.maxFlows} flows, the most Plotwork draws.`, 'Fold the small nodes and flows into one "Other", then convert the chart.');
+      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf33(line5, text6), `The sankey has more than ${SANKEY_LIMITS.maxNodes} nodes or ${SANKEY_LIMITS.maxFlows} flows, the most Plotwork draws.`, 'Fold the small nodes and flows into one "Other", then convert the chart.');
       return null;
     }
   }
   return removeLoops(ctx, flows) ? { flows } : null;
 }
-var NUMBER7, CSV_HEADER, spanOf32;
+var NUMBER7, CSV_HEADER, spanOf33;
 var init_mermaid_read3 = __esm({
   "../../packages/diagrams/src/kinds/sankey/mermaid-read.ts"() {
     "use strict";
@@ -161596,7 +161678,7 @@ var init_mermaid_read3 = __esm({
     init_graph2();
     NUMBER7 = /^\d+(?:\.\d+)?$/;
     CSV_HEADER = /^source\s*,\s*target\s*,\s*value$/i;
-    spanOf32 = (line5, text6) => ({ line: line5.number, column: line5.text.indexOf(text6) + 1 || 1, length: Math.max(1, text6.length) });
+    spanOf33 = (line5, text6) => ({ line: line5.number, column: line5.text.indexOf(text6) + 1 || 1, length: Math.max(1, text6.length) });
   }
 });
 
@@ -161712,7 +161794,7 @@ function readName3(token, what, at3, report4) {
     report4.push(errorAt(DIAGNOSTIC_CODES.syntax, "A node needs a name", token, 'Give the node a name between the quotes, such as "API gateway".'));
     return null;
   }
-  return { label, span: spanOf33(token) };
+  return { label, span: spanOf34(token) };
 }
 function parseFlowStatement(cursor, state, line5) {
   if (state.report.some((diagnostic) => diagnostic.code === DIAGNOSTIC_CODES.unterminatedString && diagnostic.line === line5.line)) return;
@@ -161732,7 +161814,7 @@ function parseFlowStatement(cursor, state, line5) {
   const next = cursor.peek();
   const isOptionNext = next?.kind === "word" && cursor.peek(1)?.kind === "equals";
   const amountToken = isOptionNext ? null : cursor.next();
-  const value = readAmount(amountToken, isOptionNext && next !== null ? spanOf33(next) : end, state.report);
+  const value = readAmount(amountToken, isOptionNext && next !== null ? spanOf34(next) : end, state.report);
   const comma = cursor.peek();
   if (value !== null && comma?.kind === "comma") {
     state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, "An amount has no thousands separator", comma, "Write the amount as plain digits: 12000, not 12,000."));
@@ -161760,7 +161842,7 @@ function parseFlowStatement(cursor, state, line5) {
   };
   state.flows.push(flow);
 }
-var FLOW_HINT, NUMBER8, spanOf33;
+var FLOW_HINT, NUMBER8, spanOf34;
 var init_parse_flow = __esm({
   "../../packages/diagrams/src/kinds/sankey/parse-flow.ts"() {
     "use strict";
@@ -161773,7 +161855,7 @@ var init_parse_flow = __esm({
     init_state9();
     FLOW_HINT = 'A flow is: "Edge" -> "API gateway" : 12000 tone=red. Names are in double quotes, and the amount is plain digits.';
     NUMBER8 = /^\d+(?:\.\d+)?$/;
-    spanOf33 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf34 = (token) => ({ line: token.line, column: token.column, length: token.length });
   }
 });
 
@@ -164143,7 +164225,7 @@ function splitKeyAlias(text6) {
   return { key: text6.slice(0, at3).trim(), alias: text6.slice(at3 + 4).trim() };
 }
 function parseParticipant(state, ctx, statement, rest, isActorKeyword) {
-  const span = spanOf8(statement);
+  const span = spanOf9(statement);
   const { text: text6, config: config2 } = splitConfig(rest);
   const { key, alias } = splitKeyAlias(text6);
   if (key === "") {
@@ -164318,7 +164400,7 @@ var init_sequence_state2 = __esm({
 // ../../packages/diagrams/src/import/sequence.ts
 function openBlock(state, ctx, statement, word2, rest) {
   const rule = sequenceBlockRule(word2);
-  const span = spanOf8(statement);
+  const span = spanOf9(statement);
   if (rule === void 0 || rule.plotwork === null) return;
   if (rule.mermaid !== rule.plotwork) {
     ctx.reporter.add(DIAGNOSTIC_CODES.mermaidMappedToNearest, span, `A ${word2} block became ${/^[aeiou]/.test(rule.plotwork) ? "an" : "a"} ${rule.plotwork} block.`, rule.note, `block-${word2}`);
@@ -164327,16 +164409,16 @@ function openBlock(state, ctx, statement, word2, rest) {
   state.openBlock(rule, label, span);
 }
 function startBranch(state, ctx, statement, word2, rest) {
-  const label = describeLabel(ctx.reporter, rest, spanOf8(statement), { allowSub: false }).label;
+  const label = describeLabel(ctx.reporter, rest, spanOf9(statement), { allowSub: false }).label;
   if (!state.branch(word2, label, statement.line)) {
-    reportUnreadable(ctx, spanOf8(statement), `The "${word2}" line`, "Use else inside an alt block, and inside a par block, and option inside a critical block.");
+    reportUnreadable(ctx, spanOf9(statement), `The "${word2}" line`, "Use else inside an alt block, and inside a par block, and option inside a critical block.");
   }
 }
 function setTitle(ctx, title) {
   if (ctx.prepared.meta.title === null && title !== "") ctx.prepared.meta.title = title;
 }
 function handleKeyword(state, ctx, statement, word2, rest) {
-  const span = spanOf8(statement);
+  const span = spanOf9(statement);
   if (word2 === "participant" || word2 === "actor") parseParticipant(state, ctx, statement, rest, word2 === "actor");
   else if (word2 === "create") createParticipant(state, ctx, statement, rest);
   else if (word2 === "destroy") ctx.reporter.dropped("createDestroy", span, "destroy");
@@ -164361,7 +164443,7 @@ function readAutonumber(state, ctx, statement, rest) {
   }
   const numbers = words.map((word2) => AUTONUMBER_NUMBER.test(word2) ? Number(word2) : Number.NaN);
   if (words.length > 2 || numbers.some((number4) => Number.isNaN(number4))) {
-    reportUnreadable(ctx, spanOf8(statement), `The statement "${shorten2(statement.text)}"`, "Write: autonumber, autonumber 10, autonumber 10 5, or autonumber off");
+    reportUnreadable(ctx, spanOf9(statement), `The statement "${shorten2(statement.text)}"`, "Write: autonumber, autonumber 10, autonumber 10 5, or autonumber off");
     return;
   }
   state.startNumbering(numbers[0] ?? DEFAULT_FIRST_STEP, numbers[1] ?? 1);
@@ -164369,16 +164451,16 @@ function readAutonumber(state, ctx, statement, rest) {
 function createParticipant(state, ctx, statement, rest) {
   const inner = splitKeyword(rest);
   if (inner.word !== "participant" && inner.word !== "actor") {
-    reportUnreadable(ctx, spanOf8(statement), `The statement "${shorten2(statement.text)}"`, "Write: create participant Alice");
+    reportUnreadable(ctx, spanOf9(statement), `The statement "${shorten2(statement.text)}"`, "Write: create participant Alice");
     return;
   }
-  ctx.reporter.dropped("createDestroy", spanOf8(statement), "create");
+  ctx.reporter.dropped("createDestroy", spanOf9(statement), "create");
   parseParticipant(state, ctx, statement, inner.rest, inner.word === "actor");
 }
 function handleStatement2(state, ctx, statement) {
   const titled = /^title\s{0,8}:(.*)$/i.exec(statement.text);
   if (titled !== null) {
-    setTitle(ctx, describeLabel(ctx.reporter, (titled[1] ?? "").trim(), spanOf8(statement), { allowSub: false }).label);
+    setTitle(ctx, describeLabel(ctx.reporter, (titled[1] ?? "").trim(), spanOf9(statement), { allowSub: false }).label);
     return;
   }
   const { word: word2, rest } = splitKeyword(statement.text);
@@ -167672,21 +167754,21 @@ function placePills2(routes, runs, extents, items2, forced) {
     });
     const costed = spots.map(({ at: at3, rank, middle: middle2 }) => {
       const pill3 = pillAt3(flow, at3);
-      return { at: at3, cost: lines.filter((line5) => line5.flow !== flow && overlaps8(pill3, line5.box)).length * COST.line + placed3.filter((other) => overlaps8(pill3, other)).length * COST.pill + items2.filter((item2) => overlaps8(pill3, item2)).length * COST.item + rank * COST.otherRun + Math.abs(at3.x - middle2) * 1e-3 };
+      return { at: at3, cost: lines.filter((line5) => line5.flow !== flow && overlaps9(pill3, line5.box)).length * COST.line + placed3.filter((other) => overlaps9(pill3, other)).length * COST.pill + items2.filter((item2) => overlaps9(pill3, item2)).length * COST.item + rank * COST.otherRun + Math.abs(at3.x - middle2) * 1e-3 };
     });
     const chosen = costed.reduce((best, spot) => best === null || spot.cost < best.cost ? spot : best, null);
     if (chosen !== null) placed3.push(pillAt3(flow, chosen.at));
     return chosen === null ? null : chosen.at;
   });
 }
-var GUTTER, COST, overlaps8;
+var GUTTER, COST, overlaps9;
 var init_pills = __esm({
   "../../packages/diagrams/src/kinds/swimlane/layout/pills.ts"() {
     "use strict";
     init_theme();
     GUTTER = { base: 52, stub: 20, pitch: 12, corner: 10, headClear: 14, pillGap: 6, roundRoom: 24, endRun: EDGE_METRICS.endRun };
     COST = { line: 3, pill: 60, item: 1e3, otherRun: 0.4 };
-    overlaps8 = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+    overlaps9 = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
   }
 });
 
@@ -168065,7 +168147,7 @@ function parseHeader8(line5, p) {
   const direction = findOption(options3, "direction");
   if (direction !== void 0) {
     const found = SWIMLANE_DIRECTIONS.find((candidate2) => candidate2 === direction.value);
-    if (found === void 0) fail2(p, `Unknown direction "${direction.value}"`, spanOf34(direction.valueToken), `${didYouMean(direction.value, SWIMLANE_DIRECTIONS)} A swimlane reads right (bands) or down (columns).`, DIAGNOSTIC_CODES.unknownDirection);
+    if (found === void 0) fail2(p, `Unknown direction "${direction.value}"`, spanOf35(direction.valueToken), `${didYouMean(direction.value, SWIMLANE_DIRECTIONS)} A swimlane reads right (bands) or down (columns).`, DIAGNOSTIC_CODES.unknownDirection);
     else p.direction = found;
   }
   p.description = findOption(options3, "desc")?.value ?? p.description;
@@ -168081,10 +168163,10 @@ function parseLane(cursor, p, line5) {
   const options3 = readOptions(cursor, ["tone", "icon"], p.report);
   const brace = cursor.next();
   const isOpen = brace?.kind === "lbrace";
-  if (!isOpen) fail2(p, "A lane needs a block for its steps", brace === null ? cursor.endPosition(line5.line) : spanOf34(brace), 'Write: lane customer "Customer" { ... } and close it with } on its own line.');
+  if (!isOpen) fail2(p, "A lane needs a block for its steps", brace === null ? cursor.endPosition(line5.line) : spanOf35(brace), 'Write: lane customer "Customer" { ... } and close it with } on its own line.');
   else rejectTrailing(cursor, p, "Put the steps on the lines after the {.");
   if (id === null || label === null) return { lane: null, isOpen };
-  const lane = { id: id.text, label, tone: resolveTone(findOption(options3, "tone"), "neutral", p), icon: resolveAutoIcon(findOption(options3, "icon"), null, p, { texts: [label], roles: true }), labelAt: spanOf34(labelToken2) };
+  const lane = { id: id.text, label, tone: resolveTone(findOption(options3, "tone"), "neutral", p), icon: resolveAutoIcon(findOption(options3, "icon"), null, p, { texts: [label], roles: true }), labelAt: spanOf35(labelToken2) };
   p.lanes.push(lane);
   return { lane, isOpen };
 }
@@ -168096,7 +168178,7 @@ function parseItem2(cursor, p, line5, scope, kind) {
   const options3 = readOptions(cursor, ITEM_OPTIONS2[kind], p.report);
   rejectTrailing(cursor, p, `A ${kind} is: ${kind} id "${kind === "decision" ? "In stock?" : "Label"}" tone=green icon=lucide:check`);
   if (scope.lane === null) {
-    if (scope.opener === null) fail2(p, `A ${kind} belongs in a lane`, spanOf34(line5.tokens[0]), 'Open a lane first: lane customer "Customer" { ... }');
+    if (scope.opener === null) fail2(p, `A ${kind} belongs in a lane`, spanOf35(line5.tokens[0]), 'Open a lane first: lane customer "Customer" { ... }');
     return;
   }
   if (id === null || label === null) return;
@@ -168109,7 +168191,7 @@ function parseItem2(cursor, p, line5, scope, kind) {
     tone: resolveTone(findOption(options3, "tone"), kind === "decision" ? "amber" : "neutral", p),
     icon: resolveIcon(findOption(options3, "icon"), kind === "decision" ? SWIMLANE_DECISION_ICON : null, p),
     lane: scope.lane.id,
-    labelAt: labelToken2?.kind === "string" ? spanOf34(labelToken2) : spanOf34(id)
+    labelAt: labelToken2?.kind === "string" ? spanOf35(labelToken2) : spanOf35(id)
   });
 }
 function parseFlow2(cursor, p, line5) {
@@ -168117,8 +168199,8 @@ function parseFlow2(cursor, p, line5) {
   if (from?.kind !== "word" || arrow?.kind !== "arrow") return;
   const hint2 = 'A transition is: from -> to : "label". Use --> for a reply and ..> for an event.';
   const style = LINES2[arrow.text];
-  if (style === void 0) return fail2(p, `A transition is drawn with ->, -->, or ..>, not ${arrow.text}`, spanOf34(arrow), hint2);
-  if (to?.kind !== "word") return fail2(p, "Expected an id after the arrow", to === null ? cursor.endPosition(line5.line) : spanOf34(to), hint2);
+  if (style === void 0) return fail2(p, `A transition is drawn with ->, -->, or ..>, not ${arrow.text}`, spanOf35(arrow), hint2);
+  if (to?.kind !== "word") return fail2(p, "Expected an id after the arrow", to === null ? cursor.endPosition(line5.line) : spanOf35(to), hint2);
   const label = cursor.peek()?.kind === "colon" ? (cursor.next(), readLabel(cursor, p, line5.line, "transition label")) : null;
   const look = readLineMotion(readOptions(cursor, ["step"], p.report), p.motion, "end", arrow, p.report);
   rejectTrailing(cursor, p, "Write one transition per line; a chain like a -> b -> c is not read.");
@@ -168133,11 +168215,11 @@ function resolveFlows(p) {
     for (const end of missing) {
       const guess = suggested < SUGGESTIONS4 ? `${didYouMean(end.text, names11)} ` : "";
       suggested += 1;
-      fail2(p, `Unknown step "${end.text}"`, spanOf34(end), `${guess}Declare it first inside a lane: step ${end.text} "Label"`, DIAGNOSTIC_CODES.unknownNode);
+      fail2(p, `Unknown step "${end.text}"`, spanOf35(end), `${guess}Declare it first inside a lane: step ${end.text} "Label"`, DIAGNOSTIC_CODES.unknownNode);
     }
     if (missing.length > 0) continue;
     if (pending.from.text === pending.to.text) {
-      fail2(p, `"${pending.from.text}" cannot lead back to itself`, spanOf34(pending.to), "Loop through another step: a -> b, then b -> a.");
+      fail2(p, `"${pending.from.text}" cannot lead back to itself`, spanOf35(pending.to), "Loop through another step: a -> b, then b -> a.");
       continue;
     }
     const parts = pending.label === null ? { event: null, guard: null, action: null } : splitLabel(pending.label);
@@ -168148,10 +168230,10 @@ function resolveFlows(p) {
 function dispatch17(line5, p, scope) {
   const cursor = new TokenCursor(line5.tokens);
   const first = line5.tokens[0];
-  if (first.kind !== "word") return fail2(p, "A statement must start with a keyword or a step id", spanOf34(first), "Write a lane, a step, or a transition such as: a -> b");
+  if (first.kind !== "word") return fail2(p, "A statement must start with a keyword or a step id", spanOf35(first), "Write a lane, a step, or a transition such as: a -> b");
   if (line5.tokens[1]?.kind === "arrow") return parseFlow2(cursor, p, line5);
   if (first.text === "lane") {
-    if (scope.opener !== null) fail2(p, "A lane cannot sit inside a lane", spanOf34(first), "Close the lane above with } first.");
+    if (scope.opener !== null) fail2(p, "A lane cannot sit inside a lane", spanOf35(first), "Close the lane above with } first.");
     const parsed = parseLane(cursor, p, line5);
     scope.lane = parsed.lane;
     scope.opener = parsed.isOpen ? line5 : scope.opener;
@@ -168162,7 +168244,7 @@ function dispatch17(line5, p, scope) {
     p.description = readLabel(cursor, p, line5.line, "description") ?? p.description;
     rejectTrailing(cursor, p, 'Write: desc "One or two sentences about the process"');
   } else {
-    fail2(p, `Unknown statement "${first.text}"`, spanOf34(first), `${didYouMean(first.text, SWIMLANE_STATEMENT_WORDS)} A transition looks like: from -> to : "label"`, DIAGNOSTIC_CODES.unknownStatement);
+    fail2(p, `Unknown statement "${first.text}"`, spanOf35(first), `${didYouMean(first.text, SWIMLANE_STATEMENT_WORDS)} A transition looks like: from -> to : "label"`, DIAGNOSTIC_CODES.unknownStatement);
   }
 }
 function parseSwimlane(lines, diagnostics) {
@@ -168176,16 +168258,16 @@ function parseSwimlane(lines, diagnostics) {
       dispatch17(line5, p, scope);
       continue;
     }
-    if (scope.opener === null) fail2(p, "Unmatched }", spanOf34(brace), 'Remove it, or open the block it closes with: lane id "Name" {', DIAGNOSTIC_CODES.unexpectedClose);
-    else if (line5.tokens[1] !== void 0) fail2(p, "Unexpected text after }", spanOf34(line5.tokens[1]), "Put } on its own line.");
+    if (scope.opener === null) fail2(p, "Unmatched }", spanOf35(brace), 'Remove it, or open the block it closes with: lane id "Name" {', DIAGNOSTIC_CODES.unexpectedClose);
+    else if (line5.tokens[1] !== void 0) fail2(p, "Unexpected text after }", spanOf35(line5.tokens[1]), "Put } on its own line.");
     scope.lane = null;
     scope.opener = null;
   }
   const opener = scope.opener?.tokens[0];
-  if (opener !== void 0) fail2(p, "Block is never closed", spanOf34(opener), "Add a } on its own line after the steps of the lane.", DIAGNOSTIC_CODES.unclosedBlock);
+  if (opener !== void 0) fail2(p, "Block is never closed", spanOf35(opener), "Add a } on its own line after the steps of the lane.", DIAGNOSTIC_CODES.unclosedBlock);
   return { kind: "swimlane", meta: { title: p.title, description: p.description }, direction: p.direction, lanes: p.lanes, items: p.items, flows: resolveFlows(p) };
 }
-var ITEM_OPTIONS2, LINES2, SUGGESTIONS4, spanOf34;
+var ITEM_OPTIONS2, LINES2, SUGGESTIONS4, spanOf35;
 var init_parse21 = __esm({
   "../../packages/diagrams/src/kinds/swimlane/parse.ts"() {
     "use strict";
@@ -168201,7 +168283,7 @@ var init_parse21 = __esm({
     ITEM_OPTIONS2 = { step: ["sub", "tone", "icon"], decision: ["tone", "icon"], start: ["tone", "icon"], end: ["tone", "icon"] };
     LINES2 = { "->": "solid", "-->": "dashed", "..>": "dotted" };
     SUGGESTIONS4 = 25;
-    spanOf34 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf35 = (token) => ({ line: token.line, column: token.column, length: token.length });
   }
 });
 
@@ -169337,7 +169419,7 @@ function parseMermaidTimeline(ctx) {
     headerLine: header?.line ?? 1
   };
 }
-var ENTITY, TITLE_LINE, SECTION_LINE, ENTITY_REACH, decodeColons, spanOf35, Reader;
+var ENTITY, TITLE_LINE, SECTION_LINE, ENTITY_REACH, decodeColons, spanOf36, Reader;
 var init_read10 = __esm({
   "../../packages/diagrams/src/kinds/timeline/mermaid/read.ts"() {
     "use strict";
@@ -169350,7 +169432,7 @@ var init_read10 = __esm({
     SECTION_LINE = /^section\s+(\S.*)$/;
     ENTITY_REACH = 20;
     decodeColons = (text6) => text6.replace(/#colon;/gi, ":");
-    spanOf35 = (line5, part2) => ({ line: line5, column: part2.column, length: Math.max(1, part2.text.length) });
+    spanOf36 = (line5, part2) => ({ line: line5, column: part2.column, length: Math.max(1, part2.text.length) });
     Reader = class {
       constructor(ctx) {
         this.ctx = ctx;
@@ -169364,7 +169446,7 @@ var init_read10 = __esm({
       /** Adds the events of one line to a period; an empty one is reported and left out. */
       addEvents(period, parts, line5) {
         for (const part2 of parts) {
-          const span = spanOf35(line5, part2);
+          const span = spanOf36(line5, part2);
           const label = this.clean(part2.text, span);
           if (label === "") {
             this.ctx.reporter.add(DIAGNOSTIC_CODES.mermaidEmptyElement, span, "An empty event was dropped.", "Write the event after the colon, or delete the colon.", "empty-event");
@@ -169381,7 +169463,7 @@ var init_read10 = __esm({
           if (this.ctx.prepared.meta.title === null) {
             const text6 = title[1] ?? "";
             const part2 = { text: text6, column: lead + (body2.length - text6.length) + 1 };
-            this.ctx.prepared.meta.title = this.clean(part2.text, spanOf35(line5, part2));
+            this.ctx.prepared.meta.title = this.clean(part2.text, spanOf36(line5, part2));
           }
           return;
         }
@@ -169389,24 +169471,24 @@ var init_read10 = __esm({
         if (section !== null) {
           const text6 = section[1] ?? "";
           const part2 = { text: text6, column: lead + (body2.length - text6.length) + 1 };
-          this.sections.push({ label: this.clean(part2.text, spanOf35(line5, part2)), span: spanOf35(line5, part2) });
+          this.sections.push({ label: this.clean(part2.text, spanOf36(line5, part2)), span: spanOf36(line5, part2) });
           return;
         }
         const isContinuation = body2.startsWith(":");
         const parts = splitParts(isContinuation ? body2.slice(1) : body2, lead + (isContinuation ? 2 : 1));
         const [first, ...rest] = parts;
         if (first === void 0) return;
-        const label = isContinuation ? "" : this.clean(first.text, spanOf35(line5, first));
+        const label = isContinuation ? "" : this.clean(first.text, spanOf36(line5, first));
         const previous = this.periods[this.periods.length - 1];
         if (label === "" && previous !== void 0) {
           this.addEvents(previous, isContinuation ? parts : rest, line5);
           return;
         }
         if (label === "") {
-          reportUnreadable(this.ctx, spanOf35(line5, first), "A line of events with no period before it", "Write the period first, for example: 2002 : LinkedIn.");
+          reportUnreadable(this.ctx, spanOf36(line5, first), "A line of events with no period before it", "Write the period first, for example: 2002 : LinkedIn.");
           return;
         }
-        const period = { label, section: this.sections.length === 0 ? null : this.sections.length - 1, events: [], span: spanOf35(line5, first) };
+        const period = { label, section: this.sections.length === 0 ? null : this.sections.length - 1, events: [], span: spanOf36(line5, first) };
         this.periods.push(period);
         this.addEvents(period, rest, line5);
       }
@@ -169606,7 +169688,7 @@ function readOpeningBrace(cursor, state, line5, form) {
   state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, "Expected { to open the block", brace ?? cursor.endPosition(line5), form));
   return false;
 }
-function spanOf36(token, line5) {
+function spanOf37(token, line5) {
   return token === null ? { line: line5.line, column: 1, length: 1 } : { line: token.line, column: token.column, length: token.length };
 }
 function parseSectionStatement2(cursor, state, line5) {
@@ -169625,7 +169707,7 @@ function parseSectionStatement2(cursor, state, line5) {
     label: label ?? "",
     tone: tone === void 0 ? fallback : resolveTone(tone, fallback, state),
     icon: resolveIcon(findOption(options3, "icon"), null, state),
-    labelAt: spanOf36(labelToken2, line5)
+    labelAt: spanOf37(labelToken2, line5)
   });
   state.scopes.push({ kind: "section", opener: line5 });
 }
@@ -169640,7 +169722,7 @@ function readPeriod(cursor, state, line5) {
     tone: tone === void 0 ? null : resolveTone(tone, "neutral", state),
     section: currentSection2(state),
     events: [],
-    labelAt: spanOf36(labelToken2, line5)
+    labelAt: spanOf37(labelToken2, line5)
   };
 }
 function reportInsidePeriod(state, keyword, word2) {
@@ -169651,7 +169733,7 @@ function parsePeriodStatement(cursor, state, line5) {
   const period = readPeriod(cursor, state, line5);
   if (!readOpeningBrace(cursor, state, line5.line, PERIOD_FORMS)) return;
   if (state.scopes[state.scopes.length - 1]?.kind === "period") reportInsidePeriod(state, keyword, "period");
-  const made = period ?? { label: "", tone: null, section: currentSection2(state), events: [], labelAt: spanOf36(null, line5) };
+  const made = period ?? { label: "", tone: null, section: currentSection2(state), events: [], labelAt: spanOf37(null, line5) };
   state.periods.push(made);
   state.scopes.push({ kind: "period", opener: line5, period: made });
 }
@@ -170839,7 +170921,7 @@ function readTree(ctx) {
   let count4 = 0;
   const open2 = [];
   for (const line5 of body2) {
-    const span = spanOf37(line5);
+    const span = spanOf38(line5);
     const text6 = line5.text.trim();
     const heading = /^title(?:\s+(.+))?$/i.exec(text6);
     if (heading !== null) {
@@ -170874,7 +170956,7 @@ function readTree(ctx) {
   }
   return { roots, title, count: count4 };
 }
-var spanOf37, indentOf4;
+var spanOf38, indentOf4;
 var init_read11 = __esm({
   "../../packages/diagrams/src/kinds/tree/mermaid/read.ts"() {
     "use strict";
@@ -170882,7 +170964,7 @@ var init_read11 = __esm({
     init_context();
     init_limits();
     init_constants15();
-    spanOf37 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
+    spanOf38 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
     indentOf4 = (line5) => line5.text.length - line5.text.trimStart().length;
   }
 });
@@ -171030,7 +171112,7 @@ function readFields(kind, name2, options3, state) {
     change: choose(findOption(options3, "change"), TREE_CHANGES, "change", state),
     size: sizeText2 === "" || sizeText2.length > TREE_LIMITS.maxSizeLength ? null : sizeText2,
     mark: choose(findOption(options3, "mark"), TREE_SWITCH, "mark setting", state) === "on",
-    labelAt: spanOf38(name2)
+    labelAt: spanOf39(name2)
   };
 }
 function parseEntry(cursor, state, line5, kind) {
@@ -171045,7 +171127,7 @@ function parseEntry(cursor, state, line5, kind) {
   }
   const container = currentChildren(state);
   const label = fields?.label ?? "";
-  const labelAt = fields?.labelAt ?? spanOf38(word2);
+  const labelAt = fields?.labelAt ?? spanOf39(word2);
   if (brace === null) {
     if (fields !== null && fields.label !== "") container.push({ ...fields, children: [] });
     return;
@@ -171088,11 +171170,11 @@ function parseOmitted(cursor, state, line5) {
     size: null,
     mark: false,
     children: [],
-    labelAt: spanOf38(word2)
+    labelAt: spanOf39(word2)
   };
   currentChildren(state).push(entry2);
 }
-var HEADER_HINT11, ENTRY_HINT, OMITTED_HINT, spanOf38;
+var HEADER_HINT11, ENTRY_HINT, OMITTED_HINT, spanOf39;
 var init_parse_statements7 = __esm({
   "../../packages/diagrams/src/kinds/tree/parse-statements.ts"() {
     "use strict";
@@ -171107,7 +171189,7 @@ var init_parse_statements7 = __esm({
     HEADER_HINT11 = 'The header is: tree "Title" style=files direction=down counts=off desc="Plain-language summary"';
     ENTRY_HINT = 'An entry is: dir "src" note="what is in it" icon=lucide:folder {, file "main.ts" note="entry point" change=modified, or node "Name" note="Role"';
     OMITTED_HINT = 'Write: omitted 14 "files", which draws "and 14 more files"';
-    spanOf38 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf39 = (token) => ({ line: token.line, column: token.column, length: token.length });
   }
 });
 
@@ -172227,7 +172309,7 @@ function readTreemap(ctx) {
   let count4 = 0;
   const open2 = [];
   for (const line5 of body2) {
-    const span = spanOf39(line5);
+    const span = spanOf40(line5);
     const text6 = line5.text.trim();
     const heading = /^title\s+(.+)$/i.exec(text6);
     if (heading !== null) {
@@ -172275,7 +172357,7 @@ function readTreemap(ctx) {
   }
   return { roots, title, count: count4 };
 }
-var spanOf39, indentOf5;
+var spanOf40, indentOf5;
 var init_read12 = __esm({
   "../../packages/diagrams/src/kinds/treemap/mermaid/read.ts"() {
     "use strict";
@@ -172283,7 +172365,7 @@ var init_read12 = __esm({
     init_context();
     init_limits();
     init_constants16();
-    spanOf39 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
+    spanOf40 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
     indentOf5 = (line5) => line5.text.length - line5.text.trimStart().length;
   }
 });
@@ -172491,7 +172573,7 @@ function parseItemStatement(cursor, state, line5) {
     icon,
     ...icon !== null && iconOption !== void 0 ? { isIconWritten: true } : {},
     delta,
-    labelAt: spanOf40(labelToken2)
+    labelAt: spanOf41(labelToken2)
   };
   currentChildren2(state).push(item2);
 }
@@ -172516,13 +172598,13 @@ function parseGroupStatement2(cursor, state, line5) {
     label: label ?? "",
     tone: toneOption === void 0 ? null : resolveTone(toneOption, "neutral", state),
     icon: resolveAutoIcon(findOption(options3, "icon"), null, state, { texts: [label] }),
-    labelAt: labelToken2 === null ? spanOf40(word2) : spanOf40(labelToken2),
+    labelAt: labelToken2 === null ? spanOf41(word2) : spanOf41(labelToken2),
     children: isOverflow ? currentChildren2(state) : [],
     brace,
     isOverflow
   });
 }
-var HEADER_HINT12, GROUP_HINT, ITEM_HINT2, spanOf40;
+var HEADER_HINT12, GROUP_HINT, ITEM_HINT2, spanOf41;
 var init_parse_statements8 = __esm({
   "../../packages/diagrams/src/kinds/treemap/parse-statements.ts"() {
     "use strict";
@@ -172538,7 +172620,7 @@ var init_parse_statements8 = __esm({
     HEADER_HINT12 = 'The header is: treemap "Title" unit="MB" sort=desc values=on better=up icons=auto desc="Plain-language summary"';
     GROUP_HINT = 'A group is: group "Name" tone=blue icon=lucide:server { with its items inside, and } on its own line';
     ITEM_HINT2 = 'An item is: item "Name" 120 tone=orange icon=lucide:database delta="-5"';
-    spanOf40 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf41 = (token) => ({ line: token.line, column: token.column, length: token.length });
   }
 });
 
@@ -173126,7 +173208,7 @@ function settlePills(links, runs, input2) {
     const spots = Array.from({ length: steps + 1 }, (_, at3) => steps === 0 ? middle2 : lo + (hi - lo) * at3 / steps);
     const costOf2 = (y) => {
       const rect2 = { x: run3.x - width / 2, y: y - height / 2, width, height };
-      return input2.cases.filter((item2) => overlaps9(rect2, item2.rect)).length * COST2.item + placed3.filter((other) => overlaps9(rect2, other)).length * COST2.pill + edges.filter((edge2) => overlaps9(rect2, edge2)).length * COST2.frame + lines.filter((line5) => overlaps9(rect2, line5)).length * COST2.line + Math.abs(y - middle2) * COST2.drift;
+      return input2.cases.filter((item2) => overlaps10(rect2, item2.rect)).length * COST2.item + placed3.filter((other) => overlaps10(rect2, other)).length * COST2.pill + edges.filter((edge2) => overlaps10(rect2, edge2)).length * COST2.frame + lines.filter((line5) => overlaps10(rect2, line5)).length * COST2.line + Math.abs(y - middle2) * COST2.drift;
     };
     const best = spots.reduce((chosen, y) => costOf2(y) < costOf2(chosen) ? y : chosen, middle2);
     const rect = { x: Math.round(run3.x - width / 2), y: Math.round(best - height / 2), width, height };
@@ -173163,13 +173245,13 @@ function routeLinks4(input2) {
   });
   return settlePills(links, runs, input2);
 }
-var overlaps9, COST2;
+var overlaps10, COST2;
 var init_routes = __esm({
   "../../packages/diagrams/src/kinds/usecase/layout/routes.ts"() {
     "use strict";
     init_metrics23();
     init_ports();
-    overlaps9 = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+    overlaps10 = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
     COST2 = { item: 1e3, pill: 60, frame: 20, line: 8, drift: 0.01 };
   }
 });
@@ -173681,7 +173763,7 @@ function readUsecase(ctx) {
     if (dashes > 2) ctx.reporter.dropped("edgeLength", relation2.span);
   };
   for (const { line: line5, text: text6 } of statements(body2)) {
-    const span = spanOf41(line5);
+    const span = spanOf42(line5);
     if (ir.elements.size > IMPORT_LIMITS.maxNodes) {
       ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, span, `The diagram has more than ${IMPORT_LIMITS.maxNodes} actors and use cases.`, "Split it into one diagram for each system, then convert each.");
       return ir;
@@ -173743,7 +173825,7 @@ function reportMeta(ctx, meta3, owner, key, span) {
   if (/icon\s*:/.test(meta3)) ctx.reporter.add(DIAGNOSTIC_CODES.mermaidIconToken, span, `The icon of "${key}" was dropped. Plotwork icons are a closed set.`, "Set icon= on the actor. Find one with the search_icons tool.", "icon-token");
   if (/business\s*:\s*true/.test(meta3)) ctx.reporter.add(DIAGNOSTIC_CODES.mermaidDroppedMeaning, span, `Dropped the business mark of "${key}".`, "Say it in the name or a note if it matters.", "business");
 }
-var ID4, EDGE_ID, INCLUDE, KIND_OF2, LABELLED, PLAIN, NOTE2, META, spanOf41;
+var ID4, EDGE_ID, INCLUDE, KIND_OF2, LABELLED, PLAIN, NOTE2, META, spanOf42;
 var init_read13 = __esm({
   "../../packages/diagrams/src/kinds/usecase/mermaid/read.ts"() {
     "use strict";
@@ -173758,7 +173840,7 @@ var init_read13 = __esm({
     PLAIN = new RegExp(`^(${ID4})\\s*${EDGE_ID}(<-{2,}|-{2,}>|-{2,}o|o-{2,}|-{2,}x|x-{2,}|-{2,})\\s*(${ID4})$`);
     NOTE2 = new RegExp(`^note\\s+for\\s+(${ID4})\\s+(.+)$`);
     META = new RegExp(`^(${ID4})@\\{.*\\}$`);
-    spanOf41 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
+    spanOf42 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
   }
 });
 
@@ -173858,7 +173940,7 @@ function choice2(p, options3, key, choices, fallback) {
   if (option2 === void 0) return fallback;
   const found = choices.find((candidate2) => candidate2 === option2.value);
   if (found !== void 0) return found;
-  fail3(p, `Option "${key}" takes ${choices.join(" or ")}, found "${option2.value}"`, spanOf42(option2.valueToken), didYouMean(option2.value, choices), DIAGNOSTIC_CODES.badOptionValue);
+  fail3(p, `Option "${key}" takes ${choices.join(" or ")}, found "${option2.value}"`, spanOf43(option2.valueToken), didYouMean(option2.value, choices), DIAGNOSTIC_CODES.badOptionValue);
   return fallback;
 }
 function parseActor(cursor, p, line5, scope) {
@@ -173868,7 +173950,7 @@ function parseActor(cursor, p, line5, scope) {
   const label = readLabel(cursor, p, line5.line, "actor name", 'actor customer "Customer" icon=lucide:user');
   const options3 = readOptions(cursor, ACTOR_OPTIONS2, p.report);
   rejectTrailing(cursor, p, 'An actor is: actor customer "Customer" side=left icon=lucide:user');
-  if (scope.opener !== null) fail3(p, "An actor stands outside the systems", spanOf42(line5.tokens[0]), "Declare the actor before or after the system block, not inside it.");
+  if (scope.opener !== null) fail3(p, "An actor stands outside the systems", spanOf43(line5.tokens[0]), "Declare the actor before or after the system block, not inside it.");
   if (id === null || label === null) return;
   const iconOption = findOption(options3, "icon");
   const isProduct = iconOption !== void 0 && iconOption.value !== "none" && !PLAIN_ICON_SETS.some((set2) => iconOption.value.startsWith(`${set2}:`));
@@ -173881,7 +173963,7 @@ function parseActor(cursor, p, line5, scope) {
     side: choice2(p, options3, "side", ACTOR_SIDES, "left"),
     tone: resolveTone(findOption(options3, "tone"), look.tone, p),
     icon: resolveIcon(iconOption, look.icon, p),
-    labelAt: labelToken2?.kind === "string" ? spanOf42(labelToken2) : spanOf42(id)
+    labelAt: labelToken2?.kind === "string" ? spanOf43(labelToken2) : spanOf43(id)
   });
 }
 function parseSystem(cursor, p, line5) {
@@ -173892,10 +173974,10 @@ function parseSystem(cursor, p, line5) {
   const options3 = readOptions(cursor, SYSTEM_OPTIONS, p.report);
   const brace = cursor.next();
   const isOpen = brace?.kind === "lbrace";
-  if (!isOpen) fail3(p, "A system needs a block for its use cases", brace === null ? cursor.endPosition(line5.line) : spanOf42(brace), 'Write: system shop "Shop" { and the cases on the lines after it, then } on its own line.');
+  if (!isOpen) fail3(p, "A system needs a block for its use cases", brace === null ? cursor.endPosition(line5.line) : spanOf43(brace), 'Write: system shop "Shop" { and the cases on the lines after it, then } on its own line.');
   else rejectTrailing(cursor, p, "Put the use cases on the lines after the {.");
   if (id === null || label === null) return { system: null, isOpen };
-  const system = { id: id.text, label, tone: resolveTone(findOption(options3, "tone"), "neutral", p), icon: resolveIcon(findOption(options3, "icon"), null, p), labelAt: spanOf42(labelToken2) };
+  const system = { id: id.text, label, tone: resolveTone(findOption(options3, "tone"), "neutral", p), icon: resolveIcon(findOption(options3, "icon"), null, p), labelAt: spanOf43(labelToken2) };
   p.systems.push(system);
   return { system, isOpen };
 }
@@ -173908,12 +173990,12 @@ function parseCase(cursor, p, line5, scope) {
   rejectTrailing(cursor, p, 'A use case is: case checkout "Check out" sub="Detail" tone=green');
   if (id === null || label === null || scope.opener !== null && scope.system === null) return;
   const sub = findOption(options3, "sub")?.value.trim();
-  p.cases.push({ id: id.text, label, sub: sub === void 0 || sub === "" ? null : sub, tone: resolveTone(findOption(options3, "tone"), "neutral", p), system: scope.system?.id ?? null, labelAt: labelToken2?.kind === "string" ? spanOf42(labelToken2) : spanOf42(id) });
+  p.cases.push({ id: id.text, label, sub: sub === void 0 || sub === "" ? null : sub, tone: resolveTone(findOption(options3, "tone"), "neutral", p), system: scope.system?.id ?? null, labelAt: labelToken2?.kind === "string" ? spanOf43(labelToken2) : spanOf43(id) });
 }
 function parseNote3(cursor, p, line5) {
   cursor.next();
   const target2 = cursor.next();
-  if (target2?.kind !== "word") return fail3(p, 'Expected the id of an actor or a use case after "note"', target2 === null ? cursor.endPosition(line5.line) : spanOf42(target2), 'Write: note checkout "Needs a signed-in customer"');
+  if (target2?.kind !== "word") return fail3(p, 'Expected the id of an actor or a use case after "note"', target2 === null ? cursor.endPosition(line5.line) : spanOf43(target2), 'Write: note checkout "Needs a signed-in customer"');
   const text6 = readLabel(cursor, p, line5.line, "note", 'note checkout "Needs a signed-in customer"');
   rejectTrailing(cursor, p, 'A note is: note checkout "Needs a signed-in customer"');
   if (text6 !== null) p.notes.push({ target: target2, text: text6, at: spanOfLine9(line5) });
@@ -173921,8 +174003,8 @@ function parseNote3(cursor, p, line5) {
 function parseLink3(cursor, p, line5) {
   const [from, arrow, to] = [cursor.next(), cursor.next(), cursor.next()];
   if (arrow.kind !== "arrow") return;
-  if (!["--", "->", "..>"].includes(arrow.text)) return fail3(p, `A link is drawn with --, ->, or ..>, not ${arrow.text}`, spanOf42(arrow), LINK_HINT);
-  if (to?.kind !== "word") return fail3(p, "Expected an id after the arrow", to === null ? cursor.endPosition(line5.line) : spanOf42(to), LINK_HINT);
+  if (!["--", "->", "..>"].includes(arrow.text)) return fail3(p, `A link is drawn with --, ->, or ..>, not ${arrow.text}`, spanOf43(arrow), LINK_HINT);
+  if (to?.kind !== "word") return fail3(p, "Expected an id after the arrow", to === null ? cursor.endPosition(line5.line) : spanOf43(to), LINK_HINT);
   let kind = arrow.text === "..>" ? "dependency" : "association";
   let label = null;
   if (cursor.peek()?.kind === "colon") {
@@ -173934,7 +174016,7 @@ function parseLink3(cursor, p, line5) {
       if (allowed.includes(word2.text)) kind = word2.text === KIND_OF ? "kind-of" : word2.text;
       else {
         const said = allowed.length === 0 ? "A -- link takes a quoted label, or none. Write -> for kind-of." : `After ${arrow.text} the word is ${allowed.join(" or ")}, or a quoted label.`;
-        fail3(p, `Unknown link word "${word2.text}"`, spanOf42(word2), `${didYouMean(word2.text, [...DASHED_WORDS, KIND_OF])} ${said}`, DIAGNOSTIC_CODES.badOptionValue);
+        fail3(p, `Unknown link word "${word2.text}"`, spanOf43(word2), `${didYouMean(word2.text, [...DASHED_WORDS, KIND_OF])} ${said}`, DIAGNOSTIC_CODES.badOptionValue);
         return;
       }
     } else {
@@ -173948,13 +174030,13 @@ function parseLink3(cursor, p, line5) {
 function dispatch20(line5, p, scope) {
   const cursor = new TokenCursor(line5.tokens);
   const first = line5.tokens[0];
-  if (first.kind !== "word") return fail3(p, "A statement must start with a keyword or an id", spanOf42(first), "Write an actor, a system, a case, a note, or a link such as: customer -- checkout");
+  if (first.kind !== "word") return fail3(p, "A statement must start with a keyword or an id", spanOf43(first), "Write an actor, a system, a case, a note, or a link such as: customer -- checkout");
   if (line5.tokens[1]?.kind === "arrow") {
-    if (scope.opener !== null) fail3(p, "A link sits outside the systems", spanOf42(first), "Close the system with } first, then write the links.");
+    if (scope.opener !== null) fail3(p, "A link sits outside the systems", spanOf43(first), "Close the system with } first, then write the links.");
     return parseLink3(cursor, p, line5);
   }
   if (first.text === "system") {
-    if (scope.opener !== null) fail3(p, "A system cannot sit inside a system", spanOf42(first), "Close the system above with } first. Systems are one level deep.");
+    if (scope.opener !== null) fail3(p, "A system cannot sit inside a system", spanOf43(first), "Close the system above with } first. Systems are one level deep.");
     const parsed = parseSystem(cursor, p, line5);
     scope.system = parsed.system;
     scope.opener = parsed.isOpen ? line5 : scope.opener;
@@ -173966,7 +174048,7 @@ function dispatch20(line5, p, scope) {
     p.description = readLabel(cursor, p, line5.line, "description") ?? p.description;
     rejectTrailing(cursor, p, 'Write: desc "One or two sentences about the system"');
   } else {
-    fail3(p, `Unknown statement "${first.text}"`, spanOf42(first), `${didYouMean(first.text, USECASE_STATEMENT_WORDS)} A link looks like: customer -- checkout`, DIAGNOSTIC_CODES.unknownStatement);
+    fail3(p, `Unknown statement "${first.text}"`, spanOf43(first), `${didYouMean(first.text, USECASE_STATEMENT_WORDS)} A link looks like: customer -- checkout`, DIAGNOSTIC_CODES.unknownStatement);
   }
 }
 function roleOf(p, id) {
@@ -173982,7 +174064,7 @@ function resolveLinks3(p) {
     const isSystem = roleOf(p, end.text) === "system";
     const guess = !isSystem && suggested < SUGGESTIONS5 ? `${didYouMean(end.text, names11)} ` : "";
     suggested += 1;
-    fail3(p, isSystem ? `"${end.text}" is a system, and a link joins actors and use cases` : `Unknown actor or use case "${end.text}"`, spanOf42(end), isSystem ? "Link the actor to a use case inside the system." : `${guess}Declare it first: actor ${end.text} "Name", or case ${end.text} "Label"`, DIAGNOSTIC_CODES.unknownNode);
+    fail3(p, isSystem ? `"${end.text}" is a system, and a link joins actors and use cases` : `Unknown actor or use case "${end.text}"`, spanOf43(end), isSystem ? "Link the actor to a use case inside the system." : `${guess}Declare it first: actor ${end.text} "Name", or case ${end.text} "Label"`, DIAGNOSTIC_CODES.unknownNode);
   };
   for (const link2 of p.links) {
     const ends = [link2.from, link2.to].map((end) => roleOf(p, end.text));
@@ -173993,20 +174075,20 @@ function resolveLinks3(p) {
     }
     const [from, to] = ends;
     if (link2.from.text === link2.to.text) {
-      fail3(p, `"${link2.from.text}" cannot link to itself`, spanOf42(link2.to), "Link two different actors or use cases.");
+      fail3(p, `"${link2.from.text}" cannot link to itself`, spanOf43(link2.to), "Link two different actors or use cases.");
       continue;
     }
     const isCases = from === "case" && to === "case";
     if ((link2.kind === "include" || link2.kind === "extend") && !isCases) {
-      fail3(p, `${link2.kind} joins two use cases`, spanOf42(link2.arrow), `Write it between two cases: checkout ..> pay : ${link2.kind}. An actor takes part with --.`);
+      fail3(p, `${link2.kind} joins two use cases`, spanOf43(link2.arrow), `Write it between two cases: checkout ..> pay : ${link2.kind}. An actor takes part with --.`);
       continue;
     }
     if (link2.kind === "kind-of" && from !== to) {
-      fail3(p, "kind-of joins two actors or two use cases, never an actor and a use case", spanOf42(link2.arrow), "An actor takes part in a use case with --: customer -- checkout");
+      fail3(p, "kind-of joins two actors or two use cases, never an actor and a use case", spanOf43(link2.arrow), "An actor takes part in a use case with --: customer -- checkout");
       continue;
     }
     if (link2.kind === "association" && from === "actor" && to === "actor") {
-      fail3(p, "Two actors are not joined by an association", spanOf42(link2.arrow), "Write guest -> customer : kind-of when one actor is a kind of the other, or link each to the use case they share.");
+      fail3(p, "Two actors are not joined by an association", spanOf43(link2.arrow), "Write guest -> customer : kind-of when one actor is a kind of the other, or link each to the use case they share.");
       continue;
     }
     resolved2.push({ id: `l${resolved2.length}`, from: link2.from.text, to: link2.to.text, kind: link2.kind, label: link2.label, isDirected: link2.isDirected, at: link2.at });
@@ -174017,7 +174099,7 @@ function resolveNotes3(p) {
   const names11 = [...p.actors.map((actor) => actor.id), ...p.cases.map((item2) => item2.id)];
   return p.notes.flatMap((note, index2) => {
     if (names11.includes(note.target.text)) return [{ id: `n${index2}`, target: note.target.text, text: note.text, at: note.at }];
-    fail3(p, `Unknown actor or use case "${note.target.text}"`, spanOf42(note.target), `${didYouMean(note.target.text, names11)} A note is attached to an actor or a use case.`, DIAGNOSTIC_CODES.unknownNode);
+    fail3(p, `Unknown actor or use case "${note.target.text}"`, spanOf43(note.target), `${didYouMean(note.target.text, names11)} A note is attached to an actor or a use case.`, DIAGNOSTIC_CODES.unknownNode);
     return [];
   });
 }
@@ -174032,16 +174114,16 @@ function parseUsecase(lines, diagnostics) {
       dispatch20(line5, p, scope);
       continue;
     }
-    if (scope.opener === null) fail3(p, "Unmatched }", spanOf42(brace), 'Remove it, or open the block it closes with: system id "Name" {', DIAGNOSTIC_CODES.unexpectedClose);
-    else if (line5.tokens[1] !== void 0) fail3(p, "Unexpected text after }", spanOf42(line5.tokens[1]), "Put } on its own line.");
+    if (scope.opener === null) fail3(p, "Unmatched }", spanOf43(brace), 'Remove it, or open the block it closes with: system id "Name" {', DIAGNOSTIC_CODES.unexpectedClose);
+    else if (line5.tokens[1] !== void 0) fail3(p, "Unexpected text after }", spanOf43(line5.tokens[1]), "Put } on its own line.");
     scope.system = null;
     scope.opener = null;
   }
   const opener = scope.opener?.tokens[0];
-  if (opener !== void 0) fail3(p, "Block is never closed", spanOf42(opener), "Add a } on its own line after the use cases of the system.", DIAGNOSTIC_CODES.unclosedBlock);
+  if (opener !== void 0) fail3(p, "Block is never closed", spanOf43(opener), "Add a } on its own line after the use cases of the system.", DIAGNOSTIC_CODES.unclosedBlock);
   return { kind: "usecase", meta: { title: p.title, description: p.description }, actors: p.actors, systems: p.systems, cases: p.cases, links: resolveLinks3(p), notes: resolveNotes3(p) };
 }
-var SUGGESTIONS5, spanOf42, LINK_HINT;
+var SUGGESTIONS5, spanOf43, LINK_HINT;
 var init_parse25 = __esm({
   "../../packages/diagrams/src/kinds/usecase/parse.ts"() {
     "use strict";
@@ -174052,7 +174134,7 @@ var init_parse25 = __esm({
     init_token_cursor();
     init_words7();
     SUGGESTIONS5 = 25;
-    spanOf42 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf43 = (token) => ({ line: token.line, column: token.column, length: token.length });
     LINK_HINT = 'A link is: actor -- case, a ..> b : include, a ..> b : extend, or a -> b : kind-of. A label is quoted: a -- b : "label".';
   }
 });
@@ -175094,7 +175176,7 @@ function planVenn(ir, ctx) {
     for (const text6 of set2.texts) items2.push({ ids: [id], text: text6.label, size: null, origin: text6.span.line });
   }
   const order = sets.map((set2) => set2.id);
-  const overlaps11 = [];
+  const overlaps12 = [];
   const named2 = /* @__PURE__ */ new Set();
   for (const union2 of ir.unions) {
     const unknown2 = union2.names.filter((name2) => !ids.has(name2));
@@ -175109,7 +175191,7 @@ function planVenn(ir, ctx) {
       ctx.reporter.add(DIAGNOSTIC_CODES.mermaidDuplicateDropped, union2.span, `A second name for the overlap of ${members2.join(", ")} was dropped; its text lines are kept.`, "Name each overlap once.", "duplicate-union");
     } else if (union2.label !== null) {
       named2.add(key);
-      overlaps11.push({ ids: members2, text: union2.label, size: union2.size, origin: union2.span.line });
+      overlaps12.push({ ids: members2, text: union2.label, size: union2.size, origin: union2.span.line });
     } else if (union2.size !== null) {
       ctx.reporter.add(DIAGNOSTIC_CODES.mermaidDroppedMeaning, union2.span, `The size of the overlap of ${members2.join(", ")} was dropped, because the overlap has no name to write it with.`, 'Give the union a name, as in union A,B["Shared"]:8, to keep its size.', "unnamed-size");
     }
@@ -175120,7 +175202,7 @@ function planVenn(ir, ctx) {
     if (!isOneSet) ctx.reporter.dropped("style", style.span);
   }
   const sizes = sets.length === 2 && sets.every((set2) => set2.size !== null && set2.size > 0);
-  return { title: meta3.title, description: meta3.description, origin: header?.line ?? 1, sizes, sets, overlaps: overlaps11, items: items2 };
+  return { title: meta3.title, description: meta3.description, origin: header?.line ?? 1, sizes, sets, overlaps: overlaps12, items: items2 };
 }
 var init_plan16 = __esm({
   "../../packages/diagrams/src/kinds/venn/mermaid/plan.ts"() {
@@ -175144,7 +175226,7 @@ function labelOf5(ctx, bracket2, name2, span) {
   return label === "" ? name2 : label;
 }
 function readLine4(ctx, line5, state) {
-  const span = spanOf43(line5);
+  const span = spanOf44(line5);
   const text6 = line5.text.trim();
   if (/^title(?:\s|$)/.test(text6)) {
     if (ctx.prepared.meta.title === null) ctx.prepared.meta.title = describeLabel(ctx.reporter, unquoted3(text6.slice(5)), span, { allowSub: false }).label || null;
@@ -175192,18 +175274,18 @@ function readVenn(ctx) {
   const state = { sets: [], unions: [], styles: [], holder: null, items: 0 };
   for (const line5 of body2) {
     if (state.sets.length > VENN_LIMITS.maxSets) {
-      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf43(line5), `The diagram has more than ${VENN_LIMITS.maxSets} sets, and more than four sets cannot be drawn so every overlap shows.`, "Use a matrix with one row for each item and one column for each set, or split the sets into two diagrams.");
+      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf44(line5), `The diagram has more than ${VENN_LIMITS.maxSets} sets, and more than four sets cannot be drawn so every overlap shows.`, "Use a matrix with one row for each item and one column for each set, or split the sets into two diagrams.");
       break;
     }
     if (state.items > VENN_LIMITS.maxItems) {
-      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf43(line5), `The diagram has more than ${VENN_LIMITS.maxItems} text lines.`, "Keep the items that make the point of each region, then convert again.");
+      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf44(line5), `The diagram has more than ${VENN_LIMITS.maxItems} text lines.`, "Keep the items that make the point of each region, then convert again.");
       break;
     }
     readLine4(ctx, line5, state);
   }
   return { sets: state.sets, unions: state.unions, styles: state.styles };
 }
-var spanOf43, NAME3, SET, UNION, TEXT2, STYLE, unquoted3, namesOf;
+var spanOf44, NAME3, SET, UNION, TEXT2, STYLE, unquoted3, namesOf;
 var init_read14 = __esm({
   "../../packages/diagrams/src/kinds/venn/mermaid/read.ts"() {
     "use strict";
@@ -175212,7 +175294,7 @@ var init_read14 = __esm({
     init_text2();
     init_colour();
     init_constants17();
-    spanOf43 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
+    spanOf44 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
     NAME3 = String.raw`(?:"[^"]*"|[^\s,\[":]+)`;
     SET = new RegExp(String.raw`^set\s+(?<name>${NAME3})\s*(?:\[\s*(?<label>"[^"]*"|[^\]]*)\s*\])?\s*(?::\s*(?<size>[^\s]+))?\s*$`);
     UNION = new RegExp(String.raw`^union\s+(?<names>${NAME3}(?:\s*,\s*${NAME3})+)\s*(?:\[\s*(?<label>"[^"]*"|[^\]]*)\s*\])?\s*(?::\s*(?<size>[^\s]+))?\s*$`);
@@ -175270,8 +175352,8 @@ function overlapLine(diagram, region) {
 function outlineVenn(diagram) {
   const regions = allRegions(diagram);
   const sets = regions.filter((region) => region.sets.length === 1).map((region) => setLine(diagram, region));
-  const overlaps11 = regions.filter((region) => region.sets.length > 1).flatMap((region) => overlapLine(diagram, region) ?? []);
-  return [summarizeVenn(diagram), ...sets, ...overlaps11];
+  const overlaps12 = regions.filter((region) => region.sets.length > 1).flatMap((region) => overlapLine(diagram, region) ?? []);
+  return [summarizeVenn(diagram), ...sets, ...overlaps12];
 }
 var flat6, itemsOf;
 var init_outline24 = __esm({
@@ -175344,7 +175426,7 @@ function parseSet(cursor, state, line5) {
   }
   const written3 = labelToken2?.kind === "string" ? oneLine11(labelToken2.text) : "";
   state.setLines.set(id.text, keyword.line);
-  state.sets.push({ id: id.text, label: written3 === "" ? id.text : written3, size, tone, icon, at: spanOf44(id) });
+  state.sets.push({ id: id.text, label: written3 === "" ? id.text : written3, size, tone, icon, at: spanOf45(id) });
 }
 function readIds(cursor) {
   const ids = [];
@@ -175376,11 +175458,11 @@ function parseRegion(cursor, state, line5, word2) {
     state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, message2, ids[0] ?? keyword, hint2));
     return;
   }
-  const pending = { ids, text: text6, size, at: spanOf44(textToken) };
+  const pending = { ids, text: text6, size, at: spanOf45(textToken) };
   if (word2 === "overlap") state.pendingOverlaps.push(pending);
   else state.pendingItems.push(pending);
 }
-var HEADER_HINT13, SET_HINT, OVERLAP_HINT, ITEM_HINT3, spanOf44, oneLine11;
+var HEADER_HINT13, SET_HINT, OVERLAP_HINT, ITEM_HINT3, spanOf45, oneLine11;
 var init_parse_statements9 = __esm({
   "../../packages/diagrams/src/kinds/venn/parse-statements.ts"() {
     "use strict";
@@ -175394,7 +175476,7 @@ var init_parse_statements9 = __esm({
     SET_HINT = 'A set is: set fe "Frontend" size=30 tone=blue icon=lucide:monitor';
     OVERLAP_HINT = 'An overlap is: overlap fe be "API contracts" size=8, naming two or more sets and then the name of the region.';
     ITEM_HINT3 = 'An item is: item fe be "GraphQL schema", naming the sets it is in and then its text.';
-    spanOf44 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf45 = (token) => ({ line: token.line, column: token.column, length: token.length });
     oneLine11 = (text6) => text6.replace(/\s+/g, " ").trim();
   }
 });
@@ -175886,7 +175968,7 @@ var init_layout_axes2 = __esm({
 function around2(center, half) {
   return { x: center.x - half, y: center.y - half, width: half * 2, height: half * 2 };
 }
-function overlaps10(a, b, margin = 0) {
+function overlaps11(a, b, margin = 0) {
   return a.x < b.x + b.width + margin && b.x < a.x + a.width + margin && a.y < b.y + b.height + margin && b.y < a.y + a.height + margin;
 }
 function isWithin2(inner, outer, inset2 = 0) {
@@ -175947,9 +176029,9 @@ function crosses4(segment2, rect) {
 }
 function isFree2(rect, request, plot, obstacles, placed3, lines) {
   if (!isWithin2(rect, plot, M37.edgeInset)) return false;
-  if (obstacles.some((obstacle, index2) => index2 !== request.own && overlaps10(rect, obstacle, M37.keepOff))) return false;
-  if (placed3.some((other) => overlaps10(rect, other, M37.keepOff))) return false;
-  const padded = grown2(rect, 2);
+  if (obstacles.some((obstacle, index2) => index2 !== request.own && overlaps11(rect, obstacle, M37.keepOff))) return false;
+  if (placed3.some((other) => overlaps11(rect, other, M37.keepOff))) return false;
+  const padded = grown3(rect, 2);
   return !lines.hard.some((segment2) => crosses4(segment2, padded)) && !lines.soft.some((segment2) => crosses4(segment2, padded));
 }
 function placeLabels4(requests, plot, obstacles, fixed, lines) {
@@ -175970,14 +176052,14 @@ function placeLabels4(requests, plot, obstacles, fixed, lines) {
   }
   return result;
 }
-var M37, grown2, ATTEMPTS2;
+var M37, grown3, ATTEMPTS2;
 var init_layout_labels5 = __esm({
   "../../packages/diagrams/src/kinds/wardley/layout-labels.ts"() {
     "use strict";
     init_metrics25();
     init_rects2();
     M37 = WARDLEY_METRICS;
-    grown2 = (rect, margin) => ({ x: rect.x - margin, y: rect.y - margin, width: rect.width + margin * 2, height: rect.height + margin * 2 });
+    grown3 = (rect, margin) => ({ x: rect.x - margin, y: rect.y - margin, width: rect.width + margin * 2, height: rect.height + margin * 2 });
     ATTEMPTS2 = [
       { gap: M37.labelGap, avoidLines: true },
       { gap: M37.labelGap, avoidLines: false },
@@ -176056,8 +176138,8 @@ function placePill2(text6, from, to, marks, pills, others) {
   const fitted = fitLine(text6, "edgeLabel", M39.pillMaxWidth - M39.pillPaddingX * 2);
   const width = Math.ceil(measureRole(fitted, "edgeLabel")) + M39.pillPaddingX * 2;
   const at3 = (share) => ({ x: Math.round(from.x + (to.x - from.x) * share - width / 2), y: Math.round(from.y + (to.y - from.y) * share - M39.pillHeight / 2), width, height: M39.pillHeight });
-  const apart = PILL_STOPS.map(at3).filter((rect) => !pills.some((pill3) => overlaps10(rect, pill3, 2)));
-  const stops = apart.filter((rect) => !marks.some((mark) => overlaps10(rect, mark, 2)));
+  const apart = PILL_STOPS.map(at3).filter((rect) => !pills.some((pill3) => overlaps11(rect, pill3, 2)));
+  const stops = apart.filter((rect) => !marks.some((mark) => overlaps11(rect, mark, 2)));
   const clear = stops.find((rect) => !others.some((segment2) => crosses4(segment2, rect))) ?? stops[0] ?? apart[0];
   return { text: fitted, rect: clear ?? at3(0.5), isShortened: fitted !== text6 };
 }
@@ -176163,7 +176245,7 @@ function collisionsOf3(parts) {
   const pairs = [];
   parts.forEach((part2, first) => {
     for (let second = first + 1; second < parts.length; second += 1) {
-      if (overlaps10(part2.mark, parts[second].mark, 1)) pairs.push([first, second]);
+      if (overlaps11(part2.mark, parts[second].mark, 1)) pairs.push([first, second]);
     }
   });
   return pairs;
@@ -176757,7 +176839,7 @@ function readSetting2(ctx, word2, span) {
   return false;
 }
 function readLine5(ctx, line5, state) {
-  const span = spanOf45(line5);
+  const span = spanOf46(line5);
   const text6 = withoutComment3(line5.text).trim();
   if (text6 === "") return;
   if (state.open !== null) {
@@ -176798,7 +176880,7 @@ function readWardley(ctx) {
   const state = { stages: null, stagesSpan: null, parts: [], links: [], moves: [], pipelines: [], notes: [], sourcing: [], open: null };
   for (const line5 of body2) {
     if (state.parts.length > WARDLEY_LIMITS.maxParts || state.links.length > WARDLEY_LIMITS.maxLinks || state.notes.length > WARDLEY_LIMITS.maxNotes) {
-      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf45(line5), `The map has more than ${WARDLEY_LIMITS.maxParts} parts, ${WARDLEY_LIMITS.maxLinks} links, or ${WARDLEY_LIMITS.maxNotes} notes.`, "Split it into one map for each user need, then convert each.");
+      ctx.reporter.add(DIAGNOSTIC_CODES.mermaidTooLarge, spanOf46(line5), `The map has more than ${WARDLEY_LIMITS.maxParts} parts, ${WARDLEY_LIMITS.maxLinks} links, or ${WARDLEY_LIMITS.maxNotes} notes.`, "Split it into one map for each user need, then convert each.");
       return null;
     }
     readLine5(ctx, line5, state);
@@ -176809,7 +176891,7 @@ function readWardley(ctx) {
   }
   return state;
 }
-var spanOf45, PLACE;
+var spanOf46, PLACE;
 var init_mermaid_read4 = __esm({
   "../../packages/diagrams/src/kinds/wardley/mermaid-read.ts"() {
     "use strict";
@@ -176817,7 +176899,7 @@ var init_mermaid_read4 = __esm({
     init_context();
     init_constants18();
     init_mermaid_read_parts();
-    spanOf45 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
+    spanOf46 = (line5) => ({ line: line5.number, column: line5.text.length - line5.text.trimStart().length + 1, length: Math.max(1, line5.text.trim().length) });
     PLACE = /\[\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\]/;
   }
 });
@@ -176866,13 +176948,13 @@ function readUnit5(option2, state) {
   if (option2 === void 0) return void 0;
   return readUnitText(option2.value, option2.valueToken, option2.key, state);
 }
-var NUMBER11, spanOf46, MEANING2, oneLine12;
+var NUMBER11, spanOf47, MEANING2, oneLine12;
 var init_parse_values = __esm({
   "../../packages/diagrams/src/kinds/wardley/parse-values.ts"() {
     "use strict";
     init_core();
     NUMBER11 = /^\d+(?:\.\d+)?$/;
-    spanOf46 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf47 = (token) => ({ line: token.line, column: token.column, length: token.length });
     MEANING2 = {
       visibility: "visibility= runs up the map, 0 at the bottom (invisible to the user) and 1 at the top (what the user sees)",
       evolution: "evolution= runs across the map, 0 at genesis on the left and 1 at commodity on the right",
@@ -176969,7 +177051,7 @@ function parsePart(cursor, state, line5, kind) {
     return;
   }
   if (typeof visibility !== "number" || typeof evolution !== "number") return;
-  const part2 = { kind, id: idToken.text, label, visibility, evolution, source, inertia, tone, icon, at: spanOf46(idToken) };
+  const part2 = { kind, id: idToken.text, label, visibility, evolution, source, inertia, tone, icon, at: spanOf47(idToken) };
   state.parts.push(part2);
 }
 var hintFor;
@@ -177016,7 +177098,7 @@ function parseLink4(cursor, state, line5) {
     state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, `"${fromToken.text}" links to itself`, toToken, "A link joins two different parts: the one higher in the chain and the one it needs."));
     return;
   }
-  state.links.push({ from: fromToken.text, to: toToken.text, style, label, at: spanOf46(fromToken), fromToken, toToken });
+  state.links.push({ from: fromToken.text, to: toToken.text, style, label, at: spanOf47(fromToken), fromToken, toToken });
 }
 function parseEvolve(cursor, state, line5) {
   cursor.next();
@@ -177028,7 +177110,7 @@ function parseEvolve(cursor, state, line5) {
   rejectTrailing(cursor, state, EVOLVE_HINT);
   if (ref2 === null || ref2.kind !== "word" || evolution === null) return;
   const label = labelToken2?.kind === "string" && oneLine12(labelToken2.text) !== "" ? oneLine12(labelToken2.text) : null;
-  state.moves.push({ id: ref2.text, evolution, label, at: spanOf46(ref2), token: ref2 });
+  state.moves.push({ id: ref2.text, evolution, label, at: spanOf47(ref2), token: ref2 });
 }
 function parsePipeline(cursor, state, line5) {
   cursor.next();
@@ -177047,7 +177129,7 @@ function parsePipeline(cursor, state, line5) {
     state.report.push(errorAt(DIAGNOSTIC_CODES.badOptionValue, `The pipeline of "${ref2.text}" ends at ${to}, which is not after its start at ${from}`, ref2, "from= is the least evolved end and to= the most evolved: write the smaller number in from=."));
     return;
   }
-  state.pipelines.push({ id: ref2.text, from, to, at: spanOf46(ref2), token: ref2 });
+  state.pipelines.push({ id: ref2.text, from, to, at: spanOf47(ref2), token: ref2 });
 }
 function parseNote4(cursor, state, line5) {
   const keyword = cursor.next();
@@ -177070,7 +177152,7 @@ function parseNote4(cursor, state, line5) {
     return;
   }
   if (visibility === null || evolution === null) return;
-  state.notes.push({ text: text6, visibility, evolution, at: spanOf46(keyword) });
+  state.notes.push({ text: text6, visibility, evolution, at: spanOf47(keyword) });
 }
 var LINK_HINT2, EVOLVE_HINT, PIPELINE_HINT, NOTE_HINT;
 var init_parse_statements10 = __esm({
@@ -178389,7 +178471,7 @@ function readXychart(ctx) {
   const unreadable3 = (span, text6, hint2) => reportUnreadable(ctx, span, `The line "${text6.slice(0, 40)}"`, hint2);
   for (const line5 of [...first, ...ctx.prepared.body]) {
     const text6 = line5.text.trim();
-    const span = spanOf47(line5, text6);
+    const span = spanOf48(line5, text6);
     const title = /^title\s+(.*)$/i.exec(text6);
     const axis = /^(x-axis|y-axis)\b(.*)$/i.exec(text6);
     const plot = /^(bar|line)\b(.*)$/i.exec(text6);
@@ -178428,7 +178510,7 @@ function readXychart(ctx) {
   });
   return { isHorizontal: orientation?.[1]?.toLowerCase() === "horizontal", x, y, series: fitting };
 }
-var NUMBER12, AXIS_REST, PLOT_REST, spanOf47;
+var NUMBER12, AXIS_REST, PLOT_REST, spanOf48;
 var init_mermaid_read5 = __esm({
   "../../packages/diagrams/src/kinds/xychart/mermaid-read.ts"() {
     "use strict";
@@ -178439,7 +178521,7 @@ var init_mermaid_read5 = __esm({
     NUMBER12 = /^-?\d+(?:\.\d+)?$/;
     AXIS_REST = /^\s*(?:"([^"]*)"|([A-Za-z_][^\s[]*))?\s*(?:\[(.*)\]|(-?\d+(?:\.\d+)?)\s*-->\s*(-?\d+(?:\.\d+)?))?\s*$/;
     PLOT_REST = /^\s*(?:"([^"]*)"\s*)?\[(.*)\]\s*$/;
-    spanOf47 = (line5, text6) => ({ line: line5.number, column: line5.text.indexOf(text6) + 1 || 1, length: Math.max(1, text6.length) });
+    spanOf48 = (line5, text6) => ({ line: line5.number, column: line5.text.indexOf(text6) + 1 || 1, length: Math.max(1, text6.length) });
   }
 });
 
@@ -178562,7 +178644,7 @@ function readList(cursor, state, line5, hint2) {
   if (close3 === void 0) state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, "The list is missing its closing bracket ]", cursor.endPosition(line5), hint2));
   return items2;
 }
-var NUMBER13, NUMBER_HINT, spanOf48, readNumberOption;
+var NUMBER13, NUMBER_HINT, spanOf49, readNumberOption;
 var init_read15 = __esm({
   "../../packages/diagrams/src/kinds/xychart/read.ts"() {
     "use strict";
@@ -178570,7 +178652,7 @@ var init_read15 = __esm({
     init_constants19();
     NUMBER13 = /^\d+(?:\.\d+)?$/;
     NUMBER_HINT = 'Write plain digits such as 42 or 12.5, with no thousands mark, unit, or quotes. Put the unit on the axis: y "Latency" unit="ms".';
-    spanOf48 = (token) => ({ line: token.line, column: token.column, length: token.length });
+    spanOf49 = (token) => ({ line: token.line, column: token.column, length: token.length });
     readNumberOption = (option2, state) => readNumber(option2.valueToken, state, `a number for ${option2.key}=`, option2.valueToken);
   }
 });
@@ -178598,7 +178680,7 @@ function readRange2(cursor, state, line5) {
 }
 function parseXAxis(cursor, state, line5) {
   const word2 = cursor.next();
-  const at3 = word2 === null ? { line: line5, column: 1, length: 1 } : spanOf48(word2);
+  const at3 = word2 === null ? { line: line5, column: 1, length: 1 } : spanOf49(word2);
   if (state.x !== null) state.report.push(errorAt(DIAGNOSTIC_CODES.duplicateId, `The x axis is already set on line ${state.x.at.line}`, at3, "A chart has one x axis."));
   const title = readTitle(cursor, state, line5);
   const hasBracket = state.report.some((entry2) => entry2.line === line5 && entry2.message === 'Unexpected character "["');
@@ -178621,7 +178703,7 @@ function parseXAxis(cursor, state, line5) {
 }
 function parseYAxis(cursor, state, line5) {
   const word2 = cursor.next();
-  const at3 = word2 === null ? { line: line5, column: 1, length: 1 } : spanOf48(word2);
+  const at3 = word2 === null ? { line: line5, column: 1, length: 1 } : spanOf49(word2);
   const previous = state.y.at;
   if (previous !== null) state.report.push(errorAt(DIAGNOSTIC_CODES.duplicateId, `The y axis is already set on line ${previous.line}`, at3, "A chart has one y axis. Two scales on one plot invent a link between the series; draw two charts."));
   const title = readTitle(cursor, state, line5);
@@ -178706,7 +178788,7 @@ function readName5(cursor, state, line5, what, hint2) {
   cursor.next();
   const text6 = oneLine13(token.text);
   if (text6 === "") state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, `A ${what} needs some text`, token, hint2));
-  return text6 === "" ? null : { text: text6, at: spanOf48(token) };
+  return text6 === "" ? null : { text: text6, at: spanOf49(token) };
 }
 function parseSeries2(cursor, state, line5, kind) {
   cursor.next();
@@ -178718,7 +178800,7 @@ function parseSeries2(cursor, state, line5, kind) {
   const tone = toneOption === void 0 ? null : resolveTone(toneOption, "neutral", state);
   const icon = resolveAutoIcon(findOption(options3, "icon"), null, state, { texts: [name2?.text ?? null] });
   if (items2 === null) return;
-  const values = items2.map((item2) => readNumber(item2, state, "a number", spanOf48(item2)));
+  const values = items2.map((item2) => readNumber(item2, state, "a number", spanOf49(item2)));
   if (values.length === 0) state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, "A series has no values", name2?.at ?? { line: line5, column: 1, length: 1 }, SERIES_HINT2));
   if (name2 === null || values.length === 0 || values.some((value) => value === null)) return;
   const first = state.names.get(nameKey2(name2.text));
@@ -178749,7 +178831,7 @@ function parseNote5(cursor, state, line5) {
   const start2 = word2 ?? { line: line5, column: 1, length: 4 };
   if (state.direction === "horizontal") state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, "A note marks a place along the horizontal axis, so it needs direction=vertical", start2, "Remove the note, or draw the chart upright. A threshold labels a number on a horizontal chart."));
   else if (place3 === void 0) state.report.push(errorAt(DIAGNOSTIC_CODES.syntax, "A note needs at= to say where it stands", name2?.at ?? start2, NOTE_HINT2));
-  else if (name2 !== null) state.pending.push({ text: name2.text, place: place3.value, placeAt: spanOf48(place3.valueToken), at: name2.at });
+  else if (name2 !== null) state.pending.push({ text: name2.text, place: place3.value, placeAt: spanOf49(place3.valueToken), at: name2.at });
 }
 var SERIES_HINT2, THRESHOLD_HINT, NOTE_HINT2;
 var init_parse_series = __esm({
@@ -179730,7 +179812,7 @@ var init_schema4 = __esm({
     init_schema3();
     init_themes();
     init_sources2();
-    SHARED_DEFAULT_OPTIONS = ["icons", "legend", "legendparts", "spacing", "edges", "fit", "direction", "animate", "numbered", "theme"];
+    SHARED_DEFAULT_OPTIONS = ["icons", "legend", "legendparts", "spacing", "edges", "fit", "tabs", "direction", "animate", "numbered", "theme"];
     optionKey = external_exports.string().regex(/^[a-z][a-z0-9-]*$/, "Write the header option as the header writes it, such as direction or layout").refine((key) => key !== "title", { message: "A title is the diagram's own; it has no default" });
     optionValue = external_exports.union([external_exports.string().min(1).max(SETTINGS_FILE.maxValueLength), external_exports.number(), external_exports.boolean()]);
     MOVED_DEFAULTS = {
@@ -179744,6 +179826,7 @@ var init_schema4 = __esm({
       spacing: external_exports.enum(SPACING_VALUES).optional().describe("spacing= on every header that takes it: compact packs the boxes closer, roomy spreads them, normal is the default."),
       edges: external_exports.enum(EDGE_SHAPES).optional().describe("edges= on every header that takes it: orthogonal (the default), spline for smooth curves, or straight for slanted lines."),
       fit: external_exports.enum(FIT_VALUES).optional().describe("fit= on every header that takes it: the shape direction=auto lays a picture out for, wide (slides), tall (phones), square, or auto (the default)."),
+      tabs: external_exports.enum(GROUP_TAB_STYLES).optional().describe("tabs= on every header that takes it: plate draws a group's name on a raised outlined tab (the default), heading sets it flat into the frame."),
       direction: external_exports.enum(DIRECTIONS).optional().describe("direction= on every header that takes this value."),
       animate: external_exports.enum(SWITCH_VALUES).optional().describe("animate= on every header that takes it: on moves dashes along every line."),
       numbered: external_exports.enum(SWITCH_VALUES).optional().describe("numbered= on every header that takes it: on numbers every line in the order written."),
@@ -180123,7 +180206,8 @@ var init_tool_settings = __esm({
     init_apply_defaults();
     STYLE_PARTS = [
       { part: "spacing", fallback: DEFAULT_SPACING },
-      { part: "edges", fallback: DEFAULT_EDGE_SHAPE }
+      { part: "edges", fallback: DEFAULT_EDGE_SHAPE },
+      { part: "tabs", fallback: DEFAULT_GROUP_TABS }
     ];
   }
 });
@@ -180220,10 +180304,11 @@ async function fetchOrgStyle(request, fetcher = fetch) {
   const spacing = partOf(answer.spacing, SPACING_VALUES);
   const edges = partOf(answer.edges, EDGE_SHAPES);
   if (spacing === void 0 || edges === void 0) return err("The API answered with a diagram style this version does not know.");
+  const tabs = answer.tabs === "heading" ? "heading" : null;
   const allowed = { spacing: listOf3(answer.allowed?.spacing, SPACING_VALUES), edges: listOf3(answer.allowed?.edges, EDGE_SHAPES) };
   const narrows = allowed.spacing !== void 0 || allowed.edges !== void 0;
-  if (spacing === null && edges === null && !narrows) return ok(null);
-  return ok({ spacing, edges, ...narrows ? { allowed: { ...allowed.spacing === void 0 ? {} : { spacing: allowed.spacing }, ...allowed.edges === void 0 ? {} : { edges: allowed.edges } } } : {} });
+  if (spacing === null && edges === null && tabs === null && !narrows) return ok(null);
+  return ok({ spacing, edges, ...tabs === null ? {} : { tabs }, ...narrows ? { allowed: { ...allowed.spacing === void 0 ? {} : { spacing: allowed.spacing }, ...allowed.edges === void 0 ? {} : { edges: allowed.edges } } } : {} });
 }
 function withOrgStyleDefaults(defaults, style) {
   if (style === null) return defaults;
@@ -182222,14 +182307,14 @@ function detourOf(lines) {
 function measureScene(scene) {
   const boxes2 = solidBoxes(scene.boxes);
   const over = linesOverBoxes(scene.lines, boxes2);
-  const overlaps11 = overlappingLabels(scene.labels, boxes2);
+  const overlaps12 = overlappingLabels(scene.labels, boxes2);
   const crossings2 = countCrossings(scene.lines);
   const biggest = [...scene.groups].sort((a, b) => b.boxes - a.boxes || a.id.localeCompare(b.id))[0];
   return {
     measures: {
       crossings: crossings2.count,
       lineOverBox: over.count,
-      labelOverlaps: overlaps11.count,
+      labelOverlaps: overlaps12.count,
       smallestTextPx: round(smallestText(scene), 1),
       aspectRatio: scene.height > 0 ? round(scene.width / scene.height, 2) : 0,
       emptySpace: round(emptyShare(scene), 2),
@@ -182243,7 +182328,7 @@ function measureScene(scene) {
     },
     lineOverBox: over.first,
     crossingPair: crossings2.first,
-    labelPair: overlaps11.first,
+    labelPair: overlaps12.first,
     biggestGroup: biggest === void 0 || biggest.boxes === 0 ? null : { id: biggest.id, boxes: biggest.boxes }
   };
 }
@@ -196693,9 +196778,9 @@ var init_inflate = __esm({
       push(value) {
         if (this.length >= this.limit) throw new Malformed("The stream unpacks past the limit.");
         if (this.length === this.bytes.length) {
-          const grown3 = new Uint8Array(Math.min(this.limit, this.bytes.length * 2));
-          grown3.set(this.bytes);
-          this.bytes = grown3;
+          const grown4 = new Uint8Array(Math.min(this.limit, this.bytes.length * 2));
+          grown4.set(this.bytes);
+          this.bytes = grown4;
         }
         this.bytes[this.length] = value;
         this.length += 1;
@@ -209940,7 +210025,7 @@ var init_files2 = __esm({
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // package.json
-var package_default = { version: "0.7.0-beta.2" };
+var package_default = { version: "0.7.0-beta.3" };
 
 // npm/package-config.json
 var package_config_default = {
