@@ -1648,8 +1648,8 @@ var init_action_release = __esm({
     "use strict";
     ACTION_REPOSITORY = "plotwork-official/plotwork-action";
     ACTION_RELEASE = {
-      version: "1.5.1",
-      sha: "a4df8eaf155240df63e49d360bc63e50529a3f26"
+      version: "1.6.0",
+      sha: "6dadd275242a09f7a77bf19a7e3e0eb792c89e5b"
     };
     PINNED_ACTION_LINE = `uses: ${ACTION_REPOSITORY}@${ACTION_RELEASE.sha} # v${ACTION_RELEASE.version}`;
   }
@@ -1689,7 +1689,7 @@ var init_view_links = __esm({
     };
     CLI_RELEASE = {
       packageName: "@buun_group/plotwork",
-      version: "0.6.1",
+      version: "0.7.0",
       onNpm: true
     };
     CLI_SCHEME_FLAG_SINCE = "0.3.0";
@@ -1727,7 +1727,7 @@ var init_gitlab_component_release = __esm({
       project: "plotwork/plotwork-component",
       /** The component's name: its template is `templates/<name>.yml`. */
       component: "plotwork",
-      version: "0.1.2",
+      version: "0.1.3",
       published: true
     };
     GITLAB_COMPONENT_PATH = `gitlab.com/${GITLAB_COMPONENT_RELEASE.project}/${GITLAB_COMPONENT_RELEASE.component}`;
@@ -1801,7 +1801,7 @@ var init_mcp_release = __esm({
     "use strict";
     MCP_RELEASE = {
       packageName: "@buun_group/plotwork-mcp",
-      version: "0.8.1"
+      version: "0.9.0"
     };
   }
 });
@@ -210221,7 +210221,7 @@ var init_files2 = __esm({
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // package.json
-var package_default = { version: "0.8.0-beta.1" };
+var package_default = { version: "0.8.0" };
 
 // npm/package-config.json
 var package_config_default = {
