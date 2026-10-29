@@ -1,6 +1,6 @@
 {
   "name": "@buun_group/plotwork",
-  "version": "0.9.0-beta.2",
+  "version": "0.9.0",
   "description": "The Plotwork command line: validate, render, sync, and convert diagrams in your repository, offline. Keeps the pictures in Markdown files in step with their source, with a check for CI. It counts nothing and sends nothing.",
   "license": "MIT",
   "type": "module",
