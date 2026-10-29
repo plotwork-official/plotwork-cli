@@ -1617,7 +1617,7 @@ var init_editing = __esm({
 });
 
 // ../../packages/diagrams/src/constants/diagram-links.ts
-var DIAGRAM_LINK_HOSTS, DIAGRAM_LINK_PATH, READ_LIMITS;
+var DIAGRAM_LINK_HOSTS, DIAGRAM_LINK_PATH, READ_LIMITS, HOSTED_PICTURE_PATH, VIEWER_PACKAGE;
 var init_diagram_links = __esm({
   "../../packages/diagrams/src/constants/diagram-links.ts"() {
     "use strict";
@@ -1628,6 +1628,19 @@ var init_diagram_links = __esm({
       timeoutMs: 5e3,
       /** The most bytes of a picture it reads. A picture of the largest diagram is far smaller. */
       maxBytes: 1e6
+    };
+    HOSTED_PICTURE_PATH = /^\/([dlo])\/[A-Za-z0-9_-]{22}\.svg$/;
+    VIEWER_PACKAGE = {
+      /** The package name on npm. */
+      name: "@plotwork.official/viewer",
+      /** The entry that defines the `<plotwork-diagram>` element. */
+      register: "@plotwork.official/viewer/register",
+      /** The entry of the React component. */
+      react: "@plotwork.official/viewer/react",
+      /** The custom element. */
+      element: "plotwork-diagram",
+      /** The React component. */
+      component: "PlotworkDiagram"
     };
   }
 });
@@ -1648,8 +1661,8 @@ var init_action_release = __esm({
     "use strict";
     ACTION_REPOSITORY = "plotwork-official/plotwork-action";
     ACTION_RELEASE = {
-      version: "1.6.0",
-      sha: "6dadd275242a09f7a77bf19a7e3e0eb792c89e5b"
+      version: "1.7.0",
+      sha: "f1bb2403552880c8dd9c0f2c5ed213b36c3c9390"
     };
     PINNED_ACTION_LINE = `uses: ${ACTION_REPOSITORY}@${ACTION_RELEASE.sha} # v${ACTION_RELEASE.version}`;
   }
@@ -1689,7 +1702,7 @@ var init_view_links = __esm({
     };
     CLI_RELEASE = {
       packageName: "@buun_group/plotwork",
-      version: "0.7.0",
+      version: "0.8.0",
       onNpm: true
     };
     CLI_SCHEME_FLAG_SINCE = "0.3.0";
@@ -1801,7 +1814,7 @@ var init_mcp_release = __esm({
     "use strict";
     MCP_RELEASE = {
       packageName: "@buun_group/plotwork-mcp",
-      version: "0.9.0"
+      version: "0.10.0"
     };
   }
 });
@@ -140006,7 +140019,7 @@ function fanOrder(laidOut2, diagram, direction) {
     const source = ends.get(edge2.id)?.from;
     if (source !== void 0) slotsBySource.set(source, [...slotsBySource.get(source) ?? [], slot]);
   });
-  const targetOf2 = (edge2) => centres.get(ends.get(edge2.id)?.to ?? "") ?? 0;
+  const targetOf3 = (edge2) => centres.get(ends.get(edge2.id)?.to ?? "") ?? 0;
   const order = edges.map((edge2) => edge2.id);
   let isChanged = false;
   for (const slots of slotsBySource.values()) {
@@ -140016,12 +140029,12 @@ function fanOrder(laidOut2, diagram, direction) {
         const [a, b] = [elkRouteOf(first), elkRouteOf(second)];
         const [startA, startB] = [a[0], b[0]];
         if (startA === void 0 || startB === void 0) return false;
-        const isReversed = Math.sign(across2(startA) - across2(startB)) * Math.sign(targetOf2(first) - targetOf2(second)) < 0;
+        const isReversed = Math.sign(across2(startA) - across2(startB)) * Math.sign(targetOf3(first) - targetOf3(second)) < 0;
         return isReversed && crossingsBetween(a, b) > 0;
       })
     );
     if (!isTangled) continue;
-    const sorted = [...fan].sort((first, second) => targetOf2(first) - targetOf2(second));
+    const sorted = [...fan].sort((first, second) => targetOf3(first) - targetOf3(second));
     slots.forEach((slot, index2) => {
       order[slot] = sorted[index2].id;
     });
@@ -184401,6 +184414,213 @@ var init_check_command = __esm({
   }
 });
 
+// ../../packages/diagrams/src/embed/hosted-link.ts
+function looksLikeLink(text6) {
+  return /^[a-z][a-z0-9+.-]*:\/\//i.test(text6.trim());
+}
+function readHostedLink(text6) {
+  let link2;
+  try {
+    link2 = new URL(text6.trim());
+  } catch {
+    return { ok: false, message: `"${text6.slice(0, 80)}" is not a link.`, hint: HINT2 };
+  }
+  if (link2.protocol !== "https:") return { ok: false, message: "A hosted picture is shown over https only.", hint: HINT2 };
+  if (link2.username !== "" || link2.password !== "" || link2.port !== "") return { ok: false, message: "A link with a user name, a password, or a port is not a hosted picture.", hint: HINT2 };
+  if (!DIAGRAM_LINK_HOSTS.includes(link2.hostname)) {
+    return { ok: false, message: `Only pictures on ${DIAGRAM_LINK_HOSTS.join(" and ")} are hosted by Plotwork.`, hint: `${HINT2} A view link holds the diagram itself: draw it to a file with the command line's render, and embed the file.` };
+  }
+  const folder = HOSTED_PICTURE_PATH.exec(link2.pathname)?.[1];
+  const kind = folder === void 0 ? void 0 : KIND_OF_FOLDER[folder];
+  if (kind === void 0) return { ok: false, message: "The path of a hosted picture is /d/, /l/ or /o/, a 22 character token, and .svg.", hint: HINT2 };
+  if (link2.search !== "" || link2.hash !== "") return { ok: false, message: "A hosted picture has no query or fragment.", hint: `Send the link as it was published. ${HINT2}` };
+  return { ok: true, url: link2.href, kind };
+}
+var KIND_OF_FOLDER, HINT2;
+var init_hosted_link = __esm({
+  "../../packages/diagrams/src/embed/hosted-link.ts"() {
+    "use strict";
+    init_constants();
+    KIND_OF_FOLDER = { d: "picture", l: "stable", o: "organisation" };
+    HINT2 = `Send a hosted picture, such as https://${DIAGRAM_LINK_HOSTS[0]}/d/<token>.svg, a stable link (/l/<token>.svg), or an organisation embed link (/o/<token>.svg).`;
+  }
+});
+
+// ../../packages/diagrams/src/embed/fingerprint.ts
+async function pictureFingerprint(svg) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(svg));
+  return `sha256-${Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("")}`;
+}
+var init_fingerprint = __esm({
+  "../../packages/diagrams/src/embed/fingerprint.ts"() {
+    "use strict";
+  }
+});
+
+// ../../packages/diagrams/src/embed/snippet.ts
+function escapeHtmlAttribute(value) {
+  return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function jsxAttribute(name2, value) {
+  return /^[^"&{}<>\\\r\n\u2028\u2029]*$/.test(value) ? `${name2}="${value}"` : `${name2}={${JSON.stringify(value).replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029")}}`;
+}
+async function buildEmbed(request) {
+  const notes = [];
+  const fingerprint = request.svg === null ? null : await pictureFingerprint(request.svg);
+  const pinned = request.pin && fingerprint !== null;
+  if (request.pin && fingerprint === null) notes.push(EMBED_NOTES.pinLink);
+  if (pinned && request.link === "stable") notes.push(EMBED_NOTES.pinStable);
+  const followable = request.link === "stable" || request.link === "organisation";
+  const live = request.live && followable && !pinned;
+  if (request.live && !live) notes.push(pinned && followable ? EMBED_NOTES.livePinned : request.link === null ? EMBED_NOTES.liveFile : EMBED_NOTES.livePicture);
+  if (request.link === "organisation") notes.push(EMBED_NOTES.organisation);
+  const label = request.label?.trim() ?? "";
+  const attributes2 = [["src", request.src]];
+  if (label !== "") attributes2.push(["label", label]);
+  if (pinned) attributes2.push(["fingerprint", fingerprint]);
+  const snippet2 = request.format === "react" ? [
+    `import { ${VIEWER_PACKAGE.component} } from '${VIEWER_PACKAGE.react}'`,
+    "",
+    `<${VIEWER_PACKAGE.component} ${[...attributes2.map(([name2, value]) => jsxAttribute(name2, value)), ...live ? ["live"] : []].join(" ")} />`
+  ].join("\n") : [
+    '<script type="module">',
+    `  import '${VIEWER_PACKAGE.register}'`,
+    "</script>",
+    "",
+    `<${VIEWER_PACKAGE.element} ${[...attributes2.map(([name2, value]) => `${name2}="${escapeHtmlAttribute(value)}"`), ...live ? ["live"] : []].join(" ")}></${VIEWER_PACKAGE.element}>`
+  ].join("\n");
+  return { snippet: snippet2, install: EMBED_INSTALL, fingerprint, live, pinned, notes };
+}
+var EMBED_FORMATS, EMBED_INSTALL, EMBED_NOTES;
+var init_snippet = __esm({
+  "../../packages/diagrams/src/embed/snippet.ts"() {
+    "use strict";
+    init_constants();
+    init_fingerprint();
+    EMBED_FORMATS = ["html", "react"];
+    EMBED_INSTALL = `npm install ${VIEWER_PACKAGE.name}`;
+    EMBED_NOTES = {
+      livePicture: "live is left out: a published picture (/d/) never changes. Only a stable link (/l/) or an organisation embed link (/o/) shows a new version.",
+      liveFile: "live is left out: a file the page serves changes only when the site is built again. Only a stable link (/l/) or an organisation embed link (/o/) shows a new version.",
+      livePinned: "live is left out: a pinned picture is never live, because a new version would not match its fingerprint.",
+      pinLink: "fingerprint is left out: a link cannot be pinned without its SVG text, and nothing is fetched. Pin the file itself, or send the SVG text with the link.",
+      pinStable: "A pinned stable link stops showing the diagram once the link moves to a new version.",
+      organisation: "An organisation embed link shows the diagram only on the websites its owner allows; any other page shows a placeholder."
+    };
+  }
+});
+
+// ../../packages/diagrams/src/embed/embed-diagram.ts
+function isSvgText(text6) {
+  return /^\s*(?:<\?xml[^>]*>\s*)?(?:<!--[\s\S]*?-->\s*|<!DOCTYPE[^>]*>\s*)*<svg[\s>]/i.test(text6);
+}
+var init_embed_diagram = __esm({
+  "../../packages/diagrams/src/embed/embed-diagram.ts"() {
+    "use strict";
+    init_hosted_link();
+    init_snippet();
+  }
+});
+
+// ../../packages/diagrams/src/embed/index.ts
+var init_embed2 = __esm({
+  "../../packages/diagrams/src/embed/index.ts"() {
+    "use strict";
+    init_embed_diagram();
+    init_fingerprint();
+    init_hosted_link();
+    init_snippet();
+  }
+});
+
+// ../../packages/diagrams/src/cli/embed-command.ts
+import { existsSync as existsSync4, readFileSync as readFileSync4 } from "node:fs";
+function pictureOf(path) {
+  return /\.[^./\\]+$/.test(path) ? path.replace(/\.[^./\\]+$/, ".svg") : `${path}.svg`;
+}
+async function targetOf(target2, options3) {
+  if (looksLikeLink(target2)) {
+    const read = readHostedLink(target2);
+    if (!read.ok) {
+      console.error(`${read.message}
+${read.hint}`);
+      return { exit: EXIT.usage };
+    }
+    return { request: { src: read.url, link: read.kind, svg: null }, notes: [] };
+  }
+  if (!existsSync4(target2)) {
+    console.error(`no file ${target2}`);
+    return { exit: EXIT.usage };
+  }
+  if (/\.svg$/i.test(target2)) {
+    const svg2 = readFileSync4(target2, "utf8");
+    if (!isSvgText(svg2)) {
+      console.error(`${target2} is not an SVG: it does not start with an <svg> element`);
+      return { exit: EXIT.problems };
+    }
+    return { request: { src: target2, link: null, svg: svg2 }, notes: [] };
+  }
+  const [unit3] = readSourceUnits(target2);
+  if (unit3 === void 0) {
+    console.error(`no diagram found in ${target2}`);
+    return { exit: EXIT.problems };
+  }
+  const source = applyDefaults(unit3.source, options3.defaults).source;
+  const parsed = parseDiagram(source);
+  if (!parsed.ok) {
+    for (const diagnostic of parsed.error) console.error(`${formatDiagnostic(diagnostic, source)}
+     at file line ${unit3.firstLine + diagnostic.line - 1}
+`);
+    return { exit: EXIT.problems };
+  }
+  const embedSource = options3.defaults?.embedSource ?? true;
+  const svg = await renderDiagram(parsed.value, { scheme: "auto", ...embedSource ? { source } : {} });
+  const src = pictureOf(target2);
+  return { request: { src, link: null, svg }, notes: [`The snippet loads ${src}: write it with render ${target2} --scheme auto --out ${src}${options3.pin ? ", so the picture matches the fingerprint" : ""}.`] };
+}
+async function embedCommand(target2, options3) {
+  const read = await targetOf(target2, options3);
+  if ("exit" in read) return read.exit;
+  const embed = await buildEmbed({ ...read.request, format: options3.format, live: options3.live, pin: options3.pin, label: options3.label });
+  process.stdout.write(`${embed.install}
+
+${embed.snippet}
+`);
+  for (const note of [...embed.notes, ...read.notes]) console.error(`note: ${note}`);
+  return EXIT.ok;
+}
+async function runEmbed(target2, args) {
+  if (args.format !== void 0 && !EMBED_FORMATS.includes(args.format)) {
+    console.error(`embed --format is one of ${EMBED_FORMATS.join(", ")}`);
+    return EXIT.usage;
+  }
+  const local = looksLikeLink(target2) ? { status: "none" } : settingsFor(target2, { explicit: args.config });
+  if (local.status === "invalid") {
+    console.error(local.message);
+    return EXIT.usage;
+  }
+  return embedCommand(target2, {
+    format: args.format === "react" ? "react" : "html",
+    live: args.live === true,
+    pin: args.pin === true,
+    label: args.label,
+    defaults: local.status === "found" ? local.settings.defaults : void 0
+  });
+}
+var init_embed_command = __esm({
+  "../../packages/diagrams/src/cli/embed-command.ts"() {
+    "use strict";
+    init_core();
+    init_embed2();
+    init_parse29();
+    init_render24();
+    init_settings();
+    init_commands();
+    init_input();
+    init_settings_file();
+  }
+});
+
 // ../../packages/diagrams/src/export/wiki-export.ts
 function xmlAttribute(text6) {
   return text6.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
@@ -200892,7 +201112,7 @@ function sharedMark(addresses) {
   const [only] = [...marks];
   return marks.size === 1 && only !== void 0 ? only : null;
 }
-function targetOf(target2, upstreams, context, servers, from) {
+function targetOf2(target2, upstreams, context, servers, from) {
   if (target2.kind === "static") return { key: `static:${target2.path}`, node: { key: `static:${target2.path}`, type: "storage", label: cleanText(target2.path), sub: "Static files", idHint: "static_files" }, verb: "reads" };
   if (target2.kind === "redirect") {
     const names11 = target2.host === null ? from.names : [target2.host];
@@ -200968,7 +201188,7 @@ function readNginx(text6, context) {
   for (const { key, server } of servers) {
     const byTarget = /* @__PURE__ */ new Map();
     for (const route of server.routes) {
-      const found = targetOf(route.target, upstreams, server.context, servers, server);
+      const found = targetOf2(route.target, upstreams, server.context, servers, server);
       if (found === null) continue;
       if (found.node !== null && !extra.has(found.key)) extra.set(found.key, found.node);
       const entry2 = byTarget.get(found.key) ?? { verb: found.verb, routes: [] };
@@ -206483,7 +206703,7 @@ var init_import_icons = __esm({
 });
 
 // ../../packages/diagrams/src/generate/files.ts
-import { existsSync as existsSync4, globSync as globSync2, readFileSync as readFileSync4, readdirSync, statSync as statSync3 } from "node:fs";
+import { existsSync as existsSync5, globSync as globSync2, readFileSync as readFileSync5, readdirSync, statSync as statSync3 } from "node:fs";
 import { join as join6, normalize, relative as relative6, resolve as resolve7, sep as sep2 } from "node:path";
 function inside(root, path) {
   const rel = toPosix(relative6(root, resolve7(root, path)));
@@ -206505,7 +206725,7 @@ function named(root, pattern3) {
     return globSync2(pattern3, { cwd: root, exclude }).map((path) => toPosix(normalize(path))).filter((path) => !isSkipped2(path) && statSync3(resolve7(root, path), { throwIfNoEntry: false })?.isFile() === true);
   }
   const at3 = inside(root, pattern3);
-  if (at3 === null || !existsSync4(resolve7(root, at3))) return [];
+  if (at3 === null || !existsSync5(resolve7(root, at3))) return [];
   if (statSync3(resolve7(root, at3)).isDirectory()) {
     const out = [];
     walk(root, at3, 0, out);
@@ -206527,11 +206747,11 @@ function expandSourcePatterns(root, patterns) {
   return [...found].filter((path) => !removed.has(path)).sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
 }
 function readSourceFiles(root, paths) {
-  return paths.map((path) => ({ path, text: readFileSync4(resolve7(root, path), "utf8") }));
+  return paths.map((path) => ({ path, text: readFileSync5(resolve7(root, path), "utf8") }));
 }
 function readIfThere(root, path) {
   const absolute = join6(root, path);
-  return existsSync4(absolute) && statSync3(absolute).isFile() ? readFileSync4(absolute, "utf8") : null;
+  return existsSync5(absolute) && statSync3(absolute).isFile() ? readFileSync5(absolute, "utf8") : null;
 }
 function diskFiles(root) {
   return {
@@ -207006,7 +207226,7 @@ var init_changed = __esm({
 });
 
 // ../../packages/diagrams/src/generate/owners.ts
-import { existsSync as existsSync5, readFileSync as readFileSync5, statSync as statSync4 } from "node:fs";
+import { existsSync as existsSync6, readFileSync as readFileSync6, statSync as statSync4 } from "node:fs";
 import { join as join7 } from "node:path";
 function globSource(glob) {
   let out = "";
@@ -207067,11 +207287,11 @@ function ownersOfAll(codeOwners, paths) {
 function readCodeOwners(repositoryRoot) {
   for (const file2 of CODEOWNERS_PATHS) {
     const absolute = join7(repositoryRoot, file2);
-    if (!existsSync5(absolute)) continue;
+    if (!existsSync6(absolute)) continue;
     const stat = statSync4(absolute);
     if (!stat.isFile()) continue;
     if (stat.size > CODEOWNERS_MAX_BYTES) return { file: file2, rules: [] };
-    return parseCodeOwners(readFileSync5(absolute, "utf8"), file2);
+    return parseCodeOwners(readFileSync6(absolute, "utf8"), file2);
   }
   return null;
 }
@@ -207244,7 +207464,7 @@ var init_generate2 = __esm({
 
 // ../../packages/diagrams/src/cli/generate-command.ts
 import { spawnSync } from "node:child_process";
-import { existsSync as existsSync6, mkdirSync as mkdirSync5, readFileSync as readFileSync6, writeFileSync as writeFileSync6 } from "node:fs";
+import { existsSync as existsSync7, mkdirSync as mkdirSync5, readFileSync as readFileSync7, writeFileSync as writeFileSync6 } from "node:fs";
 import { basename as basename2, dirname as dirname6, relative as relative8, resolve as resolve11 } from "node:path";
 function settingsRoot(path) {
   const folder = dirname6(path);
@@ -207260,7 +207480,7 @@ function textOf10(root, plan, file2, settings) {
   if (resolve11(root, file2) === settings.path) return settings.text;
   for (const diagram of plan.diagrams) for (const made of diagram.files) if (made.path === file2 && made.content !== null) return made.content;
   const absolute = resolve11(root, file2);
-  return existsSync6(absolute) ? readFileSync6(absolute, "utf8") : "";
+  return existsSync7(absolute) ? readFileSync7(absolute, "utf8") : "";
 }
 function printProblem(problem, root, cwd, format, text6) {
   const file2 = repositoryPath2(resolve11(root, problem.file), cwd);
@@ -207333,11 +207553,11 @@ function machineReport(options3, plan, at3) {
 async function generateCommand(options3, deps = {}) {
   const cwd = deps.cwd ?? process.cwd();
   const path = settingsPath(options3, deps);
-  if (path === null || !existsSync6(path)) {
+  if (path === null || !existsSync7(path)) {
     console.error(path === null ? `no settings: add ${SETTINGS_FILE.names[0]} with a sources section, or pass --config <file>` : `no settings file at ${path}`);
     return EXIT.usage;
   }
-  let text6 = readFileSync6(path, "utf8");
+  let text6 = readFileSync7(path, "utf8");
   const read = readSettings2(text6);
   const shown3 = relative8(cwd, path) || path;
   if (!read.ok) {
@@ -208035,7 +208255,7 @@ var init_output = __esm({
 });
 
 // ../../packages/diagrams/src/cli/board/board-commands.ts
-import { existsSync as existsSync7, readFileSync as readFileSync7 } from "node:fs";
+import { existsSync as existsSync8, readFileSync as readFileSync8 } from "node:fs";
 import { basename as basename3, extname } from "node:path";
 async function listBoards(run3, options3) {
   const listed2 = await run3.client.call("GET", "/v1/boards", { query: { query: options3.query, limit: options3.limit ?? 100 } });
@@ -208091,7 +208311,7 @@ async function addTab(run3, word2, options3) {
   let source;
   if (options3.file !== void 0) {
     try {
-      source = readFileSync7(options3.file, "utf8");
+      source = readFileSync8(options3.file, "utf8");
     } catch (error62) {
       return run3.print.fail(failure3(CLI_BOARD_ERRORS.unreadable, `cannot read ${options3.file}: ${error62 instanceof Error ? error62.message : String(error62)}`));
     }
@@ -208117,10 +208337,10 @@ function importFromOf(word2, format) {
   const named2 = /^(library|personal|pattern):(.+)$/.exec(word2);
   if (named2 !== null) return { ok: true, from: named2[1] === "pattern" ? { kind: "pattern", id: named2[2] } : { kind: named2[1], diagram: named2[2] } };
   if (/^https:\/\//.test(word2)) return { ok: true, from: { kind: "link", url: word2 } };
-  if (!existsSync7(word2)) return { ok: false, message: `${word2} is not a file, an https address, or library:<id>, personal:<id> or pattern:<id>` };
+  if (!existsSync8(word2)) return { ok: false, message: `${word2} is not a file, an https address, or library:<id>, personal:<id> or pattern:<id>` };
   let text6;
   try {
-    text6 = readFileSync7(word2, "utf8");
+    text6 = readFileSync8(word2, "utf8");
   } catch (error62) {
     return { ok: false, message: `cannot read ${word2}: ${error62 instanceof Error ? error62.message : String(error62)}` };
   }
@@ -208248,13 +208468,13 @@ var init_edit_flags = __esm({
 
 // ../../packages/diagrams/src/cli/board/sidecar.ts
 import { createHash as createHash2 } from "node:crypto";
-import { existsSync as existsSync8, readFileSync as readFileSync8, writeFileSync as writeFileSync7 } from "node:fs";
+import { existsSync as existsSync9, readFileSync as readFileSync9, writeFileSync as writeFileSync7 } from "node:fs";
 function readSidecar(file2) {
   const path = sidecarPath(file2);
-  if (!existsSync8(path)) return null;
+  if (!existsSync9(path)) return null;
   let value;
   try {
-    value = JSON.parse(readFileSync8(path, "utf8"));
+    value = JSON.parse(readFileSync9(path, "utf8"));
   } catch (error62) {
     return { unreadable: `${path} cannot be read: ${error62 instanceof Error ? error62.message : String(error62)}` };
   }
@@ -208294,7 +208514,7 @@ var init_sidecar = __esm({
 });
 
 // ../../packages/diagrams/src/cli/board/tab-commands.ts
-import { existsSync as existsSync9, readFileSync as readFileSync9, writeFileSync as writeFileSync8 } from "node:fs";
+import { existsSync as existsSync10, readFileSync as readFileSync10, writeFileSync as writeFileSync8 } from "node:fs";
 import { basename as basename4 } from "node:path";
 function defaultFileOf(tabName) {
   const slug = tabName.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -208309,7 +208529,7 @@ async function pullTab(run3, boardWord, tabWord, options3) {
   if (!found.ok) return run3.print.fail(found);
   const revision = options3.revision ?? found.address?.revision ?? null;
   const target2 = options3.out;
-  const before = target2 !== void 0 && target2 !== "-" && existsSync9(target2) ? readSidecar(target2) : null;
+  const before = target2 !== void 0 && target2 !== "-" && existsSync10(target2) ? readSidecar(target2) : null;
   const same = before !== null && !("unreadable" in before) && before.board === found.board && before.tab === found.tab && before.revision === revision;
   const read = await run3.client.call("GET", tabPath(found.board, found.tab), { query: readQuery(revision, same ? before.version : void 0) });
   if (!read.ok) return run3.print.fail(read);
@@ -208322,8 +208542,8 @@ async function pullTab(run3, boardWord, tabWord, options3) {
     return 0;
   }
   const file2 = target2 ?? defaultFileOf(tab.name);
-  if (existsSync9(file2) && options3.force !== true) {
-    const now = readFileSync9(file2, "utf8");
+  if (existsSync10(file2) && options3.force !== true) {
+    const now = readFileSync10(file2, "utf8");
     const recorded = readSidecar(file2);
     if (recorded === null || "unreadable" in recorded) {
       if (now !== source) {
@@ -208376,7 +208596,7 @@ async function pushTab(run3, words, options3) {
   if (file2 === void 0 || words.length !== 1 && words.length !== 3) return run3.print.fail(failure3(CLI_BOARD_ERRORS.usage, "board push takes <file>, or <board> <tab> <file>."));
   let local;
   try {
-    local = readFileSync9(file2, "utf8");
+    local = readFileSync10(file2, "utf8");
   } catch (error62) {
     return run3.print.fail(failure3(CLI_BOARD_ERRORS.unreadable, `cannot read ${file2}: ${error62 instanceof Error ? error62.message : String(error62)}`));
   }
@@ -208877,6 +209097,7 @@ var init_manifest3 = __esm({
   "../../packages/diagrams/src/cli/manifest.ts"() {
     "use strict";
     init_constants();
+    init_snippet();
     init_wiki_export();
     init_enabled();
     init_types3();
@@ -209125,6 +209346,36 @@ var init_manifest3 = __esm({
         readsSettings: false
       },
       {
+        name: "embed",
+        operands: "<file.svg|file.diagram|link>",
+        summary: "Print a snippet that shows a picture in a web page or a React app with the viewer `@plotwork.official/viewer`",
+        description: [
+          `Prints the line that installs the viewer \`${VIEWER_PACKAGE.name}\` and a snippet that shows a picture with it: pan, zoom, tracing a box's lines, and light and dark. \`html\` writes the \`<${VIEWER_PACKAGE.element}>\` element for any page, \`react\` the \`<${VIEWER_PACKAGE.component}>\` component.`,
+          "The target is a Plotwork SVG file, a `.diagram` or Markdown file (its first diagram is drawn in memory in the `auto` scheme, as `render --scheme auto` draws it, and the snippet loads the SVG of the same name), or a hosted link: a published picture `https://cdn.plotwork.dev/d/<token>.svg`, a stable link `/l/<token>.svg`, or an organisation embed link `/o/<token>.svg`. A link is read by its shape and never fetched.",
+          "The snippet goes to standard output, and a note for each choice left out goes to standard error: `--live` is kept only for a stable link or an organisation embed link, and `--pin` only when the SVG text is on this machine."
+        ],
+        options: [
+          { flag: "--format", value: "<format>", values: EMBED_FORMATS, default: "`html`", description: "The snippet to write: `html` for any page, `react` for a React app." },
+          { flag: "--live", description: "Show each new version as it is published, for a stable link or an organisation embed link." },
+          { flag: "--pin", description: "Add the picture's fingerprint, `sha256-` and the SHA-256 of its SVG text, so only exactly that picture is shown. Needs a file, not a link." },
+          { flag: "--label", value: "<text>", description: "What the diagram shows, for a screen reader." },
+          CONFIG
+        ],
+        examples: [
+          { args: 'embed docs/assets/diagrams/checkout.svg --label "Checkout flow"', says: "Show a picture the site serves, in any page." },
+          { args: "embed https://cdn.plotwork.dev/l/<token>.svg --format react --live", says: "Show a stable link in a React app, following each new version." },
+          { args: "embed checkout.diagram --pin", says: "Draw a diagram file in memory and pin the snippet to that picture." }
+        ],
+        exits: {
+          ok: "The snippet was printed, with a note for each choice left out.",
+          problems: "The file is not an SVG, holds no diagram, or the diagram has an error.",
+          usage: `${CLI_USAGE_MISTAKES} Also when a link is not a hosted Plotwork picture, or \`--format\` is not \`html\` or \`react\`.`
+        },
+        writes: "Nothing.",
+        network: "No. A link is read by its shape, never fetched, and only the settings file on this machine is read.",
+        readsSettings: true
+      },
+      {
         name: "publish",
         operands: "<file>",
         summary: "Save every diagram of a `.diagram` or Markdown file to Plotwork, where your organisations' Publishing settings decide, and print the link",
@@ -209171,7 +209422,7 @@ var init_manifest3 = __esm({
       ...boardCommands(CLI_USAGE_MISTAKES)
     ];
     CLI_ENVIRONMENT = [
-      { name: SETTINGS_FILE.env, commands: ["sync", "validate", "check", "render", "outline", "generate", "publish"], meaning: `The settings file to read when \`--config\` is not given, instead of looking for ${SETTINGS_FILE.names.map((name2) => `\`${name2}\``).join(" or ")}.` },
+      { name: SETTINGS_FILE.env, commands: ["sync", "validate", "check", "render", "outline", "generate", "publish", "embed"], meaning: `The settings file to read when \`--config\` is not given, instead of looking for ${SETTINGS_FILE.names.map((name2) => `\`${name2}\``).join(" or ")}.` },
       {
         name: STYLE_RULES.env.org,
         commands: ["check", "sync", "validate", "render", "outline", "generate"],
@@ -209299,7 +209550,7 @@ var init_help = __esm({
 });
 
 // ../../packages/diagrams/src/cli/import-command.ts
-import { mkdirSync as mkdirSync6, readFileSync as readFileSync10, writeFileSync as writeFileSync9 } from "node:fs";
+import { mkdirSync as mkdirSync6, readFileSync as readFileSync11, writeFileSync as writeFileSync9 } from "node:fs";
 import { dirname as dirname7 } from "node:path";
 async function warningsOf(source) {
   if (source === "") return [];
@@ -209372,7 +209623,7 @@ async function importMarkdownFile(path, text6, options3) {
 async function importFile(path, options3) {
   let text6;
   try {
-    text6 = readFileSync10(path, "utf8");
+    text6 = readFileSync11(path, "utf8");
   } catch {
     console.error(`cannot read ${path}`);
     return EXIT.problems;
@@ -209419,7 +209670,7 @@ var init_importers = __esm({
 });
 
 // ../../packages/diagrams/src/cli/import-source-command.ts
-import { mkdirSync as mkdirSync7, readFileSync as readFileSync11, readdirSync as readdirSync2, statSync as statSync5, writeFileSync as writeFileSync10 } from "node:fs";
+import { mkdirSync as mkdirSync7, readFileSync as readFileSync12, readdirSync as readdirSync2, statSync as statSync5, writeFileSync as writeFileSync10 } from "node:fs";
 import { dirname as dirname8, join as join8, relative as relative9 } from "node:path";
 function readerOptions(options3) {
   const view = IMPORT_VIEWS.find((name2) => name2 === options3.view);
@@ -209439,7 +209690,7 @@ function folderFiles(root) {
       const stat = statSync5(path);
       if (stat.isDirectory()) {
         if (!SKIPPED_FOLDERS.has(name2)) walk2(path, depth + 1);
-      } else if (stat.isFile()) out.push({ path: relative9(root, path), text: readFileSync11(path, "utf8") });
+      } else if (stat.isFile()) out.push({ path: relative9(root, path), text: readFileSync12(path, "utf8") });
     }
   };
   walk2(root, 0);
@@ -209462,7 +209713,7 @@ async function importSourceFile(format, path, options3) {
   }
   let input2;
   try {
-    input2 = statSync5(path).isDirectory() ? folderFiles(path) : readFileSync11(path, "utf8");
+    input2 = statSync5(path).isDirectory() ? folderFiles(path) : readFileSync12(path, "utf8");
   } catch {
     console.error(`cannot read ${path}`);
     return EXIT.usage;
@@ -209639,7 +209890,7 @@ var init_publish_command = __esm({
 });
 
 // ../../packages/diagrams/src/cli/read-command.ts
-import { readFileSync as readFileSync12, writeFileSync as writeFileSync11 } from "node:fs";
+import { readFileSync as readFileSync13, writeFileSync as writeFileSync11 } from "node:fs";
 function isLink(target2) {
   return /^https?:\/\//i.test(target2);
 }
@@ -209665,7 +209916,7 @@ async function readFile2(target2, outPath2, deps = {}) {
     console.error(`${parsed2.value.kind} source${outPath2 === void 0 ? "" : ` written to ${outPath2}`}`);
     return EXIT.ok;
   }
-  const input2 = isLink(target2) ? { url: target2 } : { svg: readFileSync12(target2, "utf8") };
+  const input2 = isLink(target2) ? { url: target2 } : { svg: readFileSync13(target2, "utf8") };
   const result = await readDiagram(input2, deps);
   if (result.source === null) {
     console.error(`${result.message}
@@ -210063,6 +210314,8 @@ async function runCli(argv, who = REPOSITORY_CLI, deps = {}) {
       });
     case "icons":
       return searchIconsCommand(positionals.slice(1).join(" "));
+    case "embed":
+      return runEmbed(target2, values);
     default:
       console.error(usage);
       return EXIT.usage;
@@ -210076,6 +210329,7 @@ var init_run2 = __esm({
     init_theme();
     init_check_command();
     init_commands();
+    init_embed_command();
     init_export_command();
     init_generate_command();
     init_help();
@@ -210148,6 +210402,9 @@ var init_run2 = __esm({
       "keep-alive": { type: "boolean" },
       text: { type: "string" },
       tab: { type: "string" },
+      live: { type: "boolean" },
+      pin: { type: "boolean" },
+      label: { type: "string" },
       help: { type: "boolean", short: "h" }
     };
     ORG_READS = { legend: /* @__PURE__ */ new Map(), style: /* @__PURE__ */ new Map() };
@@ -210221,7 +210478,7 @@ var init_files2 = __esm({
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // package.json
-var package_default = { version: "0.8.0" };
+var package_default = { version: "0.9.0-beta.1" };
 
 // npm/package-config.json
 var package_config_default = {
